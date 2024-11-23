@@ -11,18 +11,16 @@ import com.example.explanationtable.R
 
 @Composable
 fun Background(content: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Display the background image
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image
         Image(
             painter = painterResource(id = R.drawable.background_main),
-            contentDescription = null, // Background images do not need a description
+            contentDescription = null, // Background image doesn't need a description
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Overlay the page-specific content
+        // Page content
         content()
     }
 }

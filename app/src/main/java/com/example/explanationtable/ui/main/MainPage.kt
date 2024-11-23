@@ -1,7 +1,5 @@
 package com.example.explanationtable.ui.main
 
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -9,49 +7,56 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.R // Make sure this is imported to access the drawable resources
-import androidx.compose.ui.graphics.Color
+import com.example.explanationtable.R
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainPage(navController: NavController) {
-    Background { // Wrapping with the reusable background composable
+    Background {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(text = "") }, // Empty text to hide the title
+                    title = { Text(text = "") }, // Empty title
                     actions = {
                         Box(
                             modifier = Modifier
-                                .size(64.dp) // Adjust size as necessary
+                                .size(64.dp)
                                 .clickable { navController.navigate(Routes.SETTINGS) }
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_settings),
                                 contentDescription = "Settings",
-                                tint = Color.Unspecified, // Use original colors of the icon
+                                tint = Color.Unspecified,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent // Makes the topBar transparent
+                    )
                 )
+            },
+            containerColor = Color.Transparent, // Ensures Scaffold background is transparent
+            content = { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    MainContent(navController)
+                }
             }
-        ) { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                MainContent(navController)
-            }
-        }
+        )
     }
 }
+
 
 @Composable
 fun MainContent(navController: NavController) {
@@ -79,12 +84,12 @@ fun MainContent(navController: NavController) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_start_game),
                     contentDescription = "Start Game",
-                    tint = Color.Unspecified, // Use original colors of the icon
+                    tint = Color.Unspecified,
                     modifier = Modifier.fillMaxSize()
                 )
             }
 
-            Spacer(modifier = Modifier.width(8.dp)) // Reduced spacer for closer icons
+            Spacer(modifier = Modifier.width(8.dp))
 
             Box(
                 modifier = Modifier
@@ -94,7 +99,7 @@ fun MainContent(navController: NavController) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_stages_list),
                     contentDescription = "Game Stages List",
-                    tint = Color.Unspecified, // Use original colors of the icon
+                    tint = Color.Unspecified,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -105,11 +110,9 @@ fun MainContent(navController: NavController) {
 }
 
 
-
 @Preview
 @Composable
 fun MainPagePreview() {
-    // If you're using a specific theme, wrap your MainPage composable in that theme.
     MaterialTheme {
         MainPage(navController = rememberNavController())
     }

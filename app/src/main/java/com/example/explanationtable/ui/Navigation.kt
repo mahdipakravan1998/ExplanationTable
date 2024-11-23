@@ -1,5 +1,6 @@
 package com.example.explanationtable.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -17,9 +18,11 @@ object Routes {
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = Routes.MAIN) {
-        composable(Routes.MAIN) { MainPage(navController) }
-        composable(Routes.SETTINGS) { SettingsPage(navController) }
-        composable(Routes.STAGES_LIST) { StagesListPage(navController) }
+    Background {
+        NavHost(navController = navController, startDestination = Routes.MAIN) {
+            composable(Routes.MAIN) { MainPage(navController) }
+            composable(Routes.SETTINGS) { SettingsPage(navController) }
+            composable(Routes.STAGES_LIST) { StagesListPage(navController) }
+        }
     }
 }
