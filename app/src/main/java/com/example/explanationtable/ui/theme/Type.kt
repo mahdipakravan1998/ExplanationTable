@@ -32,3 +32,13 @@ val Typography = Typography(
     )
     */
 )
+
+// Add a custom text style for "bodyBoldLarge"
+val Typography.bodyBoldLarge: TextStyle
+    get() = TextStyle(
+        fontFamily = FontFamily.Default,  // Keep default font family
+        fontWeight = FontWeight.Bold,     // Bold weight for emphasis
+        fontSize = 20.sp,                 // Larger font size
+        lineHeight = 28.sp,               // Adjust line height for readability
+        letterSpacing = 0.sp              // No additional spacing
+    )
