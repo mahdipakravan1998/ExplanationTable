@@ -18,10 +18,19 @@ import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.theme.bodyBoldLarge
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
+import com.example.explanationtable.ui.popup.PopupOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainPage(navController: NavController) {
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedOption by remember { mutableStateOf<String?>(null) }
+
     Background {
         Scaffold(
             topBar = { MainTopBar(navController) }, // Extracted top bar
@@ -32,12 +41,50 @@ fun MainPage(navController: NavController) {
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    MainContent(navController)
+                    MainContent(navController, onListClicked = { showDialog = true })
+                }
+
+                // AlertDialog to show options (Centered)
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentSize(align = Alignment.TopEnd) // Prevent Box from taking too much space
+                            ) {
+                                IconButton(
+                                    onClick = { showDialog = false },
+                                    modifier = Modifier
+                                        .size(24.dp) // Control the size of the icon
+                                        .padding(4.dp) // Use minimal padding to control spacing
+                                        .align(Alignment.TopEnd) // Align to top-right corner
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Close,
+                                        contentDescription = stringResource(id = R.string.close)
+                                    )
+                                }
+                            }
+                        },
+                        text = {
+                            PopupOptions(
+                                onOptionSelected = { option ->
+                                    selectedOption = option
+                                    showDialog = false
+                                }
+                            )
+                        },
+                        confirmButton = { /* Remove the confirm button entirely */ }
+                    )
                 }
             }
         )
     }
 }
+
+
 
 /**
  * Reusable Top Bar Composable
@@ -86,7 +133,7 @@ fun TopBarAction(iconId: Int, contentDescription: String, onClick: () -> Unit) {
  * Main Content Composable with Buttons
  */
 @Composable
-fun MainContent(navController: NavController) {
+fun MainContent(navController: NavController, onListClicked: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -104,7 +151,7 @@ fun MainContent(navController: NavController) {
             MainButton(
                 iconId = R.drawable.ic_stages_list,
                 label = stringResource(id = R.string.list_of_steps),
-                onClick = { navController.navigate(Routes.STAGES_LIST) }
+                onClick = onListClicked // Open Dialog
             )
 
             // Second Button: Start Game

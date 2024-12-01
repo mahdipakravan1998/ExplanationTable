@@ -7,4 +7,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="easy_step_color">#36432F</color>
+    <color name="medium_step_color">#D17F59</color>
+    <color name="difficult_step_color">#1E040F</color>
+    <color name="shadow_color_1">#77ac30</color> <!-- Green shadow -->
+    <color name="shadow_color_2">#f7e9a7</color> <!-- Yellow shadow -->
+    <color name="shadow_color_3">#c27927</color> <!-- Orange shadow -->
 </resources>
