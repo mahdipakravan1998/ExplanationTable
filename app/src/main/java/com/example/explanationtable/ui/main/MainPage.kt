@@ -16,7 +16,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.explanationtable.R
 import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.ui.theme.bodyBoldLarge
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +75,10 @@ fun MainPage(navController: NavController) {
                                 }
                             )
                         },
-                        confirmButton = { /* Remove the confirm button entirely */ }
+                        confirmButton = { /* Remove the confirm button entirely */ },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        textContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -189,8 +191,9 @@ fun MainButton(iconId: Int, label: String, onClick: () -> Unit) {
         }
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyBoldLarge,
-            textAlign = TextAlign.Center
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }
