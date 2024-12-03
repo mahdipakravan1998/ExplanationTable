@@ -7,7 +7,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
-import com.example.explanationtable.ui.components.OptionCard
+import com.example.explanationtable.ui.popup.components.OptionCard
 
 @Composable
 fun PopupOptions(
