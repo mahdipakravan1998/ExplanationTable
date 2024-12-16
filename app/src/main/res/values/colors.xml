@@ -1,42 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-
-    <!--<color name="easy_step_color">#36432F</color>
-    <color name="medium_step_color">#D17F59</color>
-    <color name="difficult_step_color">#1E040F</color>
-    <color name="shadow_color_1">#77ac30</color> &lt;!&ndash; Green shadow &ndash;&gt;
-    <color name="shadow_color_2">#f7e9a7</color> &lt;!&ndash; Yellow shadow &ndash;&gt;
-    <color name="shadow_color_3">#c27927</color> &lt;!&ndash; Orange shadow &ndash;&gt;-->
-
-    <!-- Easy Option Colors -->
-    <color name="easy_option_background">#228B22</color> <!-- Forest Green -->
-    <color name="easy_option_shadow">#3CB371</color> <!-- Medium Sea Green -->
-    <color name="easy_option_text">#FFFFFF</color> <!-- White -->
-
-    <!-- Medium Option Colors -->
-    <color name="medium_option_background">#DAA520</color> <!-- Goldenrod -->
-    <color name="medium_option_shadow">#FFD700</color> <!-- Gold -->
-    <color name="medium_option_text">#2F4F4F</color> <!-- Dark Slate Gray -->
-
-    <!-- Hard Option Colors -->
-    <color name="hard_option_background">#B22222</color> <!-- Firebrick -->
-    <color name="hard_option_shadow">#CD5C5C</color> <!-- Indian Red -->
-    <color name="hard_option_text">#FFFFFF</color> <!-- White -->
-
-    <color name="colorPrimaryText">#2F4F4F</color>
-    <color name="colorSecondaryText">#696969</color>
-    <color name="colorAccent">#228B22</color>
-    <color name="colorHighlight">#DAA520</color>
-    <color name="colorBackgroundOverlay">#FFFFFFCC</color>
-    <color name="colorErrorWarning">#B22222</color>
-    <color name="colorSuccess">#3CB371</color>
-
-
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimaryText">#212121</color>
+    <color name="colorHighlight">#FFEB3B</color>
+    <color name="colorSecondaryText">#757575</color>
+    <color name="colorErrorWarning">#D32F2F</color>
+    <color name="colorBackgroundOverlay">#4D000000</color>
+    <color name="colorSuccess">#4CAF50</color>
 </resources>

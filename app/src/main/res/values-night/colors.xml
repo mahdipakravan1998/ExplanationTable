@@ -1,25 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimaryText">#D3D3D3</color>
-    <color name="colorSecondaryText">#708090</color>
-    <color name="colorAccent">#008080</color>
-    <color name="colorHighlight">#9370DB</color>
-    <color name="colorBackgroundOverlay">#000000B3</color>
-    <color name="colorErrorWarning">#CD5C5C</color>
-    <color name="colorSuccess">#2E8B57</color>
-
-    <!-- Easy Option Colors -->
-    <color name="easy_option_background">#2E8B57</color> <!-- Sea Green -->
-    <color name="easy_option_shadow">#3CB371</color> <!-- Medium Sea Green -->
-    <color name="easy_option_text">#D3D3D3</color> <!-- Light Gray -->
-
-    <!-- Medium Option Colors -->
-    <color name="medium_option_background">#9370DB</color> <!-- Medium Purple -->
-    <color name="medium_option_shadow">#BA55D3</color> <!-- Medium Orchid -->
-    <color name="medium_option_text">#D3D3D3</color> <!-- Light Gray -->
-
-    <!-- Hard Option Colors -->
-    <color name="hard_option_background">#CD5C5C</color> <!-- Indian Red -->
-    <color name="hard_option_shadow">#F08080</color> <!-- Light Coral -->
-    <color name="hard_option_text">#D3D3D3</color> <!-- Light Gray -->
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimaryText">#212121</color>
+    <color name="colorHighlight">#FFEB3B</color>
+    <color name="colorSecondaryText">#757575</color>
+    <color name="colorErrorWarning">#D32F2F</color>
+    <color name="colorBackgroundOverlay">#4D000000</color>
+    <color name="colorSuccess">#4CAF50</color>
 </resources>
