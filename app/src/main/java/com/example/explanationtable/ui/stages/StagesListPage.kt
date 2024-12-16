@@ -6,11 +6,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
+import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
-import com.example.explanationtable.ui.components.TopBar
+import com.example.explanationtable.ui.components.AppTopBar
 
 /**
  * A page that displays a top bar (with a difficulty-based theme)
@@ -23,10 +25,11 @@ fun StagesListPage(
     onSettingsClick: () -> Unit = {}
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        TopBar(
-            difficulty = difficulty,
-            title = "لیست مراحل", // Could be extracted to strings.xml for localization
+        AppTopBar(
+            isHomePage = false,
+            title = stringResource(id = R.string.stages_list), // Extracted to strings.xml for localization
             diamonds = diamonds,
+            difficulty = difficulty,
             onSettingsClick = onSettingsClick
         )
 

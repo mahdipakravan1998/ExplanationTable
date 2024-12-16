@@ -16,8 +16,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.explanationtable.R
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.Routes
+import com.example.explanationtable.ui.components.AppTopBar
 import com.example.explanationtable.ui.main.components.MainContent
-import com.example.explanationtable.ui.components.MainTopBar
 import com.example.explanationtable.ui.popup.PopupOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,7 +28,12 @@ fun MainPage(navController: NavController) {
 
     Background {
         Scaffold(
-            topBar = { MainTopBar(navController) },
+            topBar = {
+                AppTopBar(
+                    isHomePage = true,
+                    onSettingsClick = { navController.navigate(Routes.SETTINGS) }
+                )
+            },
             containerColor = Color.Transparent,
             content = { paddingValues ->
                 Box(

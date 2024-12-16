@@ -16,6 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.R
+import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.model.difficultyColors
 import com.example.explanationtable.ui.theme.ColorHighlightDark
 import com.example.explanationtable.ui.theme.ColorPrimaryTextLight
 
@@ -25,6 +27,7 @@ import com.example.explanationtable.ui.theme.ColorPrimaryTextLight
  * @param isHomePage Indicates whether the current page is the home page.
  * @param title The title to display in the center (only for non-home pages).
  * @param diamonds The number of user diamonds to display on the left (only for non-home pages).
+ * @param difficulty The difficulty level determining the top bar's background color (only for non-home pages).
  * @param onSettingsClick Callback when the settings button is clicked.
  */
 @Composable
@@ -32,42 +35,46 @@ fun AppTopBar(
     isHomePage: Boolean,
     title: String? = null,
     diamonds: Int? = null,
+    difficulty: Difficulty? = null,
     onSettingsClick: () -> Unit
 ) {
-    // Determine if the current theme is dark
-    val isDarkTheme = isSystemInDarkTheme()
+    // Define top bar height based on page type
+    val topBarHeight = if (isHomePage) 112.dp else 80.dp
 
-    // Select background color for the settings button based on theme
-    val settingsButtonBackgroundColor = if (isDarkTheme) {
-        ColorHighlightDark // From Color.kt for Night Mode
-    } else {
-        ColorPrimaryTextLight // From Color.kt for Day Mode
-    }
-
-    // Define the height of the top bar based on the page type
-    val topBarHeight = 80.dp
-
-    // Define the container color for non-home pages
+    // Define container color
     val containerColor = if (isHomePage) {
         Color.Transparent
     } else {
-        // You can customize this further based on page requirements
-        MaterialTheme.colorScheme.primary
+        // For non-home pages, get color based on difficulty
+        difficultyColors(difficulty!!).backgroundColor
     }
 
-    // Define the divider color for non-home pages
+    // Define divider color for non-home pages
     val dividerColor = if (isHomePage) {
         Color.Transparent
     } else {
-        // Adjust the divider color as needed
-        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f)
+        difficultyColors(difficulty!!).dividerColor
+    }
+
+    // Define settings button background color
+    val settingsButtonBackgroundColor = if (isHomePage) {
+        // For home page, set circular background based on theme
+        if (isSystemInDarkTheme()) {
+            ColorHighlightDark
+        } else {
+            ColorPrimaryTextLight
+        }
+    } else {
+        // For other pages, no background
+        Color.Transparent
     }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(containerColor)
-            .height(topBarHeight)
+            .height(topBarHeight),
+        contentAlignment = Alignment.Center
     ) {
         Row(
             modifier = Modifier
@@ -78,10 +85,10 @@ fun AppTopBar(
         ) {
             if (!isHomePage) {
                 // Left side: Diamond count
-                DiamondGroup(diamonds = diamonds ?: 0)
+                diamonds?.let { DiamondGroup(diamonds = it) }
             } else {
-                // To balance the layout, add a spacer if it's the home page
-                Spacer(modifier = Modifier.width(48.dp))
+                // Spacer to balance layout on home page
+                Spacer(modifier = Modifier.width(48.dp)) // Assuming DiamondGroup occupies similar space
             }
 
             if (!isHomePage && title != null) {
@@ -89,37 +96,54 @@ fun AppTopBar(
                 Text(
                     text = title,
                     fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = difficultyColors(difficulty!!).textColor,
                     fontWeight = FontWeight.SemiBold,
                 )
             } else {
-                // Spacer for the home page to keep the settings button aligned to the right
+                // Spacer to keep settings button on the right for home page
                 Spacer(modifier = Modifier.weight(1f))
             }
 
-            // Right side: Settings icon with circular background
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        color = settingsButtonBackgroundColor,
-                        shape = CircleShape
+            if (isHomePage) {
+                // Settings button with circular background
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = settingsButtonBackgroundColor,
+                            shape = CircleShape
+                        )
+                        .clickable { onSettingsClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_settings),
+                        contentDescription = stringResource(id = R.string.settings),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
-                    .clickable { onSettingsClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_settings),
-                    contentDescription = stringResource(id = R.string.settings),
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
+                }
+            } else {
+                // Settings button without background
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable { onSettingsClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_settings),
+                        contentDescription = stringResource(id = R.string.settings),
+                        tint = difficultyColors(difficulty!!).textColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
 
         // Bottom divider for non-home pages
         if (!isHomePage) {
-            Divider(
+            HorizontalDivider(
                 color = dividerColor,
                 thickness = 2.dp,
                 modifier = Modifier
