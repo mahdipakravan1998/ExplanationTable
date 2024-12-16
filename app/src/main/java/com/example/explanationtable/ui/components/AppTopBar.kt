@@ -39,7 +39,7 @@ fun AppTopBar(
     onSettingsClick: () -> Unit
 ) {
     // Define top bar height based on page type
-    val topBarHeight = if (isHomePage) 112.dp else 80.dp
+    val topBarHeight = 80.dp
 
     // Define container color
     val containerColor = if (isHomePage) {
@@ -72,8 +72,8 @@ fun AppTopBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(containerColor)
-            .height(topBarHeight),
+            .height(topBarHeight)
+            .background(containerColor),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -81,69 +81,52 @@ fun AppTopBar(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (isHomePage) Arrangement.End else Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween  // Unified arrangement
         ) {
+            // Left side
             if (!isHomePage) {
-                // Left side: Diamond count
                 diamonds?.let { DiamondGroup(diamonds = it) }
             } else {
-                // Spacer to balance layout on home page
-                Spacer(modifier = Modifier.width(48.dp)) // Assuming DiamondGroup occupies similar space
+                // Spacer to match DiamondGroup width on home page
+                Spacer(modifier = Modifier.width(48.dp))
             }
 
+            // Middle
             if (!isHomePage && title != null) {
-                // Centered title
                 Text(
                     text = title,
                     fontSize = 18.sp,
                     color = difficultyColors(difficulty!!).textColor,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.SemiBold
                 )
             } else {
-                // Spacer to keep settings button on the right for home page
+                // Spacer to help push the settings button to the right
                 Spacer(modifier = Modifier.weight(1f))
             }
 
-            if (isHomePage) {
-                // Settings button with circular background
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            color = settingsButtonBackgroundColor,
-                            shape = CircleShape
-                        )
-                        .clickable { onSettingsClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_settings),
-                        contentDescription = stringResource(id = R.string.settings),
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+            // Right side (Unified Settings Button)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = if (isHomePage) settingsButtonBackgroundColor else Color.Transparent,
+                        shape = CircleShape
                     )
-                }
-            } else {
-                // Settings button without background
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clickable { onSettingsClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_settings),
-                        contentDescription = stringResource(id = R.string.settings),
-                        tint = difficultyColors(difficulty!!).textColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                    .clickable { onSettingsClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_settings),
+                    contentDescription = stringResource(id = R.string.settings),
+                    tint = if (isHomePage) Color.White else difficultyColors(difficulty!!).textColor,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
 
         // Bottom divider for non-home pages
         if (!isHomePage) {
-            HorizontalDivider(
+            HorizontalDivider(  // Replacing deprecated Divider
                 color = dividerColor,
                 thickness = 2.dp,
                 modifier = Modifier
@@ -152,4 +135,5 @@ fun AppTopBar(
             )
         }
     }
+
 }
