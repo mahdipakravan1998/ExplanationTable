@@ -1,5 +1,6 @@
 package com.example.explanationtable.ui.main
 
+import android.app.Activity
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -9,9 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -21,6 +24,7 @@ import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.AppTopBar
 import com.example.explanationtable.ui.main.components.MainContent
 import com.example.explanationtable.ui.popup.PopupOptions
+import com.example.explanationtable.ui.popup.SettingsPopup
 import com.example.explanationtable.ui.theme.ExplanationTableTheme
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -28,10 +32,14 @@ import com.example.explanationtable.ui.theme.ExplanationTableTheme
 @Composable
 fun MainPage(navController: NavController, viewModel: MainViewModel = viewModel()) {
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val isMuted by viewModel.isMuted.collectAsState()
 
     var showDifficultyDialog by remember { mutableStateOf(false) }
-//    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf<String?>(null) }
+
+    // Obtain the Activity context
+    val activity = LocalContext.current as? Activity
 
     Background(isHomePage = true, isDarkTheme = isDarkTheme) { // Pass isDarkTheme here
         Scaffold(
@@ -39,7 +47,7 @@ fun MainPage(navController: NavController, viewModel: MainViewModel = viewModel(
                 AppTopBar(
                     isHomePage = true,
                     isDarkTheme = isDarkTheme, // Pass the theme state here
-                    onSettingsClick = { navController.navigate(Routes.SETTINGS) }, // Navigate to Settings
+                    onSettingsClick = { showSettingsDialog = true }, // Show settings popup
                     iconTint = MaterialTheme.colorScheme.onSurface
                 )
             },
@@ -94,7 +102,7 @@ fun MainPage(navController: NavController, viewModel: MainViewModel = viewModel(
                     )
                 }
 
-                /*// Settings Dialog
+                // Settings Dialog
                 if (showSettingsDialog) {
                     Dialog(onDismissRequest = { showSettingsDialog = false }) {
                         Surface(
@@ -103,14 +111,18 @@ fun MainPage(navController: NavController, viewModel: MainViewModel = viewModel(
                         ) {
                             SettingsPopup(
                                 onDismiss = { showSettingsDialog = false },
-                                currentTheme = isDarkTheme, // Pass isDarkTheme here
+                                currentTheme = isDarkTheme,
                                 onToggleTheme = { viewModel.toggleTheme() },
-                                isMuted = viewModel.isMuted.value,
-                                onToggleMute = { viewModel.toggleMute() }
+                                isMuted = isMuted,
+                                onToggleMute = { viewModel.toggleMute() },
+                                onExit = {
+                                    // Exit the app by finishing the activity
+                                    activity?.finishAndRemoveTask()
+                                }
                             )
                         }
                     }
-                }*/
+                }
             }
         )
     }
@@ -122,6 +134,7 @@ fun MainPagePreview() {
     // For previews, we can still wrap in a theme to see the UI.
     ExplanationTableTheme(darkTheme = false) {
         val navController = rememberNavController()
-        MainPage(navController = navController)
+        val viewModel: MainViewModel = viewModel()
+        MainPage(navController = navController, viewModel = viewModel)
     }
 }

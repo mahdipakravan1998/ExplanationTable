@@ -9,10 +9,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.explanationtable.ui.main.MainPage
-import com.example.explanationtable.ui.settings.SettingsPage
-import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.stages.StagesListPage
 import com.example.explanationtable.ui.main.MainViewModel
+import com.example.explanationtable.model.Difficulty
 
 @Composable
 fun AppNavHost(
@@ -28,9 +27,8 @@ fun AppNavHost(
         composable(Routes.MAIN) {
             MainPage(navController, viewModel)
         }
-        composable(Routes.SETTINGS) {
-            SettingsPage(navController, viewModel)
-        }
+
+        // Removed SettingsPage as settings are now handled via a popup
 
         // Parameterized composable: "stages_list/{difficulty}"
         composable(
@@ -47,7 +45,7 @@ fun AppNavHost(
             StagesListPage(
                 difficulty = difficultyEnum,
                 isDarkTheme = isDarkTheme,
-                onSettingsClick = { navController.navigate(Routes.SETTINGS) } // Navigate to Settings
+                onSettingsClick = { /* Settings handled within the page */ }
             )
         }
     }

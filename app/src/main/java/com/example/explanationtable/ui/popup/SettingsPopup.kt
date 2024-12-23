@@ -1,14 +1,10 @@
 package com.example.explanationtable.ui.popup
 
-import android.app.Activity
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
@@ -20,11 +16,9 @@ fun SettingsPopup(
     currentTheme: Boolean,  // True if Dark, false if Light
     onToggleTheme: () -> Unit,
     isMuted: Boolean,
-    onToggleMute: () -> Unit
+    onToggleMute: () -> Unit,
+    onExit: () -> Unit // New parameter for exit functionality
 ) {
-    val context = LocalContext.current
-    val activity = context as? Activity
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -52,18 +46,18 @@ fun SettingsPopup(
         // 2) Day/Night Mode
         OptionCard(
             label = if (currentTheme) {
-                stringResource(id = R.string.day_mode)
+                stringResource(id = R.string.night_mode) // Assuming currentTheme true is Dark
             } else {
-                stringResource(id = R.string.night_mode)
+                stringResource(id = R.string.day_mode) // currentTheme false is Light
             },
             onClick = onToggleTheme,
             backgroundColor = MaterialTheme.colorScheme.secondary,
             shadowColor = MaterialTheme.colorScheme.secondaryContainer,
             textColor = MaterialTheme.colorScheme.onSecondary,
             imageResId = if (currentTheme) {
-                R.drawable.ic_sun
-            } else {
                 R.drawable.ic_moon
+            } else {
+                R.drawable.ic_sun
             }
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -71,9 +65,7 @@ fun SettingsPopup(
         // 3) Exit App
         OptionCard(
             label = stringResource(id = R.string.exit_app),
-            onClick = {
-                activity?.finishAndRemoveTask()
-            },
+            onClick = onExit, // Use the passed onExit function
             backgroundColor = MaterialTheme.colorScheme.tertiary,
             shadowColor = MaterialTheme.colorScheme.tertiaryContainer,
             textColor = MaterialTheme.colorScheme.onTertiary,

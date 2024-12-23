@@ -14,13 +14,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // 1) Get the MainViewModel to observe the user's theme preference
+            // Get the MainViewModel to observe the user's theme preference
             val mainViewModel: MainViewModel = viewModel()
             val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
 
-            // 2) Apply ExplanationTableTheme with the current theme state
+            // Apply ExplanationTableTheme with the current theme state
             ExplanationTableTheme(darkTheme = isDarkTheme) {
-                // 3) Navigation host with isDarkTheme passed
+                // Navigation host with isDarkTheme passed
                 AppNavHost(isDarkTheme = isDarkTheme)
             }
         }
