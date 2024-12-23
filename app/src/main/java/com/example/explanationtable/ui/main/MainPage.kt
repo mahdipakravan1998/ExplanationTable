@@ -1,5 +1,6 @@
 package com.example.explanationtable.ui.main
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -11,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.explanationtable.R
@@ -19,19 +21,26 @@ import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.AppTopBar
 import com.example.explanationtable.ui.main.components.MainContent
 import com.example.explanationtable.ui.popup.PopupOptions
+import com.example.explanationtable.ui.theme.ExplanationTableTheme
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainPage(navController: NavController) {
-    var showDialog by remember { mutableStateOf(false) }
+fun MainPage(navController: NavController, viewModel: MainViewModel = viewModel()) {
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+
+    var showDifficultyDialog by remember { mutableStateOf(false) }
+//    var showSettingsDialog by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf<String?>(null) }
 
-    Background {
+    Background(isHomePage = true, isDarkTheme = isDarkTheme) { // Pass isDarkTheme here
         Scaffold(
             topBar = {
                 AppTopBar(
                     isHomePage = true,
-                    onSettingsClick = { navController.navigate(Routes.SETTINGS) }
+                    isDarkTheme = isDarkTheme, // Pass the theme state here
+                    onSettingsClick = { navController.navigate(Routes.SETTINGS) }, // Navigate to Settings
+                    iconTint = MaterialTheme.colorScheme.onSurface
                 )
             },
             containerColor = Color.Transparent,
@@ -41,30 +50,30 @@ fun MainPage(navController: NavController) {
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // 'onListClicked' triggers showing the popup
-                    MainContent(onListClicked = { showDialog = true })
+                    // Show difficulty popup on button click
+                    MainContent(onListClicked = { showDifficultyDialog = true })
                 }
 
-                // AlertDialog for choosing difficulty
-                if (showDialog) {
+                // Difficulty Selection
+                if (showDifficultyDialog) {
                     AlertDialog(
-                        onDismissRequest = { showDialog = false },
+                        onDismissRequest = { showDifficultyDialog = false },
                         title = {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .wrapContentSize(align = Alignment.TopEnd)
+                                    .wrapContentSize(Alignment.TopEnd)
                             ) {
                                 IconButton(
-                                    onClick = { showDialog = false },
+                                    onClick = { showDifficultyDialog = false },
                                     modifier = Modifier
                                         .size(24.dp)
                                         .padding(4.dp)
-                                        .align(Alignment.TopEnd)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Filled.Close,
-                                        contentDescription = stringResource(id = R.string.close)
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(id = R.string.close),
+                                        tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -73,8 +82,7 @@ fun MainPage(navController: NavController) {
                             PopupOptions(
                                 onOptionSelected = { option ->
                                     selectedOption = option
-                                    showDialog = false
-                                    // Navigate with the chosen difficulty in the route
+                                    showDifficultyDialog = false
                                     navController.navigate("${Routes.STAGES_LIST}/$option")
                                 }
                             )
@@ -85,15 +93,35 @@ fun MainPage(navController: NavController) {
                         textContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 }
+
+                /*// Settings Dialog
+                if (showSettingsDialog) {
+                    Dialog(onDismissRequest = { showSettingsDialog = false }) {
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            SettingsPopup(
+                                onDismiss = { showSettingsDialog = false },
+                                currentTheme = isDarkTheme, // Pass isDarkTheme here
+                                onToggleTheme = { viewModel.toggleTheme() },
+                                isMuted = viewModel.isMuted.value,
+                                onToggleMute = { viewModel.toggleMute() }
+                            )
+                        }
+                    }
+                }*/
             }
         )
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun MainPagePreview() {
-    MaterialTheme {
-        MainPage(navController = rememberNavController())
+    // For previews, we can still wrap in a theme to see the UI.
+    ExplanationTableTheme(darkTheme = false) {
+        val navController = rememberNavController()
+        MainPage(navController = navController)
     }
 }

@@ -16,36 +16,36 @@ fun PopupOptions(onOptionSelected: (String) -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        // Easy = colorScheme.primary
+        // Easy option
         OptionCard(
             label          = stringResource(id = R.string.easy_step_label),
             onClick        = { onOptionSelected("Easy") },
-            backgroundColor= MaterialTheme.colorScheme.primary,          // #228B22 (Light) or #2E8B57 (Dark)
-            shadowColor    = MaterialTheme.colorScheme.primaryContainer, // #3CB371 or #3CB371
-            textColor      = MaterialTheme.colorScheme.onPrimary,        // #FFFFFF or #D3D3D3
-            imageResId     = R.drawable.emerald
+            backgroundColor= MaterialTheme.colorScheme.primary,
+            shadowColor    = MaterialTheme.colorScheme.primaryContainer,
+            textColor      = MaterialTheme.colorScheme.onPrimary,
+            imageResId     = R.drawable.ic_emerald // <--- Pass your drawable resource here
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Medium = colorScheme.secondary
+        // Medium option
         OptionCard(
             label          = stringResource(id = R.string.medium_step_label),
             onClick        = { onOptionSelected("Medium") },
             backgroundColor= MaterialTheme.colorScheme.secondary,
             shadowColor    = MaterialTheme.colorScheme.secondaryContainer,
             textColor      = MaterialTheme.colorScheme.onSecondary,
-            imageResId     = R.drawable.crown
+            imageResId     = R.drawable.ic_crown
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Hard = colorScheme.tertiary
+        // Hard option
         OptionCard(
             label          = stringResource(id = R.string.difficult_step_label),
             onClick        = { onOptionSelected("Hard") },
             backgroundColor= MaterialTheme.colorScheme.tertiary,
             shadowColor    = MaterialTheme.colorScheme.tertiaryContainer,
             textColor      = MaterialTheme.colorScheme.onTertiary,
-            imageResId     = R.drawable.ruby_diamond
+            imageResId     = R.drawable.ic_diamond
         )
     }
 }

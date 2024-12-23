@@ -9,4 +9,11 @@
     <string name="medium_step_label">متوسط</string>
     <string name="difficult_step_label">سخت</string>
     <string name="close">بستن</string>
+
+    <!-- New strings for settings -->
+    <string name="mute_sound">Mute Sound</string>
+    <string name="unmute_sound">Unmute Sound</string>
+    <string name="day_mode">Day Mode</string>
+    <string name="night_mode">Night Mode</string>
+    <string name="exit_app">Exit</string>
 </resources>

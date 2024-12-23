@@ -7,70 +7,78 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * Define Dark and Light Color Schemes with clearly different values
+ * so that changing themes is visually obvious.
+ */
 private val DarkColorScheme = darkColorScheme(
     // Easy
-    primary          = EasyOptionBackgroundDark,
-    onPrimary        = EasyOptionTextDark,
+    primary = EasyOptionBackgroundDark,
+    onPrimary = EasyOptionTextDark,
     primaryContainer = EasyOptionShadowDark,
 
     // Medium
-    secondary          = MediumOptionBackgroundDark,
-    onSecondary        = MediumOptionTextDark,
+    secondary = MediumOptionBackgroundDark,
+    onSecondary = MediumOptionTextDark,
     secondaryContainer = MediumOptionShadowDark,
 
     // Hard
-    tertiary          = HardOptionBackgroundDark,
-    onTertiary        = HardOptionTextDark,
+    tertiary = HardOptionBackgroundDark,
+    onTertiary = HardOptionTextDark,
     tertiaryContainer = HardOptionShadowDark,
 
-    // You can define background/surface if desired:
-    background = Color(0xFF000000),
-    surface    = Color(0xFF1C1B1F),
+    // Background and Surface
+    background = NonHomeBackgroundDark,
+    surface = NonHomeBackgroundDark,
 
-    onBackground = Color(0xFFD3D3D3),
-    onSurface    = Color(0xFFD3D3D3),
+    onBackground = ColorPrimaryTextDark,
+    onSurface = ColorPrimaryTextDark,
 )
 
 private val LightColorScheme = lightColorScheme(
     // Easy
-    primary          = EasyOptionBackgroundLight,
-    onPrimary        = EasyOptionTextLight,
+    primary = EasyOptionBackgroundLight,
+    onPrimary = EasyOptionTextLight,
     primaryContainer = EasyOptionShadowLight,
 
     // Medium
-    secondary          = MediumOptionBackgroundLight,
-    onSecondary        = MediumOptionTextLight,
+    secondary = MediumOptionBackgroundLight,
+    onSecondary = MediumOptionTextLight,
     secondaryContainer = MediumOptionShadowLight,
 
     // Hard
-    tertiary          = HardOptionBackgroundLight,
-    onTertiary        = HardOptionTextLight,
+    tertiary = HardOptionBackgroundLight,
+    onTertiary = HardOptionTextLight,
     tertiaryContainer = HardOptionShadowLight,
 
-    background = Color(0xFFFFFFFF),
-    surface    = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF2F4F4F),
-    onSurface    = Color(0xFF2F4F4F),
+    // Background and Surface
+    background = NonHomeBackgroundLight,
+    surface = NonHomeBackgroundLight,
+
+    onBackground = ColorPrimaryTextLight,
+    onSurface = ColorPrimaryTextLight,
 )
 
 @Composable
 fun ExplanationTableTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // If you want to override with dynamic wallpaper-based colors
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
+        // If you want to use the system's dynamic color (Android 12+)
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+        // Otherwise, use our own custom color schemes
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography,
+        typography = AppTypography, // Make sure AppTypography is defined or use MaterialTheme.typography
         content = content
     )
 }

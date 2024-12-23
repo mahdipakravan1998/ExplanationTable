@@ -2,7 +2,6 @@ package com.example.explanationtable.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -18,25 +17,18 @@ import androidx.compose.ui.unit.sp
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.difficultyColors
-import com.example.explanationtable.ui.theme.ColorHighlightDark
-import com.example.explanationtable.ui.theme.ColorPrimaryTextLight
+import com.example.explanationtable.ui.theme.SettingsButtonBackgroundDark
+import com.example.explanationtable.ui.theme.SettingsButtonBackgroundLight
 
-/**
- * A unified top bar composable that handles both the home page and other pages.
- *
- * @param isHomePage Indicates whether the current page is the home page.
- * @param title The title to display in the center (only for non-home pages).
- * @param diamonds The number of user diamonds to display on the left (only for non-home pages).
- * @param difficulty The difficulty level determining the top bar's background color (only for non-home pages).
- * @param onSettingsClick Callback when the settings button is clicked.
- */
 @Composable
 fun AppTopBar(
     isHomePage: Boolean,
+    isDarkTheme: Boolean, // New parameter
     title: String? = null,
     diamonds: Int? = null,
     difficulty: Difficulty? = null,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    iconTint: Color = MaterialTheme.colorScheme.onSurface
 ) {
     // Define top bar height based on page type
     val topBarHeight = 80.dp
@@ -56,16 +48,14 @@ fun AppTopBar(
         difficultyColors(difficulty!!).dividerColor
     }
 
-    // Define settings button background color
+    // Define settings button background color based on isDarkTheme
     val settingsButtonBackgroundColor = if (isHomePage) {
-        // For home page, set circular background based on theme
-        if (isSystemInDarkTheme()) {
-            ColorHighlightDark
+        if (isDarkTheme) {
+            SettingsButtonBackgroundLight
         } else {
-            ColorPrimaryTextLight
+            SettingsButtonBackgroundDark
         }
     } else {
-        // For other pages, no background
         Color.Transparent
     }
 
@@ -81,7 +71,7 @@ fun AppTopBar(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween  // Unified arrangement
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             // Left side
             if (!isHomePage) {
@@ -126,7 +116,7 @@ fun AppTopBar(
 
         // Bottom divider for non-home pages
         if (!isHomePage) {
-            HorizontalDivider(  // Replacing deprecated Divider
+            Divider(
                 color = dividerColor,
                 thickness = 2.dp,
                 modifier = Modifier
@@ -135,5 +125,4 @@ fun AppTopBar(
             )
         }
     }
-
 }

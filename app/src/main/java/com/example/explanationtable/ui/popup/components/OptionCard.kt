@@ -26,7 +26,6 @@ fun OptionCard(
     textColor: Color,
     imageResId: Int
 ) {
-    // Extension function to lighten a color
     fun Color.lighten(factor: Float): Color {
         val hsv = FloatArray(3)
         AndroidColor.colorToHSV(this.toArgb(), hsv)
@@ -53,11 +52,11 @@ fun OptionCard(
                 modifier = Modifier
                     .size(48.dp)
                     .drawBehind {
-                        val glowRadius = size.minDimension / 2 + 64.dp.toPx() // Increased radius
-                        val glowColor = shadowColor.lighten(0.8f) // Lighten the shadow color
+                        val glowRadius = size.minDimension / 2 + 64.dp.toPx()
+                        val glowColor = shadowColor.lighten(0.8f)
                         val brush = Brush.radialGradient(
                             colors = listOf(
-                                glowColor.copy(alpha = 1f), // Fully opaque for brightness
+                                glowColor.copy(alpha = 1f),
                                 glowColor.copy(alpha = 0f)
                             ),
                             center = center,
@@ -78,6 +77,7 @@ fun OptionCard(
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
+
             Text(
                 text = label,
                 color = textColor,
@@ -86,7 +86,7 @@ fun OptionCard(
                     fontWeight = FontWeight.Bold
                 ),
                 modifier = Modifier.weight(1f),
-                textAlign = TextAlign.End
+                textAlign = TextAlign.Start
             )
         }
     }
