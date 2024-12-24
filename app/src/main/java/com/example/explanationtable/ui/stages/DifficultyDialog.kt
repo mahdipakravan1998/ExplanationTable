@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.popup
+package com.example.explanationtable.ui.stages
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth

@@ -1,22 +1,15 @@
-package com.example.explanationtable.ui.popup
+package com.example.explanationtable.ui.settings
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.components.cards.SettingCard
 
 @Composable
-fun SettingsPopup(
+fun SettingsOptions(
     onDismiss: () -> Unit,
     currentTheme: Boolean,  // True if Dark, false if Light
     onToggleTheme: () -> Unit,
@@ -39,7 +32,7 @@ fun SettingsPopup(
             .padding(16.dp)
     ) {
         // 1) Sound setting row
-        SettingRow(
+        SettingCard(
             iconResId = soundIcon,
             label = soundLabel,
             // Switch is ON => isChecked = true => means NOT muted
@@ -56,7 +49,7 @@ fun SettingsPopup(
         )
 
         // 2) Theme setting row
-        SettingRow(
+        SettingCard(
             iconResId = themeIcon,
             label = themeLabel,
             // Switch is ON => isChecked = true => means "Dark theme"
@@ -85,45 +78,3 @@ fun SettingsPopup(
     }
 }
 
-@Composable
-private fun SettingRow(
-    iconResId: Int,
-    label: String,
-    isChecked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp) // adjust as needed
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Icon on the left
-        Image(
-            painter = painterResource(id = iconResId),
-            contentDescription = null,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .size(24.dp)
-        )
-
-        // Fixed label in the middle
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp)
-        )
-
-        // Toggle Switch on the right
-        Switch(
-            checked = isChecked,
-            onCheckedChange = onCheckedChange,
-            modifier = Modifier
-                .padding(end = 16.dp)
-        )
-    }
-}

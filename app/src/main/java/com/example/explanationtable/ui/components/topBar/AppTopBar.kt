@@ -17,8 +17,10 @@ import androidx.compose.ui.unit.sp
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.difficultyColors
-import com.example.explanationtable.ui.theme.SettingsButtonBackgroundDark
-import com.example.explanationtable.ui.theme.SettingsButtonBackgroundLight
+import com.example.explanationtable.ui.theme.SettingsButtonBackgroundDay
+import com.example.explanationtable.ui.theme.SettingsButtonBackgroundNight
+import com.example.explanationtable.ui.theme.SettingsButtonIconDay
+import com.example.explanationtable.ui.theme.SettingsButtonIconNight
 
 @Composable
 fun AppTopBar(
@@ -48,15 +50,26 @@ fun AppTopBar(
         difficultyColors(difficulty!!).dividerColor
     }
 
-    // Define settings button background color based on isDarkTheme
+    // Define settings button background color based on isDarkTheme and isHomePage
     val settingsButtonBackgroundColor = if (isHomePage) {
         if (isDarkTheme) {
-            SettingsButtonBackgroundLight
+            SettingsButtonBackgroundNight
         } else {
-            SettingsButtonBackgroundDark
+            SettingsButtonBackgroundDay
         }
     } else {
         Color.Transparent
+    }
+
+    // Define settings button icon tint based on isDarkTheme and isHomePage
+    val settingsButtonIconTint = if (isHomePage) {
+        if (isDarkTheme) {
+            SettingsButtonIconNight
+        } else {
+            SettingsButtonIconDay
+        }
+    } else {
+        difficultyColors(difficulty!!).textColor
     }
 
     Box(
@@ -108,7 +121,7 @@ fun AppTopBar(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_settings),
                     contentDescription = stringResource(id = R.string.settings),
-                    tint = if (isHomePage) Color.White else difficultyColors(difficulty!!).textColor,
+                    tint = settingsButtonIconTint,
                     modifier = Modifier.size(24.dp)
                 )
             }

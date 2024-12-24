@@ -55,7 +55,7 @@ val ColorSuccessDark            = Color(0xFF2E8B57)
 // ------------------------------
 // Circular Background Colors
 // ------------------------------
-val SettingsButtonBackgroundLight = Color(0xDDFFFFFF)
+val SettingsButtonBackgroundLight = Color(0xDFFFFFFF)
 val SettingsButtonBackgroundDark = Color(0xFF141F23)
 
 // ------------------------------
@@ -115,3 +115,8 @@ val Teal700   = Color(0xFF018786)
 val Black     = Color(0xFF000000)
 val White     = Color(0xFFFFFFFF)
 
+val SettingsButtonBackgroundNight = Color(0xFFFF_FFFD) // #fffffd
+val SettingsButtonIconNight = Color(0xFF4B4B4B) // #4b4b4b
+
+val SettingsButtonBackgroundDay = Color(0xFF141F23) // #141f23
+val SettingsButtonIconDay = Color(0xFFFF_FFFD) // #fffffd

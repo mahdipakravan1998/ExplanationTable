@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.popup
+package com.example.explanationtable.ui.stages
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
@@ -7,7 +7,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import com.example.explanationtable.R
-import com.example.explanationtable.ui.popup.components.OptionCard
+import com.example.explanationtable.ui.components.cards.OptionCard
 
 @Composable
 fun DifficultyOptions(onOptionSelected: (String) -> Unit) {

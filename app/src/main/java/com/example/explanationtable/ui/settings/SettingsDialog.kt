@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.popup
+package com.example.explanationtable.ui.settings
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,7 +62,7 @@ fun SettingsDialog(
             },
             text = {
                 // Place your updated SettingsPopup here
-                SettingsPopup(
+                SettingsOptions(
                     onDismiss = onDismiss,
                     currentTheme = currentTheme,
                     onToggleTheme = onToggleTheme,

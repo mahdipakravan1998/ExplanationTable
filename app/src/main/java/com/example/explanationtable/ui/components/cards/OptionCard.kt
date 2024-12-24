@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.popup.components
+package com.example.explanationtable.ui.components.cards
 
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.Image

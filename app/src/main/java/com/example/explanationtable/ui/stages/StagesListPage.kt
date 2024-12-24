@@ -11,14 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.ui.components.AppTopBar
-import com.example.explanationtable.ui.popup.SettingsPopup
+import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.MainViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.explanationtable.ui.settings.SettingsDialog
 
 @Composable
 fun StagesListPage(
@@ -55,27 +54,19 @@ fun StagesListPage(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            // Settings Dialog
-            if (showSettingsDialog) {
-                Dialog(onDismissRequest = { showSettingsDialog = false }) {
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        SettingsPopup(
-                            onDismiss = { showSettingsDialog = false },
-                            currentTheme = isDarkTheme, // Pass isDarkTheme here
-                            onToggleTheme = { viewModel.toggleTheme() },
-                            isMuted = isMuted,
-                            onToggleMute = { viewModel.toggleMute() },
-                            onExit = {
-                                // Exit the app by finishing the activity
-                                activity?.finishAndRemoveTask()
-                            }
-                        )
-                    }
+            // SettingsDialog
+            SettingsDialog(
+                showDialog = showSettingsDialog,
+                onDismiss = { showSettingsDialog = false },
+                currentTheme = isDarkTheme,
+                onToggleTheme = { viewModel.toggleTheme() },
+                isMuted = isMuted,
+                onToggleMute = { viewModel.toggleMute() },
+                onExit = {
+                    // Exit the app
+                    activity?.finishAndRemoveTask()
                 }
-            }
+            )
         }
     }
 }
