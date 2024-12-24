@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.components
+package com.example.explanationtable.ui.components.topBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

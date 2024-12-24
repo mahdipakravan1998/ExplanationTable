@@ -10,7 +10,7 @@ import com.example.explanationtable.R
 import com.example.explanationtable.ui.popup.components.OptionCard
 
 @Composable
-fun PopupOptions(onOptionSelected: (String) -> Unit) {
+fun DifficultyOptions(onOptionSelected: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
