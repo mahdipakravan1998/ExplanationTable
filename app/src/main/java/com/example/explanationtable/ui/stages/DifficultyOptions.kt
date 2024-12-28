@@ -23,7 +23,7 @@ fun DifficultyOptions(onOptionSelected: (String) -> Unit) {
             backgroundColor= MaterialTheme.colorScheme.primary,
             shadowColor    = MaterialTheme.colorScheme.primaryContainer,
             textColor      = MaterialTheme.colorScheme.onPrimary,
-            imageResId     = R.drawable.ic_emerald // <--- Pass your drawable resource here
+            imageResId     = R.drawable.ic_emerald_stroked // <--- Pass your drawable resource here
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -34,7 +34,7 @@ fun DifficultyOptions(onOptionSelected: (String) -> Unit) {
             backgroundColor= MaterialTheme.colorScheme.secondary,
             shadowColor    = MaterialTheme.colorScheme.secondaryContainer,
             textColor      = MaterialTheme.colorScheme.onSecondary,
-            imageResId     = R.drawable.ic_crown
+            imageResId     = R.drawable.ic_crown_stroked
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -45,7 +45,7 @@ fun DifficultyOptions(onOptionSelected: (String) -> Unit) {
             backgroundColor= MaterialTheme.colorScheme.tertiary,
             shadowColor    = MaterialTheme.colorScheme.tertiaryContainer,
             textColor      = MaterialTheme.colorScheme.onTertiary,
-            imageResId     = R.drawable.ic_diamond
+            imageResId     = R.drawable.ic_diamond_stroked
         )
     }
 }

@@ -1,43 +1,32 @@
 package com.example.explanationtable.ui.settings
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.settings.components.CustomConfirmationDialog
+import com.example.explanationtable.ui.theme.DialogBackgroundDark
+import com.example.explanationtable.ui.theme.DialogBackgroundLight
 
-/**
- * A reusable composable for showing the settings dialog.
- *
- * @param showDialog Whether the dialog should be shown.
- * @param onDismiss Callback when the dialog is dismissed.
- * @param currentTheme Whether the current theme is dark or not.
- * @param onToggleTheme Callback to toggle the theme.
- * @param isMuted Whether the sound is currently muted.
- * @param onToggleMute Callback to toggle mute/unmute.
- * @param onExit Callback to exit the app or perform cleanup.
- */
 @Composable
 fun SettingsDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    currentTheme: Boolean,
+    currentTheme: Boolean, // True if Dark, false if Light
     onToggleTheme: () -> Unit,
     isMuted: Boolean,
     onToggleMute: () -> Unit,
     onExit: () -> Unit
 ) {
+    // State to control the visibility of the confirmation dialog
+    var showExitConfirmation by remember { mutableStateOf(false) }
+
     if (showDialog) {
         AlertDialog(
             onDismissRequest = onDismiss,
@@ -61,20 +50,39 @@ fun SettingsDialog(
                 }
             },
             text = {
-                // Place your updated SettingsPopup here
                 SettingsOptions(
                     onDismiss = onDismiss,
                     currentTheme = currentTheme,
                     onToggleTheme = onToggleTheme,
                     isMuted = isMuted,
                     onToggleMute = onToggleMute,
-                    onExit = onExit
+                    onExit = {
+                        // Show the confirmation dialog instead of exiting immediately
+                        showExitConfirmation = true
+                    }
                 )
             },
             confirmButton = {},
-            containerColor = MaterialTheme.colorScheme.surface,
+            // Set the container color based on the theme
+            containerColor = if (currentTheme) DialogBackgroundDark else DialogBackgroundLight,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurface
+            textContentColor = MaterialTheme.colorScheme.onSurface,
+            // Adjust shape and elevation to prevent theme overlays
+            shape = MaterialTheme.shapes.medium,
+            tonalElevation = 0.dp
+        )
+
+        // Custom Confirmation Dialog for Exit Action
+        CustomConfirmationDialog(
+            showDialog = showExitConfirmation,
+            title = R.string.confirm_exit_title,
+            message = R.string.confirm_exit_message,
+            onConfirm = {
+                showExitConfirmation = false
+                onExit()
+                onDismiss() // Optionally dismiss the SettingsDialog after exiting
+            },
+            onDismiss = { showExitConfirmation = false }
         )
     }
 }

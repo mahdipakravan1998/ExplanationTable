@@ -11,9 +11,13 @@
     <string name="close">بستن</string>
 
     <!-- New strings for settings -->
-    <string name="mute_sound">Mute Sound</string>
-    <string name="unmute_sound">Unmute Sound</string>
-    <string name="day_mode">Day Mode</string>
-    <string name="night_mode">Night Mode</string>
-    <string name="exit_app">Exit</string>
+    <string name="soundLabel">صدا</string>
+    <string name="themeLabel">حالت شب</string>
+    <string name="exitLabel">خروج</string>
+
+    <!-- New strings for ConfirmationDialog -->
+    <string name="confirm_exit_title">خروج از برنامه</string>
+    <string name="confirm_exit_message">آیا مطمئن هستید که می‌خواهید از برنامه خارج شوید؟</string>
+    <string name="yes">خروج</string>
+    <string name="no">انصراف</string>
 </resources>

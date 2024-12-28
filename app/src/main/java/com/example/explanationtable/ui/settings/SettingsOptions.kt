@@ -4,24 +4,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
 import com.example.explanationtable.ui.components.cards.SettingCard
+import com.example.explanationtable.ui.theme.BorderDark
+import com.example.explanationtable.ui.theme.BorderLight
+import com.example.explanationtable.ui.theme.DialogBackgroundDark
+import com.example.explanationtable.ui.theme.DialogBackgroundLight
 
 @Composable
 fun SettingsOptions(
     onDismiss: () -> Unit,
-    currentTheme: Boolean,  // True if Dark, false if Light
+    currentTheme: Boolean, // True if Dark, false if Light
     onToggleTheme: () -> Unit,
     isMuted: Boolean,
     onToggleMute: () -> Unit,
     onExit: () -> Unit
 ) {
-    // Fixed labels (you can translate or rename as needed)
-    val soundLabel = "صدا"
-    val themeLabel = "حالت شب"
-    val exitLabel = "خروج"
-
     // Icons that change based on toggles
     val soundIcon = if (isMuted) R.drawable.ic_volume_down else R.drawable.ic_volume_up
     val themeIcon = if (currentTheme) R.drawable.ic_moon else R.drawable.ic_sun
@@ -34,47 +34,45 @@ fun SettingsOptions(
         // 1) Sound setting row
         SettingCard(
             iconResId = soundIcon,
-            label = soundLabel,
+            label = stringResource(id = R.string.soundLabel),
             // Switch is ON => isChecked = true => means NOT muted
             isChecked = !isMuted,
-            onCheckedChange = { onToggleMute() }
+            onCheckedChange = { onToggleMute() },
+            borderColor = if (currentTheme) BorderDark else BorderLight,
+            backgroundColor = if (currentTheme) DialogBackgroundDark else DialogBackgroundLight
         )
 
         // Divider between the first and second option
-        Divider(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 2) Theme setting row
         SettingCard(
             iconResId = themeIcon,
-            label = themeLabel,
+            label = stringResource(id = R.string.themeLabel),
             // Switch is ON => isChecked = true => means "Dark theme"
             isChecked = currentTheme,
-            onCheckedChange = { onToggleTheme() }
+            onCheckedChange = { onToggleTheme() },
+            borderColor = if (currentTheme) BorderDark else BorderLight,
+            backgroundColor = if (currentTheme) DialogBackgroundDark else DialogBackgroundLight
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // 3) Exit button (red, no shadow)
         Button(
-            onClick = onExit,
+            onClick = onExit, // Trigger the confirmation dialog
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error
             ),
-            elevation = null, // No shadow
+            elevation = ButtonDefaults.buttonElevation(0.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
         ) {
             Text(
-                text = exitLabel,
+                text = stringResource(id = R.string.exitLabel),
                 color = MaterialTheme.colorScheme.onError
             )
         }
     }
 }
-

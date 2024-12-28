@@ -4,65 +4,91 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+
+/**
+ * Custom Colors class to hold additional color roles
+ */
+@Immutable
+data class CustomColors(
+    val success: Color,
+    val accent: Color,
+    val highlight: Color,
+    val overlay: Color
+)
+
+val LocalCustomColors = staticCompositionLocalOf<CustomColors> {
+    error("No CustomColors provided")
+}
 
 /**
  * Define Dark and Light Color Schemes with clearly different values
  * so that changing themes is visually obvious.
  */
-private val DarkColorScheme = darkColorScheme(
-    // Easy
-    primary = EasyOptionBackgroundDark,
-    onPrimary = EasyOptionTextDark,
-    primaryContainer = EasyOptionShadowDark,
+private val DarkColors = darkColorScheme(
+    // Primary (Easy)
+    primary = PrimaryDark,
+    onPrimary = OnPrimaryDark,
+    primaryContainer = PrimaryContainerDark,
 
-    // Medium
-    secondary = MediumOptionBackgroundDark,
-    onSecondary = MediumOptionTextDark,
-    secondaryContainer = MediumOptionShadowDark,
+    // Secondary (Medium)
+    secondary = SecondaryDark,
+    onSecondary = OnSecondaryDark,
+    secondaryContainer = SecondaryContainerDark,
 
-    // Hard
-    tertiary = HardOptionBackgroundDark,
-    onTertiary = HardOptionTextDark,
-    tertiaryContainer = HardOptionShadowDark,
+    // Tertiary (Hard)
+    tertiary = TertiaryDark,
+    onTertiary = OnTertiaryDark,
+    tertiaryContainer = TertiaryContainerDark,
 
     // Background and Surface
-    background = NonHomeBackgroundDark,
-    surface = NonHomeBackgroundDark,
+    background = BackgroundDark,
+    surface = SurfaceDark,
 
-    onBackground = ColorPrimaryTextDark,
-    onSurface = ColorPrimaryTextDark,
+    onBackground = OnBackgroundDark,
+    onSurface = OnSurfaceDark,
+
+    // Error Colors
+    error = ErrorDark,
+    onError = OnErrorDark
 )
 
-private val LightColorScheme = lightColorScheme(
-    // Easy
-    primary = EasyOptionBackgroundLight,
-    onPrimary = EasyOptionTextLight,
-    primaryContainer = EasyOptionShadowLight,
+private val LightColors = lightColorScheme(
+    // Primary (Easy)
+    primary = PrimaryLight,
+    onPrimary = OnPrimaryLight,
+    primaryContainer = PrimaryContainerLight,
 
-    // Medium
-    secondary = MediumOptionBackgroundLight,
-    onSecondary = MediumOptionTextLight,
-    secondaryContainer = MediumOptionShadowLight,
+    // Secondary (Medium)
+    secondary = SecondaryLight,
+    onSecondary = OnSecondaryLight,
+    secondaryContainer = SecondaryContainerLight,
 
-    // Hard
-    tertiary = HardOptionBackgroundLight,
-    onTertiary = HardOptionTextLight,
-    tertiaryContainer = HardOptionShadowLight,
+    // Tertiary (Hard)
+    tertiary = TertiaryLight,
+    onTertiary = OnTertiaryLight,
+    tertiaryContainer = TertiaryContainerLight,
 
     // Background and Surface
-    background = NonHomeBackgroundLight,
-    surface = NonHomeBackgroundLight,
+    background = BackgroundLight,
+    surface = SurfaceLight,
 
-    onBackground = ColorPrimaryTextLight,
-    onSurface = ColorPrimaryTextLight,
+    onBackground = OnBackgroundLight,
+    onSurface = OnSurfaceLight,
+
+    // Error Colors
+    error = ErrorLight,
+    onError = OnErrorLight
 )
 
 @Composable
 fun ExplanationTableTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    dynamicColor: Boolean = false, // Ensure dynamicColor is disabled
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -72,13 +98,35 @@ fun ExplanationTableTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         // Otherwise, use our own custom color schemes
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> DarkColors
+        else -> LightColors
+    }
+
+    // Define your custom colors based on the theme
+    val customColors = if (darkTheme) {
+        CustomColors(
+            success = SuccessDark,
+            accent = AccentDark,
+            highlight = HighlightDark,
+            overlay = OverlayDark
+        )
+    } else {
+        CustomColors(
+            success = SuccessLight,
+            accent = AccentLight,
+            highlight = HighlightLight,
+            overlay = OverlayLight
+        )
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography, // Make sure AppTypography is defined or use MaterialTheme.typography
-        content = content
+        typography = AppTypography, // Ensure AppTypography is defined or replace with your typography
+        content = {
+            // Provide the custom colors to the composition
+            CompositionLocalProvider(LocalCustomColors provides customColors) {
+                content()
+            }
+        }
     )
 }

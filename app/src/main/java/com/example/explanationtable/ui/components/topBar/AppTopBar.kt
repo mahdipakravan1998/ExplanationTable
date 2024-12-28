@@ -17,10 +17,10 @@ import androidx.compose.ui.unit.sp
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.difficultyColors
-import com.example.explanationtable.ui.theme.SettingsButtonBackgroundDay
-import com.example.explanationtable.ui.theme.SettingsButtonBackgroundNight
-import com.example.explanationtable.ui.theme.SettingsButtonIconDay
-import com.example.explanationtable.ui.theme.SettingsButtonIconNight
+import com.example.explanationtable.ui.theme.ButtonBackgroundDark
+import com.example.explanationtable.ui.theme.ButtonBackgroundLight
+import com.example.explanationtable.ui.theme.ButtonIconDark
+import com.example.explanationtable.ui.theme.ButtonIconLight
 
 @Composable
 fun AppTopBar(
@@ -53,9 +53,9 @@ fun AppTopBar(
     // Define settings button background color based on isDarkTheme and isHomePage
     val settingsButtonBackgroundColor = if (isHomePage) {
         if (isDarkTheme) {
-            SettingsButtonBackgroundNight
+            ButtonBackgroundLight
         } else {
-            SettingsButtonBackgroundDay
+            ButtonBackgroundDark
         }
     } else {
         Color.Transparent
@@ -64,9 +64,9 @@ fun AppTopBar(
     // Define settings button icon tint based on isDarkTheme and isHomePage
     val settingsButtonIconTint = if (isHomePage) {
         if (isDarkTheme) {
-            SettingsButtonIconNight
+            ButtonIconDark
         } else {
-            SettingsButtonIconDay
+            ButtonIconLight
         }
     } else {
         difficultyColors(difficulty!!).textColor

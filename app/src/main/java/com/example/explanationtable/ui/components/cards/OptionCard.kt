@@ -86,7 +86,7 @@ fun OptionCard(
                     fontWeight = FontWeight.Bold
                 ),
                 modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.End
             )
         }
     }
