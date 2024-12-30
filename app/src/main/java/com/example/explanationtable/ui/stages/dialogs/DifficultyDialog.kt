@@ -1,11 +1,10 @@
-package com.example.explanationtable.ui.stages
+package com.example.explanationtable.ui.stages.dialogs
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -17,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.stages.components.DifficultyOptions
 
 /**
  * A reusable composable for showing the difficulty selection dialog.
@@ -43,11 +43,10 @@ fun DifficultyDialog(
                 ) {
                     IconButton(
                         onClick = onDismiss,
-                        modifier = Modifier
-                            .padding(4.dp)
+                        modifier = Modifier.padding(4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.Default.Close,
                             contentDescription = stringResource(id = R.string.close),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -55,11 +54,8 @@ fun DifficultyDialog(
                 }
             },
             text = {
-                // Your PopupOptions for the difficulty list
                 DifficultyOptions(
-                    onOptionSelected = { selectedOption ->
-                        onOptionSelected(selectedOption)
-                    }
+                    onOptionSelected = onOptionSelected
                 )
             },
             confirmButton = {},

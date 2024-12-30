@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.components.cards
+package com.example.explanationtable.ui.settings.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background

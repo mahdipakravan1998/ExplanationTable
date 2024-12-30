@@ -1,14 +1,19 @@
-package com.example.explanationtable.ui.main
+package com.example.explanationtable.ui.main.viewmodel
 
 import android.app.Application
 import android.content.res.Configuration
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.explanationtable.data.DataStoreManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import android.util.Log
 
+/**
+ * ViewModel for the MainPage, managing UI-related data and state.
+ *
+ * @param application The application context.
+ */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dataStoreManager = DataStoreManager(application)
@@ -22,7 +27,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .map { it ?: systemDark } // Use systemDark if no preference is set
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly, // Start collecting immediately
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = systemDark // Initial value based on system theme
         )
 
@@ -30,7 +35,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isMuted: StateFlow<Boolean> = dataStoreManager.isMuted
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly, // Start collecting immediately
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = false
         )
 
@@ -43,20 +48,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Toggles the mute state
+    /**
+     * Toggles the mute state.
+     */
     fun toggleMute() {
         viewModelScope.launch {
             dataStoreManager.toggleMute()
-            Log.d("MainViewModel", "toggleMute called")
+            Log.d("MainViewModel", "Mute state toggled")
         }
     }
 
-    // Toggles the theme based on the current state
+    /**
+     * Toggles the app theme between dark and light.
+     */
     fun toggleTheme() {
         viewModelScope.launch {
             val currentTheme = isDarkTheme.value
             dataStoreManager.setTheme(!currentTheme)
-            Log.d("MainViewModel", "toggleTheme called, set theme to: ${!currentTheme}")
+            Log.d("MainViewModel", "Theme toggled to: ${!currentTheme}")
         }
     }
 }

@@ -1,27 +1,28 @@
-// File: StagesListPage.kt
-package com.example.explanationtable.ui.stages
+package com.example.explanationtable.ui.stages.pages
 
 import android.app.Activity
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.components.topBar.AppTopBar
-import com.example.explanationtable.ui.main.MainViewModel
-import com.example.explanationtable.ui.settings.SettingsDialog
+import com.example.explanationtable.ui.main.viewmodel.MainViewModel
+import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
+import com.example.explanationtable.ui.stages.content.StagesListContent
 
 /**
  * The parent composable that sets up the stage list screen.
+ *
+ * @param difficulty The current difficulty level.
+ * @param diamonds The number of diamonds to display.
+ * @param onSettingsClick Callback for when the settings icon is clicked.
+ * @param isDarkTheme Whether the dark theme is enabled.
  */
 @Composable
 fun StagesListPage(
@@ -34,8 +35,8 @@ fun StagesListPage(
     val isMuted by viewModel.isMuted.collectAsState()
 
     var showSettingsDialog by remember { mutableStateOf(false) }
-    // Obtain the Activity context
-    val activity = LocalContext.current as? Activity
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     // Main background
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
@@ -64,7 +65,7 @@ fun StagesListPage(
                 isMuted = isMuted,
                 onToggleMute = { viewModel.toggleMute() },
                 onExit = {
-                    // Exit the app
+                    // Safely exit the app
                     activity?.finishAndRemoveTask()
                 }
             )

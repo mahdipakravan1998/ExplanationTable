@@ -1,8 +1,7 @@
-package com.example.explanationtable.ui.settings
+package com.example.explanationtable.ui.settings.dialogs
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,10 +10,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
-import com.example.explanationtable.ui.settings.components.CustomConfirmationDialog
+import com.example.explanationtable.ui.settings.components.ConfirmationDialog
+import com.example.explanationtable.ui.settings.options.SettingsOptions
 import com.example.explanationtable.ui.theme.DialogBackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 
+/**
+ * A composable that displays the settings dialog with various options and an exit confirmation.
+ *
+ * @param showDialog Whether the settings dialog should be shown.
+ * @param onDismiss Callback invoked when the dialog is dismissed.
+ * @param currentTheme True if dark theme is active, false otherwise.
+ * @param onToggleTheme Callback to toggle the theme.
+ * @param isMuted True if the app is muted, false otherwise.
+ * @param onToggleMute Callback to toggle the mute state.
+ * @param onExit Callback invoked when the user confirms exiting the app.
+ */
 @Composable
 fun SettingsDialog(
     showDialog: Boolean,
@@ -39,11 +50,10 @@ fun SettingsDialog(
                 ) {
                     IconButton(
                         onClick = onDismiss,
-                        modifier = Modifier
-                            .padding(4.dp)
+                        modifier = Modifier.padding(4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.Default.Close,
                             contentDescription = stringResource(id = R.string.close),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -73,11 +83,11 @@ fun SettingsDialog(
             tonalElevation = 0.dp
         )
 
-        // Custom Confirmation Dialog for Exit Action
-        CustomConfirmationDialog(
+        // Confirmation Dialog for Exit Action
+        ConfirmationDialog(
             showDialog = showExitConfirmation,
-            title = R.string.confirm_exit_title,
-            message = R.string.confirm_exit_message,
+            titleResId = R.string.confirm_exit_title,
+            messageResId = R.string.confirm_exit_message,
             onConfirm = {
                 showExitConfirmation = false
                 onExit()

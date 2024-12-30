@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.settings
+package com.example.explanationtable.ui.settings.options
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,12 +7,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
-import com.example.explanationtable.ui.components.cards.SettingCard
+import com.example.explanationtable.ui.settings.components.SettingCard
 import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
 import com.example.explanationtable.ui.theme.DialogBackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 
+/**
+ * A composable that displays various settings options including sound, theme toggles, and exit.
+ *
+ * @param onDismiss Callback invoked when a setting option is dismissed.
+ * @param currentTheme True if dark theme is active, false otherwise.
+ * @param onToggleTheme Callback to toggle the theme.
+ * @param isMuted True if the app is muted, false otherwise.
+ * @param onToggleMute Callback to toggle the mute state.
+ * @param onExit Callback invoked when the user opts to exit the app.
+ */
 @Composable
 fun SettingsOptions(
     onDismiss: () -> Unit,
@@ -42,7 +52,6 @@ fun SettingsOptions(
             backgroundColor = if (currentTheme) DialogBackgroundDark else DialogBackgroundLight
         )
 
-        // Divider between the first and second option
         Spacer(modifier = Modifier.height(8.dp))
 
         // 2) Theme setting row
@@ -58,7 +67,7 @@ fun SettingsOptions(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3) Exit button (red, no shadow)
+        // 3) Exit button
         Button(
             onClick = onExit, // Trigger the confirmation dialog
             colors = ButtonDefaults.buttonColors(

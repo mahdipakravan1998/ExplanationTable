@@ -8,9 +8,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.explanationtable.ui.main.MainPage
-import com.example.explanationtable.ui.stages.StagesListPage
-import com.example.explanationtable.ui.main.MainViewModel
+import com.example.explanationtable.ui.main.pages.MainPage
+import com.example.explanationtable.ui.stages.pages.StagesListPage
+import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.model.Difficulty
 
 @Composable

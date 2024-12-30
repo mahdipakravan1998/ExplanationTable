@@ -4,10 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue // Required for 'by' delegation
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.ui.AppNavHost
-import com.example.explanationtable.ui.main.MainViewModel
+import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.theme.ExplanationTableTheme
 
 class MainActivity : ComponentActivity() {

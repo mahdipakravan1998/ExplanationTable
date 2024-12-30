@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.components.cards
+package com.example.explanationtable.ui.stages.components
 
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.Image

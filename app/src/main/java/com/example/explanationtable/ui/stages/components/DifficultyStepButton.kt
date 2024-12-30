@@ -1,5 +1,4 @@
-// File: DifficultyStepButton.kt
-package com.example.explanationtable.ui.stages
+package com.example.explanationtable.ui.stages.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -20,22 +19,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.utils.toPersianDigits
 
 /**
- * A data class holding the 6 colors we need to draw one "split circle button."
+ * A data class holding the 6 colors needed to draw one "split circle button."
  *
- * We have 3 circles, each split diagonally into a top-left color and a bottom-right color.
+ * Each circle is split diagonally into a top-left color and a bottom-right color.
  */
 data class StageButtonColors(
-    // circle #1 (behind) colors
+    // Circle #1 (behind) colors
     val behindTopLeft: Color,
     val behindBottomRight: Color,
 
-    // circle #2 (front) colors
+    // Circle #2 (front) colors
     val frontTopLeft: Color,
     val frontBottomRight: Color,
 
-    // circle #3 (inner/smaller) colors
+    // Circle #3 (inner/smaller) colors
     val innerTopLeft: Color,
     val innerBottomRight: Color,
 )
@@ -54,7 +54,7 @@ fun DifficultyStepButton(
     stepNumber: Int,
     onClick: () -> Unit = {}
 ) {
-    // 1) Choose the correct color set based on the difficulty
+    // Choose the correct color set based on the difficulty
     val colors = when (difficulty) {
         Difficulty.EASY -> StageButtonColors(
             behindTopLeft = Color(0xFF75B11F),
@@ -68,42 +68,42 @@ fun DifficultyStepButton(
         )
 
         Difficulty.MEDIUM -> StageButtonColors(
-            behindTopLeft = Color(0xFFFFD040),  // #ffd040
-            behindBottomRight = Color(0xFFFFC100),  // #ffc100
+            behindTopLeft = Color(0xFFFFD040),
+            behindBottomRight = Color(0xFFFFC100),
 
-            frontTopLeft = Color(0xFFFEEA66),  // #feea66
-            frontBottomRight = Color(0xFFFEE333),  // #fee333
+            frontTopLeft = Color(0xFFFEEA66),
+            frontBottomRight = Color(0xFFFEE333),
 
-            innerTopLeft = Color(0xFFFED540),  // #fed540
-            innerBottomRight = Color(0xFFFEC701)   // #fec701
+            innerTopLeft = Color(0xFFFED540),
+            innerBottomRight = Color(0xFFFEC701)
         )
 
         Difficulty.HARD -> StageButtonColors(
-            behindTopLeft = Color(0xFF1E9CD1),  // #1e9cd1
-            behindBottomRight = Color(0xFF008FCC),  // #008fcc
+            behindTopLeft = Color(0xFF1E9CD1),
+            behindBottomRight = Color(0xFF008FCC),
 
-            frontTopLeft = Color(0xFF5DCBFE),  // #5dcbfe
-            frontBottomRight = Color(0xFF46C4FF),  // #46c4ff
+            frontTopLeft = Color(0xFF5DCBFE),
+            frontBottomRight = Color(0xFF46C4FF),
 
-            innerTopLeft = Color(0xFF38BAF8),  // #38baf8
-            innerBottomRight = Color(0xFF1CB0F6)   // #1cb0f6
+            innerTopLeft = Color(0xFF38BAF8),
+            innerBottomRight = Color(0xFF1CB0F6)
         )
     }
 
-    // 2) Draw the 3-circle shape with these colors
+    // Draw the 3-circle shape with these colors
     Box(
         modifier = Modifier
-            .size(115.dp)
-            .clickable { onClick() }, // Make the button clickable
+            .size(90.dp)
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
-            val shapeDp = 100.dp
+            val shapeDp = 75.dp
             val shapePx = shapeDp.toPx()
             val outerRadius = shapePx / 2f
 
             // Downward offset for the behind circle
-            val behindOffsetY = 15f
+            val behindOffsetY = 16f
 
             val canvasCenter = center
             val behindCenter = Offset(canvasCenter.x, canvasCenter.y + behindOffsetY)
@@ -152,9 +152,9 @@ fun DifficultyStepButton(
 
         // Overlay step number centered within the inner circle
         Text(
-            text = stepNumber.toString(),
+            text = stepNumber.toPersianDigits(), // Convert to Persian digits
             color = Color.White,
-            fontSize = 36.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.Center)
         )
@@ -164,7 +164,7 @@ fun DifficultyStepButton(
 /**
  * Utility function to draw a split circle without borders.
  */
-fun DrawScope.drawSplitCircleNoBorder(
+private fun DrawScope.drawSplitCircleNoBorder(
     center: Offset,
     radius: Float,
     colorTopLeft: Color,
