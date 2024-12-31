@@ -1,82 +1,14 @@
 package com.example.explanationtable.ui.theme
 
 import androidx.compose.ui.graphics.Color
-
-// ------------------------------
-// Light Theme Colors
-// ------------------------------
-val PrimaryLight = Color(0xFF228B22) // Forest Green
-val PrimaryContainerLight = Color(0xFF3CB371) // Medium Sea Green
-val OnPrimaryLight = Color(0xFFFFFFFF) // White
-
-val SecondaryLight = Color(0xFFDAA520) // Goldenrod
-val SecondaryContainerLight = Color(0xFFFFD700) // Gold
-val OnSecondaryLight = Color(0xFFFFFFFF) // Dark Slate Gray
-
-val TertiaryLight = Color(0xFF14D4F4) // Top Bar Color
-val TertiaryContainerLight = Color(0xFFECF4FF) // Brighter Shade for Shadow
-val OnTertiaryLight = Color(0xFFFFFFFF) // White Text
-
-val BackgroundLight = Color(0xFFFFFDFD) // White
-val SurfaceLight = BackgroundLight // Same as BackgroundLight
-val OnBackgroundLight = Color(0xFF2F4F4F)
-val OnSurfaceLight = Color(0xFF2F4F4F)
-
-val AccentLight = Color(0xFF228B22)
-val HighlightLight = Color(0xFFDAA520)
-val OverlayLight = Color(0xCCFFFFFF) // White with 80% opacity
-val ErrorLight = Color(0xFFB22222)
-val OnErrorLight = Color(0xFFFFFFFF) // White text on error
-val SuccessLight = Color(0xFF3CB371)
-
-// ------------------------------
-// Dark Theme Colors
-// ------------------------------
-val BackgroundDark = Color(0xFF141F23) // Night Mode Color
-val SurfaceDark = BackgroundDark // Same as BackgroundDark
-val OnBackgroundDark = Color(0xFFD3D3D3)
-val OnSurfaceDark = Color(0xFFD3D3D3)
-
-val PrimaryDark = Color(0xFF2E8B57) // Sea Green
-val PrimaryContainerDark = Color(0xFF3CB371) // Medium Sea Green
-val OnPrimaryDark = Color(0xFFF7F7F7)
-
-val SecondaryDark = Color(0xFF9370DB) // Medium Purple
-val SecondaryContainerDark = Color(0xFFBA55D3) // Medium Orchid
-val OnSecondaryDark = Color(0xFFF7F7F7)
-
-val TertiaryDark = Color(0xFF1E90FF) // Dodger Blue
-val TertiaryContainerDark = Color(0xFFECF4FF) // Sky Blue
-val OnTertiaryDark = Color(0xFFF7F7F7)
-
-val AccentDark = Color(0xFF008080)
-val HighlightDark = Color(0xFF9370DB)
-val OverlayDark = Color(0xB3000000) // Black with 70% opacity
-val ErrorDark = Color(0xFFCD5C5C)
-val OnErrorDark = Color(0xFF000000) // Black text on error
-val SuccessDark = Color(0xFF2E8B57)
-
-// ------------------------------
-// Common Colors
-// ------------------------------
-val Black = Color(0xFF000000)
-val White = Color(0xFFFFFFFF)
-
-// ------------------------------
-// UI Element Colors
-// ------------------------------
-val ButtonBackgroundLight = Color(0xDFFFFFFF)
-val ButtonBackgroundDark = BackgroundDark
-
-val ButtonIconLight = White
-val ButtonIconDark = Color(0xFF4B4B4B)
+import com.example.explanationtable.ui.theme.BeakLowerFeet
 
 // ------------------------------
 // Core Brand Colors
 // ------------------------------
 val FeatherGreen = Color(0xFF58CC02)
 val MaskGreen = Color(0xFF89E219)
-val Eel = ButtonIconDark
+val Eel = Color(0xFF4B4B4B)
 
 // ------------------------------
 // Secondary Palette
@@ -114,6 +46,75 @@ val Purple500 = Color(0xFF6200EE)
 val Purple700 = Color(0xFF3700B3)
 val Teal200 = Color(0xFF03DAC5)
 val Teal700 = Color(0xFF018786)
+
+// ------------------------------
+// Common Colors
+// ------------------------------
+val Black = Color(0xFF000000)
+val White = Color(0xFFFFFFFF)
+
+// ------------------------------
+// Light Theme Colors
+// ------------------------------
+val PrimaryLight = MaskGreen // Core Brand Colors
+val PrimaryContainerLight = WingOverlay
+val OnPrimaryLight = White
+
+val SecondaryLight = BeakUpper // Secondary Palette
+val SecondaryContainerLight = Fox // Secondary Palette
+val OnSecondaryLight = White
+
+val TertiaryLight = Macaw // Duo's Palette
+val TertiaryContainerLight = Humpback // Duo's Palette
+val OnTertiaryLight = White
+
+val BackgroundLight = Color(0xFFFFFDFD) // White
+val SurfaceLight = BackgroundLight // Same as BackgroundLight
+val OnBackgroundLight = Eel
+val OnSurfaceLight = Wolf
+
+val AccentLight = PrimaryLight // Example mapping
+val HighlightLight = SecondaryLight // Example mapping
+val OverlayLight = Polar // Neutrals
+val ErrorLight = Color(0xFFB22222)
+val OnErrorLight = White
+val SuccessLight = FeatherGreen // Already defined
+
+// ------------------------------
+// Dark Theme Colors
+// ------------------------------
+val PrimaryDark = MaskGreen // Core Brand Colors
+val PrimaryContainerDark = WingOverlay // Core Brand Colors
+val OnPrimaryDark = White
+
+val SecondaryDark = BeakUpper // Secondary Palette
+val SecondaryContainerDark = Fox // Secondary Palette
+val OnSecondaryDark = White
+
+val TertiaryDark = Macaw // Duo's Palette
+val TertiaryContainerDark = Humpback // Duo's Palette
+val OnTertiaryDark = White
+
+val BackgroundDark = Color(0xFF141F23) // Night Mode Color
+val SurfaceDark = BackgroundDark // Same as BackgroundDark
+val OnBackgroundDark = Polar
+val OnSurfaceDark = Hare
+
+val AccentDark = Teal200 // Optional Legacy Colors
+val HighlightDark = Humpback // Secondary Palette
+val OverlayDark = Color(0xB3000000) // Already defined
+val ErrorDark = Color(0xFFCD5C5C)
+val OnErrorDark = Color(0xFF000000)
+val SuccessDark = Color(0xFF2E8B57) // Already defined
+
+// ------------------------------
+// UI Element Colors
+// ------------------------------
+val ButtonBackgroundLight = Color(0xDFFFFFFF)
+val ButtonBackgroundDark = BackgroundDark
+
+val ButtonIconLight = White
+val ButtonIconDark = Eel
 
 // Dark Mode Colors
 val DialogBackgroundDark = Color(0xFF141F23)

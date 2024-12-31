@@ -1,11 +1,16 @@
 package com.example.explanationtable.ui.stages.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -14,18 +19,14 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.utils.toPersianDigits
 
-/**
- * A data class holding the 6 colors needed to draw one "split circle button."
- *
- * Each circle is split diagonally into a top-left color and a bottom-right color.
- */
 data class StageButtonColors(
     // Circle #1 (behind) colors
     val behindTopLeft: Color,
@@ -40,21 +41,13 @@ data class StageButtonColors(
     val innerBottomRight: Color,
 )
 
-/**
- * A composable that draws the 3-circle split button
- * with color sets determined by the [difficulty].
- *
- * @param difficulty The current difficulty level.
- * @param stepNumber The number of the step to display on the button.
- * @param onClick Lambda to handle click events.
- */
 @Composable
 fun DifficultyStepButton(
     difficulty: Difficulty,
     stepNumber: Int,
     onClick: () -> Unit = {}
 ) {
-    // Choose the correct color set based on the difficulty
+    // 1) Pick colors based on difficulty
     val colors = when (difficulty) {
         Difficulty.EASY -> StageButtonColors(
             behindTopLeft = Color(0xFF75B11F),
@@ -66,7 +59,6 @@ fun DifficultyStepButton(
             innerTopLeft = Color(0xFF88CF1F),
             innerBottomRight = Color(0xFF78C900)
         )
-
         Difficulty.MEDIUM -> StageButtonColors(
             behindTopLeft = Color(0xFFFFD040),
             behindBottomRight = Color(0xFFFFC100),
@@ -77,7 +69,6 @@ fun DifficultyStepButton(
             innerTopLeft = Color(0xFFFED540),
             innerBottomRight = Color(0xFFFEC701)
         )
-
         Difficulty.HARD -> StageButtonColors(
             behindTopLeft = Color(0xFF1E9CD1),
             behindBottomRight = Color(0xFF008FCC),
@@ -90,25 +81,60 @@ fun DifficultyStepButton(
         )
     }
 
-    // Draw the 3-circle shape with these colors
+    // 2) Track a pressed state + animate
+    var isPressed by remember { mutableStateOf(false) }
+    val pressOffsetY by animateFloatAsState(
+        targetValue = if (isPressed) 16f else 0f,
+        animationSpec = tween(durationMillis = 30) // short, snappy animation
+    )
+
+    // The behind circle is permanently offset by 16f
+    val behindOffsetY = 16f
+
+    // Convert press offset to dp for text
+    val density = LocalDensity.current
+    val pressOffsetDp = with(density) { pressOffsetY.toDp() }
+
+    // 3) Pointer input for immediate press detection
+    val gestureModifier = Modifier.pointerInput(Unit) {
+        awaitEachGesture {
+            // Finger down => pressed = true
+            awaitFirstDown(requireUnconsumed = false)
+            isPressed = true
+
+            // Wait for finger up or cancel => pressed = false
+            val upOrCancel = waitForUpOrCancellation()
+            isPressed = false
+
+            // If the user actually lifted (not canceled), it's a click
+            if (upOrCancel != null) {
+                onClick()
+            }
+        }
+    }
+
+    // 4) Draw everything in a Box
     Box(
-        modifier = Modifier
-            .size(90.dp)
-            .clickable(onClick = onClick),
+        modifier = gestureModifier.size(90.dp),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
+            // Main circle diameter (in dp -> px)
             val shapeDp = 75.dp
             val shapePx = shapeDp.toPx()
             val outerRadius = shapePx / 2f
+            val innerRadius = outerRadius * 0.77f
 
-            // Downward offset for the behind circle
-            val behindOffsetY = 16f
-
+            // Canvas center
             val canvasCenter = center
-            val behindCenter = Offset(canvasCenter.x, canvasCenter.y + behindOffsetY)
 
-            // Build the diagonal path that splits the circle
+            // Offsets for each circle
+            val behindCenter = Offset(canvasCenter.x, canvasCenter.y + behindOffsetY)
+            val frontCenter = Offset(canvasCenter.x, canvasCenter.y + pressOffsetY)
+
+            // 5) SINGLE diagonal path for all circles (ensures alignment):
+            //    We'll define it once, using the main circle's bounding box
+            //    around the *canvas* center (the original approach).
             val diagonalPath = Path().apply {
                 val leftX = canvasCenter.x - (shapePx / 2)
                 val topY = canvasCenter.y - (shapePx / 2)
@@ -130,19 +156,18 @@ fun DifficultyStepButton(
                 diagonalPath = diagonalPath
             )
 
-            // Circle #2 (front, largest)
+            // Circle #2 (front / largest)
             drawSplitCircleNoBorder(
-                center = canvasCenter,
+                center = frontCenter,
                 radius = outerRadius,
                 colorTopLeft = colors.frontTopLeft,
                 colorBottomRight = colors.frontBottomRight,
                 diagonalPath = diagonalPath
             )
 
-            // Circle #3 (inner/smaller, on top)
-            val innerRadius = outerRadius * 0.77f
+            // Circle #3 (inner / smaller)
             drawSplitCircleNoBorder(
-                center = canvasCenter,
+                center = frontCenter,
                 radius = innerRadius,
                 colorTopLeft = colors.innerTopLeft,
                 colorBottomRight = colors.innerBottomRight,
@@ -150,19 +175,25 @@ fun DifficultyStepButton(
             )
         }
 
-        // Overlay step number centered within the inner circle
+        // Step number text (moves with the front circle)
         Text(
-            text = stepNumber.toPersianDigits(), // Convert to Persian digits
+            text = stepNumber.toPersianDigits(),
             color = Color.White,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Center)
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = pressOffsetDp)
         )
     }
 }
 
 /**
- * Utility function to draw a split circle without borders.
+ * Draws one circle, split diagonally by [diagonalPath] into two colors:
+ * [colorTopLeft] and [colorBottomRight].
+ *
+ * Because we reuse the same [diagonalPath] for all circles, the color-splitting
+ * line is consistent across all circles.
  */
 private fun DrawScope.drawSplitCircleNoBorder(
     center: Offset,
@@ -176,7 +207,7 @@ private fun DrawScope.drawSplitCircleNoBorder(
         paint = Paint()
     )
 
-    // Step 1: Draw entire circle in bottom-right color
+    // 1) Draw entire circle in the "bottom-right" color
     drawCircle(
         color = colorBottomRight,
         center = center,
@@ -185,9 +216,9 @@ private fun DrawScope.drawSplitCircleNoBorder(
         blendMode = BlendMode.Src
     )
 
-    // Step 2: Clip to the diagonal path (the top-left region)
+    // 2) Clip to the diagonal path => top-left region
     clipPath(diagonalPath, clipOp = ClipOp.Intersect) {
-        // Step 3: Overwrite top-left with colorTopLeft
+        // 3) Overwrite top-left region with the "top-left" color
         drawCircle(
             color = colorTopLeft,
             center = center,
@@ -198,13 +229,4 @@ private fun DrawScope.drawSplitCircleNoBorder(
     }
 
     drawContext.canvas.restore()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewDifficultyStepButton() {
-    DifficultyStepButton(
-        difficulty = Difficulty.EASY,
-        stepNumber = 1
-    )
 }

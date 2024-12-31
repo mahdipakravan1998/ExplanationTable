@@ -10,77 +10,58 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-/**
- * Custom Colors class to hold additional color roles
- */
 @Immutable
 data class CustomColors(
     val success: Color,
     val accent: Color,
     val highlight: Color,
-    val overlay: Color
+    val overlay: Color,
+    // Add more custom colors if needed
 )
 
 val LocalCustomColors = staticCompositionLocalOf<CustomColors> {
     error("No CustomColors provided")
 }
 
-/**
- * Define Dark and Light Color Schemes with clearly different values
- * so that changing themes is visually obvious.
- */
+// Define your color schemes using the new palettes
 private val DarkColors = darkColorScheme(
-    // Primary (Easy)
-    primary = PrimaryDark,
+    primary = PrimaryDark, // From Core Brand Colors
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
 
-    // Secondary (Medium)
-    secondary = SecondaryDark,
+    secondary = SecondaryDark, // From Secondary Palette
     onSecondary = OnSecondaryDark,
     secondaryContainer = SecondaryContainerDark,
 
-    // Tertiary (Hard)
-    tertiary = TertiaryDark,
+    tertiary = TertiaryDark, // From Duo's Palette or others
     onTertiary = OnTertiaryDark,
     tertiaryContainer = TertiaryContainerDark,
 
-    // Background and Surface
     background = BackgroundDark,
     surface = SurfaceDark,
-
     onBackground = OnBackgroundDark,
     onSurface = OnSurfaceDark,
-
-    // Error Colors
     error = ErrorDark,
     onError = OnErrorDark
 )
 
 private val LightColors = lightColorScheme(
-    // Primary (Easy)
-    primary = PrimaryLight,
+    primary = PrimaryLight, // From Core Brand Colors
     onPrimary = OnPrimaryLight,
     primaryContainer = PrimaryContainerLight,
 
-    // Secondary (Medium)
-    secondary = SecondaryLight,
+    secondary = SecondaryLight, // From Secondary Palette
     onSecondary = OnSecondaryLight,
     secondaryContainer = SecondaryContainerLight,
 
-    // Tertiary (Hard)
-    tertiary = TertiaryLight,
+    tertiary = TertiaryLight, // From Duo's Palette or others
     onTertiary = OnTertiaryLight,
     tertiaryContainer = TertiaryContainerLight,
 
-    // Background and Surface
     background = BackgroundLight,
     surface = SurfaceLight,
-
     onBackground = OnBackgroundLight,
     onSurface = OnSurfaceLight,
-
-    // Error Colors
     error = ErrorLight,
     onError = OnErrorLight
 )
@@ -92,17 +73,14 @@ fun ExplanationTableTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        // If you want to use the system's dynamic color (Android 12+)
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        // Otherwise, use our own custom color schemes
         darkTheme -> DarkColors
         else -> LightColors
     }
 
-    // Define your custom colors based on the theme
     val customColors = if (darkTheme) {
         CustomColors(
             success = SuccessDark,
@@ -123,7 +101,6 @@ fun ExplanationTableTheme(
         colorScheme = colorScheme,
         typography = AppTypography, // Ensure AppTypography is defined or replace with your typography
         content = {
-            // Provide the custom colors to the composition
             CompositionLocalProvider(LocalCustomColors provides customColors) {
                 content()
             }
