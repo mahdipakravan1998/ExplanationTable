@@ -37,6 +37,7 @@ val BeakLowerFeet = Color(0xFFF49000)
 val BeakUpper = Color(0xFFFFC200)
 val BeakHighlight = Color(0xFFFFDE00)
 val TonguePink = Color(0xFFFFCAFF)
+val LimeGreen = Color(0xFF68A62F)
 
 // ------------------------------
 // Optional Legacy Colors
@@ -57,7 +58,7 @@ val White = Color(0xFFFFFFFF)
 // Light Theme Colors
 // ------------------------------
 val PrimaryLight = MaskGreen // Core Brand Colors
-val PrimaryContainerLight = WingOverlay
+val PrimaryContainerLight = LimeGreen
 val OnPrimaryLight = White
 
 val SecondaryLight = BeakUpper // Secondary Palette
@@ -84,7 +85,7 @@ val SuccessLight = FeatherGreen // Already defined
 // Dark Theme Colors
 // ------------------------------
 val PrimaryDark = MaskGreen // Core Brand Colors
-val PrimaryContainerDark = WingOverlay // Core Brand Colors
+val PrimaryContainerDark = LimeGreen // Core Brand Colors
 val OnPrimaryDark = White
 
 val SecondaryDark = BeakUpper // Secondary Palette

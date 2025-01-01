@@ -1,14 +1,19 @@
 package com.example.explanationtable.ui.stages.components
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,26 +29,55 @@ fun OptionCard(
     textColor: Color,
     imageResId: Int
 ) {
+    // Define the shadow offset
+    val shadowOffset = 4.dp
+
+    // Press state and animation
+    var isPressed by remember { mutableStateOf(false) }
+    val pressOffsetY by animateDpAsState(
+        targetValue = if (isPressed) shadowOffset else 0.dp,
+        animationSpec = tween(durationMillis = 30) // Adjust duration as needed
+    )
+
+    // Handle pointer input for press detection
+    val gestureModifier = Modifier.pointerInput(Unit) {
+        awaitEachGesture {
+            // Wait for the first down event
+            awaitFirstDown(requireUnconsumed = false)
+            isPressed = true
+
+            // Wait for the up or cancellation event
+            val up = waitForUpOrCancellation()
+            isPressed = false
+
+            // If the gesture was not canceled, trigger the onClick callback
+            if (up != null) {
+                onClick()
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(72.dp)
-            .clickable { onClick() }
+            .then(gestureModifier) // Apply gesture detection
     ) {
-        // Background Rectangle
+        // Background Rectangle (Shadow)
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(y = 4.dp), // Slightly offset downwards
+                .offset(y = shadowOffset), // Fixed shadow offset
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(containerColor = shadowColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // No elevation
         ) {}
 
-        // Foreground Card
+        // Foreground Card with animated offset
         Card(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .offset(y = pressOffsetY), // Apply animated offset
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Removed elevation
