@@ -129,7 +129,7 @@ fun AppTopBar(
 
         // Bottom divider for non-home pages
         if (!isHomePage) {
-            Divider(
+            HorizontalDivider(
                 color = dividerColor,
                 thickness = 2.dp,
                 modifier = Modifier

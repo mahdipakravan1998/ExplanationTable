@@ -1,7 +1,6 @@
 package com.example.explanationtable.ui.theme
 
 import androidx.compose.ui.graphics.Color
-import com.example.explanationtable.ui.theme.BeakLowerFeet
 
 // ------------------------------
 // Core Brand Colors

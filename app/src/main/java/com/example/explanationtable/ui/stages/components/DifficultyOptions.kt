@@ -7,7 +7,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import com.example.explanationtable.R
-import com.example.explanationtable.ui.theme.*
 
 /**
  * A composable that displays difficulty options as selectable cards.

@@ -82,14 +82,14 @@ fun DifficultyStepButton(
     }
 
     // 2) Track a pressed state + animate
-    var isPressed by remember { mutableStateOf(false) }
-    val pressOffsetY by animateFloatAsState(
-        targetValue = if (isPressed) 16f else 0f,
-        animationSpec = tween(durationMillis = 30) // short, snappy animation
-    )
-
     // The behind circle is permanently offset by 16f
     val behindOffsetY = 16f
+
+    var isPressed by remember { mutableStateOf(false) }
+    val pressOffsetY by animateFloatAsState(
+        targetValue = if (isPressed) behindOffsetY else 0f,
+        animationSpec = tween(durationMillis = 30) // short, snappy animation
+    )
 
     // Convert press offset to dp for text
     val density = LocalDensity.current
