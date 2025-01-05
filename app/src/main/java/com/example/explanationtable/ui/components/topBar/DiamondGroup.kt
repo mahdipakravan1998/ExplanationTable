@@ -20,6 +20,7 @@ import com.example.explanationtable.ui.modifiers.innerShadowAllSides
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shadow
+import com.example.explanationtable.utils.toPersianDigits
 
 /**
  * A composable representing a colored rectangle with a diamond icon and a count.
@@ -81,9 +82,12 @@ fun DiamondGroup(
                 val shadowOffset = with(density) { Offset(x = 0f, y = 2.dp.toPx()) }
                 val shadowBlurRadius = with(density) { 4.dp.toPx() }
 
+                // Convert diamonds to Persian digits
+                val formattedDiamonds = diamonds.toPersianDigits()
+
                 Text(
-                    text = diamonds.toString(),
-                    fontSize = 14.sp,
+                    text = formattedDiamonds.toString(),
+                    fontSize = 20.sp,
                     color = Color.White,
                     fontWeight = FontWeight.Normal,
                     style = TextStyle(

@@ -1,40 +1,35 @@
-package com.example.explanationtable.ui.stages.pages
+package com.example.explanationtable.ui.gameplay.pages
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
-import com.example.explanationtable.ui.stages.content.StagesListContent
+import com.example.explanationtable.utils.toPersianDigits
 
 /**
- * The parent composable that sets up the stage list screen.
+ * A composable that represents the gameplay screen for a given stage.
  *
- * @param navController The NavController used for navigation.
- * @param difficulty The current difficulty level.
- * @param diamonds The number of diamonds to display.
- * @param onSettingsClick Callback for when the settings icon is clicked.
+ * @param stageNumber The stage number to display in the top bar title.
+ * @param difficulty The difficulty level of this stage.
  * @param isDarkTheme Whether the dark theme is enabled.
+ * @param diamonds The number of diamonds to display in the top bar.
  */
 @Composable
-fun StagesListPage(
-    navController: NavController,
-    difficulty: Difficulty = Difficulty.EASY,
-    diamonds: Int = 100,
-    onSettingsClick: () -> Unit = {},
-    isDarkTheme: Boolean
+fun GameplayPage(
+    stageNumber: Int,
+    difficulty: Difficulty,
+    isDarkTheme: Boolean,
+    diamonds: Int = 100
 ) {
     val viewModel: MainViewModel = viewModel()
     val isMuted by viewModel.isMuted.collectAsState()
@@ -43,31 +38,24 @@ fun StagesListPage(
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Main background
+    // 2. Convert stageNumber to Persian digits when building the string
+    val pageTitle = "${stringResource(id = R.string.stage)} ${stageNumber.toPersianDigits()}"
+
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Top App Bar
             AppTopBar(
                 isHomePage = false,
                 isDarkTheme = isDarkTheme,
-                title = stringResource(id = R.string.stages_list),
+                title = pageTitle,          // e.g., "Stage ۱" if R.string.stage = "Stage"
                 diamonds = diamonds,
                 difficulty = difficulty,
                 onSettingsClick = { showSettingsDialog = true },
-                iconTint = MaterialTheme.colorScheme.onSurface
+                onHelpClick = { /* no implementation yet */ }
             )
 
-            // Main content for the stage list
-            StagesListContent(
-                difficulty = difficulty,
-                onStageClick = { stageNumber ->
-                    // Navigate to the gameplay page with the given stageNumber AND difficulty
-                    navController.navigate("${Routes.GAMEPLAY}/$stageNumber/${difficulty.name}")
-                }
-            )
+            // -- The rest of your gameplay UI goes here --
 
-            // SettingsDialog
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss = { showSettingsDialog = false },
@@ -76,7 +64,6 @@ fun StagesListPage(
                 isMuted = isMuted,
                 onToggleMute = { viewModel.toggleMute() },
                 onExit = {
-                    // Safely exit the app
                     activity?.finishAndRemoveTask()
                 }
             )

@@ -25,14 +25,14 @@ import com.example.explanationtable.ui.theme.ButtonIconLight
 @Composable
 fun AppTopBar(
     isHomePage: Boolean,
-    isDarkTheme: Boolean, // New parameter
+    isDarkTheme: Boolean,
     title: String? = null,
     diamonds: Int? = null,
     difficulty: Difficulty? = null,
     onSettingsClick: () -> Unit,
-    iconTint: Color = MaterialTheme.colorScheme.onSurface
+    iconTint: Color = MaterialTheme.colorScheme.onSurface,
+    onHelpClick: (() -> Unit)? = null
 ) {
-    // Define top bar height based on page type
     val topBarHeight = 80.dp
 
     // Define container color
@@ -52,22 +52,14 @@ fun AppTopBar(
 
     // Define settings button background color based on isDarkTheme and isHomePage
     val settingsButtonBackgroundColor = if (isHomePage) {
-        if (isDarkTheme) {
-            ButtonBackgroundLight
-        } else {
-            ButtonBackgroundDark
-        }
+        if (isDarkTheme) ButtonBackgroundLight else ButtonBackgroundDark
     } else {
         Color.Transparent
     }
 
     // Define settings button icon tint based on isDarkTheme and isHomePage
     val settingsButtonIconTint = if (isHomePage) {
-        if (isDarkTheme) {
-            ButtonIconDark
-        } else {
-            ButtonIconLight
-        }
+        if (isDarkTheme) ButtonIconDark else ButtonIconLight
     } else {
         difficultyColors(difficulty!!).textColor
     }
@@ -76,43 +68,73 @@ fun AppTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(topBarHeight)
-            .background(containerColor),
-        contentAlignment = Alignment.Center
+            .background(containerColor)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Left side
-            if (!isHomePage) {
-                diamonds?.let { DiamondGroup(diamonds = it) }
-            } else {
-                // Spacer to match DiamondGroup width on home page
-                Spacer(modifier = Modifier.width(48.dp))
-            }
-
-            // Middle
-            if (!isHomePage && title != null) {
-                Text(
-                    text = title,
-                    fontSize = 18.sp,
-                    color = difficultyColors(difficulty!!).textColor,
-                    fontWeight = FontWeight.SemiBold
+        // Left Side: DiamondGroup or Spacer
+        if (!isHomePage) {
+            diamonds?.let { diamondCount ->
+                DiamondGroup(
+                    diamonds = diamondCount,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 16.dp)
                 )
-            } else {
-                // Spacer to help push the settings button to the right
-                Spacer(modifier = Modifier.weight(1f))
+            }
+        } else {
+            // Spacer to match DiamondGroup width
+            Spacer(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .size(48.dp)
+            )
+        }
+
+        // Title: Always Centered
+        if (title != null) {
+            Text(
+                text = title,
+                fontSize = 18.sp,
+                color = if (!isHomePage && difficulty != null) {
+                    difficultyColors(difficulty).textColor
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+
+        // Right Side: Help Icon (optional) and Settings Icon
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 16.dp)
+        ) {
+            // HELP ICON (only if a callback is provided)
+            if (onHelpClick != null) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable { onHelpClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_lightbulb),
+                        contentDescription = stringResource(id = R.string.hint),
+                        tint = settingsButtonIconTint,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
-            // Right side (Unified Settings Button)
+            // SETTINGS ICON
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        color = if (isHomePage) settingsButtonBackgroundColor else Color.Transparent,
+                        color = settingsButtonBackgroundColor,
                         shape = CircleShape
                     )
                     .clickable { onSettingsClick() },

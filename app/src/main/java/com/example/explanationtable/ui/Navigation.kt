@@ -10,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.explanationtable.ui.main.pages.MainPage
 import com.example.explanationtable.ui.stages.pages.StagesListPage
+import com.example.explanationtable.ui.gameplay.pages.GameplayPage
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.model.Difficulty
 
@@ -28,9 +29,7 @@ fun AppNavHost(
             MainPage(navController, viewModel)
         }
 
-        // Removed SettingsPage as settings are now handled via a popup
-
-        // Parameterized composable: "stages_list/{difficulty}"
+        // Parameterized composable for the StagesListPage
         composable(
             route = Routes.STAGES_LIST_WITH_ARG,
             arguments = listOf(navArgument("difficulty") { type = NavType.StringType })
@@ -43,9 +42,32 @@ fun AppNavHost(
                 else     -> Difficulty.EASY
             }
             StagesListPage(
+                navController = navController,
                 difficulty = difficultyEnum,
-                isDarkTheme = isDarkTheme,
-                onSettingsClick = { /* Settings handled within the page */ }
+                isDarkTheme = isDarkTheme
+            )
+        }
+
+        // New route for the GameplayPage with both stageNumber and difficulty
+        composable(
+            route = Routes.GAMEPLAY_WITH_ARGS,
+            arguments = listOf(
+                navArgument("stageNumber") { type = NavType.IntType },
+                navArgument("difficulty") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val stageNumber = backStackEntry.arguments?.getInt("stageNumber") ?: 1
+            val difficultyArg = backStackEntry.arguments?.getString("difficulty") ?: "Easy"
+            val difficultyEnum = when (difficultyArg.lowercase()) {
+                "easy"   -> Difficulty.EASY
+                "medium" -> Difficulty.MEDIUM
+                "hard"   -> Difficulty.HARD
+                else     -> Difficulty.EASY
+            }
+            GameplayPage(
+                stageNumber = stageNumber,
+                difficulty = difficultyEnum,
+                isDarkTheme = isDarkTheme
             )
         }
     }

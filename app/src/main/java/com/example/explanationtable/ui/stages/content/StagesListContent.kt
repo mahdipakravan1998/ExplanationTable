@@ -16,10 +16,12 @@ import com.example.explanationtable.ui.stages.components.DifficultyStepButton
  * A composable that displays a scrollable list of step buttons with dynamic horizontal offsets.
  *
  * @param difficulty The current difficulty level.
+ * @param onStageClick Callback triggered when a specific stage (step) is clicked.
  */
 @Composable
 fun StagesListContent(
-    difficulty: Difficulty
+    difficulty: Difficulty,
+    onStageClick: (Int) -> Unit
 ) {
     val totalSteps = difficultyStepCountMap[difficulty] ?: 9
 
@@ -48,6 +50,7 @@ fun StagesListContent(
     ) {
         // Iterate over each step and apply the corresponding offset
         stepOffsets.forEachIndexed { index, offsetX ->
+            val stageNumber = index + 1
             Box(
                 modifier = Modifier
                     .offset(x = offsetX)
@@ -55,7 +58,10 @@ fun StagesListContent(
             ) {
                 DifficultyStepButton(
                     difficulty = difficulty,
-                    stepNumber = index + 1
+                    stepNumber = stageNumber,
+                    onClick = {
+                        onStageClick(stageNumber)
+                    }
                 )
             }
         }
@@ -82,4 +88,3 @@ fun generateStepOffsets(totalSteps: Int, basePattern: List<Dp>): List<Dp> {
         }
     }
 }
-

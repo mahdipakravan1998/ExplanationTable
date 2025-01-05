@@ -20,4 +20,8 @@
     <string name="confirm_exit_message">آیا مطمئن هستید که می‌خواهید از برنامه خارج شوید؟</string>
     <string name="yes">خروج</string>
     <string name="no">انصراف</string>
+
+
+    <string name="hint">راهنمایی</string>
+    <string name="stage">مرحله</string>
 </resources>
