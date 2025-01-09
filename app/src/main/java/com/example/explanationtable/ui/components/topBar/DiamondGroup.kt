@@ -87,7 +87,7 @@ fun DiamondGroup(
 
                 Text(
                     text = formattedDiamonds.toString(),
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     color = Color.White,
                     fontWeight = FontWeight.Normal,
                     style = TextStyle(

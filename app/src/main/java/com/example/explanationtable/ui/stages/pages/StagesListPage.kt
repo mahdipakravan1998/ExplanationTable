@@ -32,7 +32,7 @@ import com.example.explanationtable.ui.stages.content.StagesListContent
 fun StagesListPage(
     navController: NavController,
     difficulty: Difficulty = Difficulty.EASY,
-    diamonds: Int = 100,
+    diamonds: Int = +999,
     onSettingsClick: () -> Unit = {},
     isDarkTheme: Boolean
 ) {

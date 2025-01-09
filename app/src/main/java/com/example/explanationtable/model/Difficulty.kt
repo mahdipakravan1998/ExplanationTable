@@ -1,4 +1,3 @@
-// File: Difficulty.kt
 package com.example.explanationtable.model
 
 import androidx.compose.ui.graphics.Color
