@@ -1,24 +1,113 @@
 package com.example.explanationtable.ui.gameplay.table
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.explanationtable.data.easy.easyLevelTables
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.model.EasyLevelTable
+import kotlin.random.Random
 
 /**
- * Top-level composable that decides which table layout to show
- * based on the current [difficulty].
+ * Data class representing a cell's position in the table.
+ */
+data class CellPosition(val row: Int, val col: Int)
+
+/**
+ * Derangement algorithm to shuffle a list such that no element remains in its original position.
+ * Uses Sattolo's algorithm for generating a cyclic permutation.
+ */
+fun derangeList(dataList: List<String>): List<String> {
+    if (dataList.size < 2) {
+        Log.d("GameTables", "Not enough data to derange.")
+        return dataList
+    }
+
+    val shuffled = dataList.toMutableList()
+    val n = shuffled.size
+
+    // Apply Sattolo's algorithm
+    for (i in n - 1 downTo 1) {
+        val j = Random.nextInt(i) // j ∈ [0, i-1]
+        // Swap elements at i and j
+        val temp = shuffled[i]
+        shuffled[i] = shuffled[j]
+        shuffled[j] = temp
+    }
+
+    // Verify derangement: no element should be in its original position
+    val isDeranged = shuffled.zip(dataList).all { (shuffledItem, originalItem) ->
+        shuffledItem != originalItem
+    }
+
+    if (!isDeranged) {
+        Log.d("GameTables", "Derangement failed, retrying...")
+        return derangeList(dataList) // Retry if derangement failed
+    }
+
+    return shuffled
+}
+
+/**
+ * Extracts movable cell data from the original table data.
+ */
+fun getMovableData(originalTable: EasyLevelTable, fixedPositions: Set<CellPosition>): List<Pair<CellPosition, String>> {
+    val movableData = mutableListOf<Pair<CellPosition, String>>()
+    for ((rowIndex, rowMap) in originalTable.rows) {
+        for ((colIndex, dataList) in rowMap) {
+            val position = CellPosition(rowIndex, colIndex)
+            if (position !in fixedPositions) {
+                // Assuming each movable cell has exactly one data item
+                // If multiple items per cell are possible, adjust accordingly
+                dataList.forEach { data ->
+                    movableData.add(position to data)
+                }
+            }
+        }
+    }
+    return movableData
+}
+
+/**
+ * Creates a new shuffled table data map with fixed cells intact and movable cells shuffled.
+ */
+fun createShuffledTable(
+    shuffledDataList: List<String>,
+    movablePositions: List<CellPosition>,
+    fixedCellsData: Map<CellPosition, List<String>>
+): Map<CellPosition, List<String>> {
+    val newTableData = mutableMapOf<CellPosition, List<String>>()
+
+    // Assign fixed cells
+    for ((position, data) in fixedCellsData) {
+        newTableData[position] = data
+    }
+
+    // Assign shuffled movable cells
+    for ((index, position) in movablePositions.withIndex()) {
+        newTableData[position] = listOf(shuffledDataList[index])
+    }
+
+    return newTableData
+}
+
+/**
+ * Composable function to display the game table.
  */
 @Composable
 fun GameTable(
     difficulty: Difficulty,
+    stageNumber: Int,  // Added stageNumber
     modifier: Modifier = Modifier
 ) {
     when (difficulty) {
-        Difficulty.EASY -> EasyThreeByFiveTable(modifier)
+        Difficulty.EASY -> EasyThreeByFiveTable(stageNumber, modifier)
         Difficulty.MEDIUM -> MediumTablePlaceholder(modifier)
         Difficulty.HARD -> HardTablePlaceholder(modifier)
     }
@@ -26,100 +115,204 @@ fun GameTable(
 
 /**
  * Easy level table layout (3 columns by 5 rows).
- * This is the old "ThreeByFiveTable".
+ * Initializes the table with shuffled movable cells.
  */
 @Composable
-fun EasyThreeByFiveTable(modifier: Modifier = Modifier) {
-    // Sample letters for Type3 squares
-    val type3Letters = listOf(
-        "A", "B", "C", "D", "E",
-        "F", "G", "H", "I", "J",
-        "K", "L"
-    )
-    val type3Iterator = type3Letters.iterator()
+fun EasyThreeByFiveTable(
+    stageNumber: Int,
+    modifier: Modifier = Modifier
+) {
+    // Define the fixed positions
+    val fixedPositions = remember {
+        setOf(
+            CellPosition(0, 0),
+            CellPosition(0, 2),
+            CellPosition(4, 2)
+        )
+    }
 
+    // 1) Find the correct EasyLevelTable by id:
+    val originalTableData = remember {
+        easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
+    }
+
+    // Log the original table data
+    Log.d("GameTables", "Original Table Data for Stage $stageNumber:")
+    originalTableData.rows.forEach { (row, cols) ->
+        cols.forEach { (col, dataList) ->
+            Log.d("GameTables", "Cell ($row, $col): ${dataList.joinToString(", ")}")
+        }
+    }
+
+    // 2) Extract movable cells data
+    val movableDataList = remember {
+        getMovableData(originalTableData, fixedPositions)
+    }
+
+    // Log movable cells
+    Log.d("GameTables", "Movable Cells Original Data:")
+    movableDataList.forEach { (position, data) ->
+        Log.d("GameTables", "Cell (${position.row}, ${position.col}): $data")
+    }
+
+    // 3) Separate positions and data
+    val movablePositions = remember { movableDataList.map { it.first } }
+    val movableData = remember { movableDataList.map { it.second } }
+
+    // 4) Shuffle movable data using derangement
+    val shuffledMovableData = remember {
+        derangeList(movableData)
+    }
+
+    // Log shuffled movable data
+    Log.d("GameTables", "Movable Cells Shuffled Data:")
+    shuffledMovableData.forEachIndexed { index, data ->
+        val position = movablePositions[index]
+        Log.d("GameTables", "Cell (${position.row}, ${position.col}): $data")
+    }
+
+    // 5) Prepare fixed cells data
+    val fixedCellsData = mapOf(
+        CellPosition(0, 0) to (originalTableData.rows[0]?.get(0) ?: listOf("?")),
+        CellPosition(0, 2) to (originalTableData.rows[0]?.get(2) ?: listOf("?")),
+        CellPosition(4, 2) to (originalTableData.rows[4]?.get(2) ?: listOf("?"))
+    )
+
+    // Log fixed cells data
+    Log.d("GameTables", "Fixed Cells Data:")
+    fixedCellsData.forEach { (position, data) ->
+        Log.d("GameTables", "Fixed Cell (${position.row}, ${position.col}): ${data.joinToString(", ")}")
+    }
+
+    // 6) Create shuffled table data
+    val shuffledTableData = remember {
+        createShuffledTable(
+            shuffledMovableData,
+            movablePositions,
+            fixedCellsData
+        )
+    }
+
+    // Log the new shuffled table data
+    Log.d("GameTables", "Shuffled Table Data:")
+    shuffledTableData.forEach { (position, dataList) ->
+        Log.d("GameTables", "Cell (${position.row}, ${position.col}): ${dataList.joinToString(", ")}")
+    }
+
+    // 7) Render the table UI with adjusted spacing and horizontal centering
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = modifier
+            .fillMaxWidth(), // Make the Column take up the full width
+        horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
+        verticalArrangement = Arrangement.spacedBy(16.dp) // 16 dp vertical spacing
     ) {
         for (rowIndex in 0 until 5) { // 5 rows
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.wrapContentWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp), // 16 dp horizontal spacing
+                modifier = Modifier
+                    .wrapContentWidth() // Let the Row wrap its content width
+                    .wrapContentHeight()
             ) {
                 for (colIndex in 0 until 3) { // 3 columns
-                    Box {
-                        when (Pair(rowIndex, colIndex)) {
-                            Pair(0, 0) -> {
-                                Type1Square(text = "1")
-                            }
-                            Pair(0, 2) -> {
-                                Type2Square(topText = "Top", bottomText = "Right")
-                            }
-                            Pair(4, 2) -> {
-                                Type1Square(text = "1")
-                            }
-                            Pair(0, 1) -> {
-                                // Square (0,1) with DirectionalSign0_1
-                                Box {
-                                    Type3Square(
-                                        letter = if (type3Iterator.hasNext()) type3Iterator.next() else "?",
-                                    )
-                                    DirectionalSign0_1(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(end = 4.dp, top = 4.dp)
-                                    )
-                                }
-                            }
-                            Pair(1, 0) -> {
-                                // Square (1,0) with DirectionalSign1_0
-                                Box {
-                                    Type3Square(
-                                        letter = if (type3Iterator.hasNext()) type3Iterator.next() else "?",
-                                    )
-                                    DirectionalSign1_0(
-                                        modifier = Modifier
-                                            .align(Alignment.TopCenter)
-                                            .padding(top = 4.dp)
-                                    )
-                                }
-                            }
-                            Pair(1, 2) -> {
-                                // Square (1,2) with DirectionalSign1_2
-                                Box {
-                                    Type3Square(
-                                        letter = if (type3Iterator.hasNext()) type3Iterator.next() else "?",
-                                    )
-                                    DirectionalSign1_2(
-                                        modifier = Modifier
-                                            .align(Alignment.TopCenter)
-                                            .padding(top = 4.dp)
-                                    )
-                                }
-                            }
-                            Pair(3, 2) -> {
-                                // Square (3,2) with DirectionalSign3_2
-                                Box {
-                                    Type3Square(
-                                        letter = if (type3Iterator.hasNext()) type3Iterator.next() else "?",
-                                    )
-                                    DirectionalSign3_2(
-                                        modifier = Modifier
-                                            .align(Alignment.BottomCenter)
-                                            .padding(bottom = 5.dp)
-                                    )
-                                }
-                            }
-                            else -> {
-                                // All other cells: Type3Square
-                                Type3Square(
-                                    letter = if (type3Iterator.hasNext()) type3Iterator.next() else "?",
-                                )
-                            }
-                        }
-                    }
+                    val currentPosition = CellPosition(rowIndex, colIndex)
+                    SquareWithDirectionalSign(
+                        position = currentPosition,
+                        shuffledTableData = shuffledTableData,
+                        squareSize = 64.dp, // Ensure this matches your square's internal size
+                        signSize = 16.dp // Adjusted sign size to fit within the square
+                    )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Helper composable to render squares with optional directional signs.
+ */
+@Composable
+fun SquareWithDirectionalSign(
+    position: CellPosition,
+    shuffledTableData: Map<CellPosition, List<String>>,
+    squareSize: Dp = 64.dp,
+    signSize: Dp = 16.dp
+) {
+    Box(
+        modifier = Modifier
+            .size(squareSize),
+        contentAlignment = Alignment.Center
+    ) {
+        // Render the appropriate square type based on position
+        when (position) {
+            // Fixed Cells
+            CellPosition(0, 0) -> {
+                Type1Square(
+                    text = shuffledTableData[position]?.joinToString(", ") ?: "?",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            CellPosition(0, 2) -> {
+                val cellData = shuffledTableData[position]
+                val topText = cellData?.getOrNull(0) ?: "?"
+                val bottomText = cellData?.getOrNull(1) ?: "?"
+                Type2Square(
+                    topText = topText,
+                    bottomText = bottomText,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            CellPosition(4, 2) -> {
+                Type1Square(
+                    text = shuffledTableData[position]?.joinToString(", ") ?: "?",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            // Movable Cells
+            else -> {
+                val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
+                Type3Square(
+                    letter = letter,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        // Overlay Directional Signs based on position
+        when (position) {
+            CellPosition(0, 1) -> {
+                DirectionalSign0_1(
+                    modifier = Modifier
+                        .size(signSize)
+                        .align(Alignment.TopEnd)
+                        .padding(end = 4.dp, top = 16.dp) // Reduced padding
+                )
+            }
+            CellPosition(1, 0) -> {
+                DirectionalSign1_0(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 4.dp)
+                )
+            }
+            CellPosition(1, 2) -> {
+                DirectionalSign1_2(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 4.dp)
+                )
+            }
+            CellPosition(3, 2) -> {
+                DirectionalSign3_2(
+                    modifier = Modifier
+                        .size(signSize)
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 4.dp)
+                )
+            }
+            // Add more cases if needed
+            else -> {
+                // No directional sign for other positions
             }
         }
     }
@@ -151,19 +344,21 @@ fun HardTablePlaceholder(modifier: Modifier = Modifier) {
 }
 
 /**
- * Preview of the Easy 3x5 table.
+ * Preview of the Easy 3x5 table,
+ * passing stageNumber = 1 as an example.
  */
 @Preview(showBackground = true)
 @Composable
 fun EasyThreeByFiveTablePreview() {
-    EasyThreeByFiveTable()
+    EasyThreeByFiveTable(stageNumber = 1)
 }
 
 /**
- * Preview of the delegating composable for the EASY difficulty.
+ * Preview of the delegating composable for the EASY difficulty,
+ * also passing stageNumber = 1 as an example.
  */
 @Preview(showBackground = true)
 @Composable
 fun GameTablePreview() {
-    GameTable(difficulty = Difficulty.EASY)
+    GameTable(difficulty = Difficulty.EASY, stageNumber = 1)
 }

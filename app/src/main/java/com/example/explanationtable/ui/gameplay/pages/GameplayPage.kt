@@ -60,8 +60,11 @@ fun GameplayPage(
 
             Spacer(modifier = Modifier.height(72.dp))
 
-            // Pass the difficulty to the GameTable composable
-            GameTable(difficulty = difficulty)
+            // Pass both difficulty and stageNumber to the GameTable
+            GameTable(
+                difficulty = difficulty,
+                stageNumber = stageNumber  // <-- now passes the stage number
+            )
 
             // Any additional gameplay UI can be added here
 
