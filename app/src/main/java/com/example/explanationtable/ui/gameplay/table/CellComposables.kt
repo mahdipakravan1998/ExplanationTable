@@ -1,99 +1,218 @@
 package com.example.explanationtable.ui.gameplay.table
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.explanationtable.ui.theme.Bee
-import com.example.explanationtable.ui.theme.Eel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.explanationtable.ui.main.viewmodel.MainViewModel
+import com.example.explanationtable.ui.theme.*
+import androidx.compose.ui.tooling.preview.Preview
 
 /**
- * A simple colored square with text in the center.
+ * A helper composable that automatically resizes text to fit within its constraints
+ * while trying to keep it in up to [maxLines]. The priority is:
+ *  1. Try to render the text in up to [maxLines] lines.
+ *  2. If it still overflows, reduce the font size.
+ *
+ * By default, we set [maxLines] to 2 in the calling composables so it first
+ * splits into two lines if needed, then shrinks if it doesn't fit within 2 lines.
+ *
+ * No ellipses are used (overflow is set to [TextOverflow.Clip]).
+ */
+@Suppress("UnusedBoxWithConstraintsScope")
+@Composable
+fun AutoResizingText(
+    text: String,
+    modifier: Modifier = Modifier,
+    minTextSize: TextUnit = 10.sp,
+    maxTextSize: TextUnit = 12.sp,
+    color: Color = Color.Black,
+    fontWeight: FontWeight? = FontWeight.Bold,
+    textAlign: TextAlign = TextAlign.Center,
+    maxLines: Int = Int.MAX_VALUE,
+    fontFamily: FontFamily = VazirmatnFontFamily
+) {
+    var textSize by remember { mutableStateOf(maxTextSize) }
+    val textMeasurer = rememberTextMeasurer()
+
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        val c = constraints
+        var fits = false
+        var attempts = 0
+
+        // Attempt to reduce text size until it fits in the box up to [maxLines].
+        while (!fits && attempts < 20 && textSize >= minTextSize) {
+            val measureResult = textMeasurer.measure(
+                text = AnnotatedString(text),
+                style = TextStyle(
+                    fontSize = textSize,
+                    color = color,
+                    fontWeight = fontWeight,
+                    textAlign = textAlign,
+                    fontFamily = fontFamily
+                ),
+                maxLines = maxLines
+            )
+
+            if (measureResult.size.width <= c.maxWidth &&
+                measureResult.size.height <= c.maxHeight
+            ) {
+                fits = true
+            } else {
+                textSize = (textSize.value - 1).sp
+            }
+            attempts++
+        }
+
+        Text(
+            text = text,
+            style = TextStyle(
+                fontSize = textSize,
+                color = color,
+                fontWeight = fontWeight,
+                textAlign = textAlign,
+                fontFamily = fontFamily
+            ),
+            maxLines = maxLines,
+            // Use Clip to avoid ellipses. If text doesn't fit, the logic above reduces size.
+            overflow = TextOverflow.Clip
+        )
+    }
+}
+
+/**
+ * A 80×80 colored square that uses [AutoResizingText] with a two-line priority:
+ *   - We attempt to place text on up to 2 lines.
+ *   - If it exceeds those 2 lines in the available space, we reduce the font size.
  */
 @Composable
-fun Type1Square(
+fun ColoredSquare(
     text: String,
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier,
+        modifier = modifier.size(80.dp),
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .fillMaxSize()
                 .clip(RoundedCornerShape(8.dp))
-                .background(color = Bee),
+                .background(color = Bee)
+                .padding(8.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
+            AutoResizingText(
                 text = text,
+                modifier = Modifier.fillMaxSize(),
                 color = Color(0xFF5E3700),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,        // Priority: fit into two lines
+                minTextSize = 12.sp,
+                maxTextSize = 16.sp,
+                textAlign = TextAlign.Center,
+                fontFamily = VazirmatnFontFamily
             )
         }
     }
 }
 
 /**
- * A square with top and bottom text, separated by a horizontal divider.
+ * A 80×80 square that shows [topText], a divider, and [bottomText], each
+ * trying to fit on two lines first, then resizing if necessary.
  */
 @Composable
-fun Type2Square(
+fun TextSeparatedSquare(
     topText: String,
     bottomText: String,
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier,
+        modifier = modifier.size(80.dp),
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .fillMaxSize()
                 .clip(RoundedCornerShape(8.dp))
-                .background(color = Bee),
-            contentAlignment = Alignment.Center
+                .background(color = Bee)
+                .padding(8.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = topText,
-                    color = Color(0xFF5E3700),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                // A dividing line that doesn't touch the left/right edges
+                // Top text
+                Box(
+                    modifier = Modifier
+                        .weight(1f, fill = true),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AutoResizingText(
+                        text = topText,
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color(0xFF5E3700),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,  // first try 2 lines
+                        minTextSize = 8.sp,
+                        maxTextSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontFamily = VazirmatnFontFamily
+                    )
+                }
+
+                // Divider
                 HorizontalDivider(
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
-                        .padding(vertical = 4.dp), // small spacing around the line
+                        .padding(vertical = 4.dp),
                     color = Color(0xFF5E3700),
                     thickness = 1.dp
                 )
-                Text(
-                    text = bottomText,
-                    color = Color(0xFF5E3700),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold
-                )
+
+                // Bottom text
+                Box(
+                    modifier = Modifier
+                        .weight(1f, fill = true),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AutoResizingText(
+                        text = bottomText,
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color(0xFF5E3700),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2, // first try 2 lines
+                        minTextSize = 8.sp,
+                        maxTextSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontFamily = VazirmatnFontFamily
+                    )
+                }
             }
         }
     }
@@ -101,52 +220,62 @@ fun Type2Square(
 
 /**
  * A three-layered stacked square (3D-ish effect) with a letter in the center.
+ * Uses Vazirmatn font at 18.sp, bold by default.
  */
 @Composable
-fun Type3Square(
+fun StackedSquare3D(
     letter: String,
     modifier: Modifier = Modifier
 ) {
+    val mainViewModel: MainViewModel = viewModel()
+    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+
+    val backColor = if (isDarkTheme) BorderDark else BorderLight
+    val middleColor = if (isDarkTheme) BorderDark else BorderLight
+    val frontColor = if (isDarkTheme) BackgroundDark else BackgroundLight
+    val textColor = if (isDarkTheme) TextDarkMode else Eel
+
     Box(
         modifier = modifier
-            .width(64.dp)
-            .height(66.dp),
+            .width(80.dp)
+            .height(82.dp),
         contentAlignment = Alignment.TopCenter
     ) {
-        Box { // Inner container wraps content
+        Box {
             // 3rd square (back)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = 2.dp)
-                    .size(64.dp)
+                    .size(80.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFE5E5E5))
+                    .background(backColor)
             )
 
             // 2nd square (middle)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(64.dp)
+                    .size(80.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFE5E5E5))
+                    .background(middleColor)
             )
 
             // 1st square (front)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(60.dp)
+                    .size(76.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFFFFDFD)),
+                    .background(frontColor),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = letter,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = Eel
+                    color = textColor,
+                    fontFamily = VazirmatnFontFamily
                 )
             }
         }
@@ -154,10 +283,11 @@ fun Type3Square(
 }
 
 /**
- * A bright green square (for a different styling) with a letter in the center.
+ * A bright green square with a letter in the center.
+ * Uses fixed text size of 18.sp (bold), can wrap up to 2 lines.
  */
 @Composable
-fun Type4Square(
+fun BrightGreenSquare(
     letter: String,
     modifier: Modifier = Modifier
 ) {
@@ -167,44 +297,50 @@ fun Type4Square(
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size(80.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF58cc02)),
+                .background(color = FeatherGreen),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = letter,
                 color = Color.White,
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                textAlign = TextAlign.Center,
+                fontFamily = VazirmatnFontFamily,
+                // We don't want ellipses
+                overflow = TextOverflow.Clip
             )
         }
     }
 }
 
 /**
- * Directional arrow sign composables for overlaying on top of squares.
+ * Directional arrow sign composables (pure drawing, no text).
  */
 @Composable
 fun DirectionalSign0_1(modifier: Modifier = Modifier) {
+    val mainViewModel: MainViewModel = viewModel()
+    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+    val signColor = if (isDarkTheme) TextDarkMode else Eel
+
     Canvas(modifier = modifier.size(20.dp)) {
         val stroke = 2.dp.toPx()
-        // Draw horizontal line from right to left
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = size.width, y = size.height / 2),
             end = Offset(x = size.width - 9.dp.toPx(), y = size.height / 2),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
-        // Draw vertical arrow pointing down from the end of the horizontal line
         val arrowStartX = size.width - 9.dp.toPx()
         val arrowStartY = size.height / 2
         val arrowEndY = arrowStartY + 10.dp.toPx()
 
-        // Vertical line
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowStartX, y = arrowStartY),
             end = Offset(x = arrowStartX, y = arrowEndY),
             strokeWidth = stroke,
@@ -212,14 +348,14 @@ fun DirectionalSign0_1(modifier: Modifier = Modifier) {
         )
         // Arrowhead pointing down
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowStartX - 3.dp.toPx(), y = arrowEndY - 3.dp.toPx()),
             end = Offset(x = arrowStartX, y = arrowEndY),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowStartX + 3.dp.toPx(), y = arrowEndY - 3.dp.toPx()),
             end = Offset(x = arrowStartX, y = arrowEndY),
             strokeWidth = stroke,
@@ -230,6 +366,10 @@ fun DirectionalSign0_1(modifier: Modifier = Modifier) {
 
 @Composable
 fun DirectionalSign1_0(modifier: Modifier = Modifier) {
+    val mainViewModel: MainViewModel = viewModel()
+    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+    val signColor = if (isDarkTheme) TextDarkMode else Eel
+
     Canvas(modifier = modifier.size(10.dp)) {
         val stroke = 2.dp.toPx()
         val arrowHeight = size.height
@@ -237,22 +377,22 @@ fun DirectionalSign1_0(modifier: Modifier = Modifier) {
 
         // Draw vertical line
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowWidth / 2, y = 0f),
             end = Offset(x = arrowWidth / 2, y = arrowHeight * 0.7f),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
-        // Draw arrowhead
+        // Arrowhead
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowWidth / 2 - 2.dp.toPx(), y = arrowHeight * 0.7f),
             end = Offset(x = arrowWidth / 2, y = arrowHeight),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowWidth / 2 + 2.dp.toPx(), y = arrowHeight * 0.7f),
             end = Offset(x = arrowWidth / 2, y = arrowHeight),
             strokeWidth = stroke,
@@ -263,30 +403,32 @@ fun DirectionalSign1_0(modifier: Modifier = Modifier) {
 
 @Composable
 fun DirectionalSign1_2(modifier: Modifier = Modifier) {
-    // Reuse the same composable as DirectionalSign1_0
-    DirectionalSign1_0(modifier = modifier)
+    // Reuse DirectionalSign1_0
+    DirectionalSign1_0(modifier)
 }
 
 @Composable
 fun DirectionalSign3_2(modifier: Modifier = Modifier) {
+    val mainViewModel: MainViewModel = viewModel()
+    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+    val signColor = if (isDarkTheme) TextDarkMode else Eel
+
     Canvas(modifier = modifier.size(20.dp)) {
         val stroke = 2.dp.toPx()
-        // Draw vertical line from bottom to top
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = size.width / 2, y = size.height),
             end = Offset(x = size.width / 2, y = size.height - 9.dp.toPx()),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
-        // Draw horizontal arrow pointing left from the end of the vertical line
         val arrowStartX = size.width / 2
         val arrowStartY = size.height - 9.dp.toPx()
         val arrowEndX = arrowStartX - 10.dp.toPx()
 
         // Horizontal line
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowStartX, y = arrowStartY),
             end = Offset(x = arrowEndX, y = arrowStartY),
             strokeWidth = stroke,
@@ -294,14 +436,14 @@ fun DirectionalSign3_2(modifier: Modifier = Modifier) {
         )
         // Arrowhead pointing left
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowEndX + 3.dp.toPx(), y = arrowStartY - 3.dp.toPx()),
             end = Offset(x = arrowEndX, y = arrowStartY),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
         drawLine(
-            color = Eel,
+            color = signColor,
             start = Offset(x = arrowEndX + 3.dp.toPx(), y = arrowStartY + 3.dp.toPx()),
             end = Offset(x = arrowEndX, y = arrowStartY),
             strokeWidth = stroke,
@@ -314,24 +456,36 @@ fun DirectionalSign3_2(modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewType1Square() {
-    Type1Square(text = "AB")
+fun PreviewColoredSquare() {
+    ColoredSquare(text = "AB")
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewType2Square() {
-    Type2Square(topText = "hello", bottomText = "world")
+fun PreviewTextSeparatedSquare() {
+    TextSeparatedSquare(topText = "Hello World", bottomText = "This is a test")
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewType3Square() {
-    Type3Square(letter = "A")
+fun PreviewStackedSquare3DLight() {
+    // Simulate light theme
+    ExplanationTableTheme(darkTheme = false) {
+        StackedSquare3D(letter = "A")
+    }
+}
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun PreviewStackedSquare3DDark() {
+    // Simulate dark theme
+    ExplanationTableTheme(darkTheme = true) {
+        StackedSquare3D(letter = "A")
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewType4Square() {
-    Type4Square(letter = "B")
+fun PreviewBrightGreenSquare() {
+    BrightGreenSquare(letter = "B")
 }

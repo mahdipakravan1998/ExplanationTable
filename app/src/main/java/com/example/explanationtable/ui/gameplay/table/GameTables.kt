@@ -103,7 +103,7 @@ fun createShuffledTable(
 @Composable
 fun GameTable(
     difficulty: Difficulty,
-    stageNumber: Int,  // Added stageNumber
+    stageNumber: Int,
     modifier: Modifier = Modifier
 ) {
     when (difficulty) {
@@ -218,7 +218,7 @@ fun EasyThreeByFiveTable(
                     SquareWithDirectionalSign(
                         position = currentPosition,
                         shuffledTableData = shuffledTableData,
-                        squareSize = 64.dp, // Ensure this matches your square's internal size
+                        squareSize = 80.dp, // Ensure this matches your square's internal size
                         signSize = 16.dp // Adjusted sign size to fit within the square
                     )
                 }
@@ -234,7 +234,7 @@ fun EasyThreeByFiveTable(
 fun SquareWithDirectionalSign(
     position: CellPosition,
     shuffledTableData: Map<CellPosition, List<String>>,
-    squareSize: Dp = 64.dp,
+    squareSize: Dp = 80.dp,
     signSize: Dp = 16.dp
 ) {
     Box(
@@ -246,7 +246,7 @@ fun SquareWithDirectionalSign(
         when (position) {
             // Fixed Cells
             CellPosition(0, 0) -> {
-                Type1Square(
+                ColoredSquare(
                     text = shuffledTableData[position]?.joinToString(", ") ?: "?",
                     modifier = Modifier.fillMaxSize()
                 )
@@ -255,14 +255,14 @@ fun SquareWithDirectionalSign(
                 val cellData = shuffledTableData[position]
                 val topText = cellData?.getOrNull(0) ?: "?"
                 val bottomText = cellData?.getOrNull(1) ?: "?"
-                Type2Square(
+                TextSeparatedSquare(
                     topText = topText,
                     bottomText = bottomText,
                     modifier = Modifier.fillMaxSize()
                 )
             }
             CellPosition(4, 2) -> {
-                Type1Square(
+                ColoredSquare(
                     text = shuffledTableData[position]?.joinToString(", ") ?: "?",
                     modifier = Modifier.fillMaxSize()
                 )
@@ -271,7 +271,7 @@ fun SquareWithDirectionalSign(
             // Movable Cells
             else -> {
                 val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
-                Type3Square(
+                StackedSquare3D(
                     letter = letter,
                     modifier = Modifier.fillMaxSize()
                 )

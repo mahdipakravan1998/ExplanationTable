@@ -37,7 +37,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
         id = 2,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("نعمت ها"),
+                0 to listOf("نعمت\u200Cها"),
                 1 to listOf("ت"),
                 2 to listOf("ریخت و پاش", "چهارپای کوچک")
             ),
@@ -97,7 +97,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
         id = 4,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("نزدیکتر"),
+                0 to listOf("نزدیک\u200Cتر"),
                 1 to listOf("و"),
                 2 to listOf("مادر", "دیوار به دیوار")
             ),
@@ -127,7 +127,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
         id = 5,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("امانت دار"),
+                0 to listOf("امانت\u200Cدار"),
                 1 to listOf("ا"),
                 2 to listOf("پسران", "یادآوری")
             ),
@@ -277,9 +277,9 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
         id = 10,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("بگوش رساننده"),
+                0 to listOf("به گوش رساننده"),
                 1 to listOf("ق"),
-                2 to listOf("پایه ها", "آواز")
+                2 to listOf("پایه\u200Cها", "آواز")
             ),
             1 to mapOf(
                 0 to listOf("م"),
@@ -339,7 +339,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("ستاره"),
                 1 to listOf("ن"),
-                2 to listOf("پشتی ها", "فراوان")
+                2 to listOf("پشتی\u200Cها", "فراوان")
             ),
             1 to mapOf(
                 0 to listOf("ک"),
@@ -359,7 +359,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             4 to mapOf(
                 0 to listOf("ب"),
                 1 to listOf("ق"),
-                2 to listOf("عمیق ترین نقطه")
+                2 to listOf("عمیق\u200Cترین نقطه")
             )
         )
     ),
@@ -399,7 +399,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("لنگ"),
                 1 to listOf("م"),
-                2 to listOf("نوشته شده", "چوب ها")
+                2 to listOf("نوشته شده", "چوب\u200Cها")
             ),
             1 to mapOf(
                 0 to listOf("ا"),
@@ -427,7 +427,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
         id = 15,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("پست تر"),
+                0 to listOf("پست\u200Cتر"),
                 1 to listOf("م"),
                 2 to listOf("بیچاره", "تونل")
             ),
@@ -509,7 +509,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             4 to mapOf(
                 0 to listOf("ی"),
                 1 to listOf("ء"),
-                2 to listOf("سرکش تر")
+                2 to listOf("سرکش\u200Cتر")
             )
         )
     ),
@@ -639,7 +639,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("پشت کننده"),
                 1 to listOf("ا"),
-                2 to listOf("زیاده روی", "حافظ")
+                2 to listOf("زیاده\u200Cروی", "حافظ")
             ),
             1 to mapOf(
                 0 to listOf("م"),
@@ -729,7 +729,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("لقب حضرت عیسی"),
                 1 to listOf("ا"),
-                2 to listOf("غیر عربی", "عدس")
+                2 to listOf("غیرعربی", "عدس")
             ),
             1 to mapOf(
                 0 to listOf("م"),
@@ -809,7 +809,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             4 to mapOf(
                 0 to listOf("ق"),
                 1 to listOf("ت"),
-                2 to listOf("سیاه ها")
+                2 to listOf("سیاه\u200Cها")
             )
         )
     ),
@@ -849,7 +849,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("مسلمان"),
                 1 to listOf("م"),
-                2 to listOf("گنجینه ها", "خون بسته شده")
+                2 to listOf("گنجینه\u200Cها", "خون بسته\u200Cشده")
             ),
             1 to mapOf(
                 0 to listOf("م"),
@@ -907,7 +907,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
         id = 31,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("پوشش ها"),
+                0 to listOf("پوشش\u200Cها"),
                 1 to listOf("م"),
                 2 to listOf("نوشته شده", "طعنه زدن")
             ),
@@ -969,7 +969,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("دردناک"),
                 1 to listOf("م"),
-                2 to listOf("خانه ها", "وحشت")
+                2 to listOf("خانه\u200Cها", "وحشت")
             ),
             1 to mapOf(
                 0 to listOf("ا"),
@@ -999,7 +999,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("تازیانه"),
                 1 to listOf("م"),
-                2 to listOf("غایت ", "بازداشتن")
+                2 to listOf("غایت", "بازداشتن")
             ),
             1 to mapOf(
                 0 to listOf("ج"),
@@ -1029,7 +1029,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("اسیر"),
                 1 to listOf("م"),
-                2 to listOf("موضع ها", "مقنعه ها")
+                2 to listOf("موضع\u200Cها", "مقنعه\u200Cها")
             ),
             1 to mapOf(
                 0 to listOf("ا"),
@@ -1079,7 +1079,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             4 to mapOf(
                 0 to listOf("ع"),
                 1 to listOf("د"),
-                2 to listOf("قدرت ها")
+                2 to listOf("قدرت\u200Cها")
             )
         )
     ),
@@ -1087,7 +1087,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
         id = 37,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("اصلاح گر"),
+                0 to listOf("اصلاح\u200Cگر"),
                 1 to listOf("م"),
                 2 to listOf("وعده داده شده", "راستی")
             ),
@@ -1119,7 +1119,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("نمونه"),
                 1 to listOf("ض"),
-                2 to listOf("گمراهی ", "رنج و سختی")
+                2 to listOf("گمراهی", "رنج و سختی")
             ),
             1 to mapOf(
                 0 to listOf("ا"),
@@ -1269,7 +1269,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("فساد کننده"),
                 1 to listOf("م"),
-                2 to listOf("گورستان ها", "فسق و فجور")
+                2 to listOf("گورستان\u200Cها", "فسق و فجور")
             ),
             1 to mapOf(
                 0 to listOf("م"),
@@ -1449,7 +1449,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             0 to mapOf(
                 0 to listOf("از اسامی قیامت"),
                 1 to listOf("م"),
-                2 to listOf("منت گذاشته شده", "غلاف ها")
+                2 to listOf("منت گذاشته شده", "غلاف\u200Cها")
             ),
             1 to mapOf(
                 0 to listOf("ط"),

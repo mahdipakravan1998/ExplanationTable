@@ -1,6 +1,8 @@
 package com.example.explanationtable.model
 
 import androidx.compose.ui.graphics.Color
+import com.example.explanationtable.ui.theme.BeakUpper
+import com.example.explanationtable.ui.theme.FeatherGreen
 
 /**
  * Enum representing difficulty levels.
@@ -26,12 +28,12 @@ data class DifficultyColors(
 fun difficultyColors(difficulty: Difficulty): DifficultyColors {
     return when (difficulty) {
         Difficulty.EASY -> DifficultyColors(
-            backgroundColor = Color(0xFF58CC02),
+            backgroundColor = FeatherGreen,
             dividerColor = Color(0xFF47A302),
             textColor = Color.White
         )
         Difficulty.MEDIUM -> DifficultyColors(
-            backgroundColor = Color(0xFFFFC200),
+            backgroundColor = BeakUpper,
             dividerColor = Color(0xFFE29100),
             textColor = Color.White
         )

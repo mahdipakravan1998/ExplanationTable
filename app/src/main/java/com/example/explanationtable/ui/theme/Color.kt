@@ -123,3 +123,6 @@ val BorderDark = Color(0xFF38464F)
 // Light Mode Colors
 val DialogBackgroundLight = Color(0xFFFF_FFFD)
 val BorderLight = Color(0xFFE5E5E5)
+
+// Define the dark mode text color
+val TextDarkMode = Color(0xFFF1F7FB)
