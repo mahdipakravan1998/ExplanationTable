@@ -121,7 +121,7 @@ fun ColoredSquare(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(color = Bee)
                 .padding(8.dp),
             contentAlignment = Alignment.Center
@@ -132,7 +132,7 @@ fun ColoredSquare(
                 color = Color(0xFF5E3700),
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,        // Priority: fit into two lines
-                minTextSize = 12.sp,
+                minTextSize = 14.sp,
                 maxTextSize = 16.sp,
                 textAlign = TextAlign.Center,
                 fontFamily = VazirmatnFontFamily
@@ -158,7 +158,7 @@ fun TextSeparatedSquare(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(color = Bee)
                 .padding(8.dp)
         ) {
@@ -179,7 +179,7 @@ fun TextSeparatedSquare(
                         color = Color(0xFF5E3700),
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,  // first try 2 lines
-                        minTextSize = 8.sp,
+                        minTextSize = 10.sp,
                         maxTextSize = 16.sp,
                         textAlign = TextAlign.Center,
                         fontFamily = VazirmatnFontFamily
@@ -207,7 +207,7 @@ fun TextSeparatedSquare(
                         color = Color(0xFF5E3700),
                         fontWeight = FontWeight.Bold,
                         maxLines = 2, // first try 2 lines
-                        minTextSize = 8.sp,
+                        minTextSize = 10.sp,
                         maxTextSize = 16.sp,
                         textAlign = TextAlign.Center,
                         fontFamily = VazirmatnFontFamily
@@ -248,7 +248,7 @@ fun StackedSquare3D(
                     .align(Alignment.Center)
                     .offset(y = 2.dp)
                     .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(backColor)
             )
 
@@ -257,7 +257,7 @@ fun StackedSquare3D(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(middleColor)
             )
 
@@ -266,7 +266,7 @@ fun StackedSquare3D(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(76.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(frontColor),
                 contentAlignment = Alignment.Center
             ) {
@@ -298,7 +298,7 @@ fun BrightGreenSquare(
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(color = FeatherGreen),
             contentAlignment = Alignment.Center
         ) {

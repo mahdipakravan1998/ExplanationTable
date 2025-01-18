@@ -27,7 +27,7 @@ fun AppTopBar(
     isHomePage: Boolean,
     isDarkTheme: Boolean,
     title: String? = null,
-    diamonds: Int? = null,
+    gems: Int? = null,
     difficulty: Difficulty? = null,
     onSettingsClick: () -> Unit,
     iconTint: Color = MaterialTheme.colorScheme.onSurface,
@@ -70,18 +70,18 @@ fun AppTopBar(
             .height(topBarHeight)
             .background(containerColor)
     ) {
-        // Left Side: DiamondGroup or Spacer
+        // Left Side: GemGroup or Spacer
         if (!isHomePage) {
-            diamonds?.let { diamondCount ->
-                DiamondGroup(
-                    diamonds = diamondCount,
+            gems?.let { gemCount ->
+                GemGroup(
+                    gems = gemCount,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .padding(start = 16.dp)
                 )
             }
         } else {
-            // Spacer to match DiamondGroup width
+            // Spacer to match GemGroup width
             Spacer(
                 modifier = Modifier
                     .align(Alignment.CenterStart)

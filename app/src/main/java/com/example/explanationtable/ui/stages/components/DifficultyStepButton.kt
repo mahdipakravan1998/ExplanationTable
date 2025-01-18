@@ -23,8 +23,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.ui.theme.AppTypography
+import com.example.explanationtable.ui.theme.White
 import com.example.explanationtable.utils.toPersianDigits
 
 data class StageButtonColors(
@@ -88,7 +89,7 @@ fun DifficultyStepButton(
     var isPressed by remember { mutableStateOf(false) }
     val pressOffsetY by animateFloatAsState(
         targetValue = if (isPressed) behindOffsetY else 0f,
-        animationSpec = tween(durationMillis = 30) // short, snappy animation
+        animationSpec = tween(durationMillis = 30), label = "" // short, snappy animation
     )
 
     // Convert press offset to dp for text
@@ -178,9 +179,10 @@ fun DifficultyStepButton(
         // Step number text (moves with the front circle)
         Text(
             text = stepNumber.toPersianDigits(),
-            color = Color.White,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
+            style = AppTypography.headlineMedium.copy(
+                color = White,
+                fontWeight = FontWeight.Bold
+            ),
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset(y = pressOffsetDp)

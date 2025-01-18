@@ -68,7 +68,7 @@ fun OptionCard(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(y = shadowOffset), // Fixed shadow offset
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = shadowColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // No elevation
         ) {}
@@ -78,7 +78,7 @@ fun OptionCard(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(y = pressOffsetY), // Apply animated offset
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Removed elevation
         ) {

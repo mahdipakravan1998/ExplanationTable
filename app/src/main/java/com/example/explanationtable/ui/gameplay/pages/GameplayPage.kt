@@ -24,14 +24,14 @@ import com.example.explanationtable.utils.toPersianDigits
  * @param stageNumber The stage number to display in the top bar title.
  * @param difficulty The difficulty level of this stage.
  * @param isDarkTheme Whether the dark theme is enabled.
- * @param diamonds The number of diamonds to display in the top bar.
+ * @param gems The number of gems to display in the top bar.
  */
 @Composable
 fun GameplayPage(
     stageNumber: Int,
     difficulty: Difficulty,
     isDarkTheme: Boolean,
-    diamonds: Int = 999
+    gems: Int = 1000
 ) {
     val viewModel: MainViewModel = viewModel()
     val isMuted by viewModel.isMuted.collectAsState()
@@ -52,7 +52,7 @@ fun GameplayPage(
                 isHomePage = false,
                 isDarkTheme = isDarkTheme,
                 title = pageTitle,
-                diamonds = diamonds,
+                gems = gems,
                 difficulty = difficulty,
                 onSettingsClick = { showSettingsDialog = true },
                 onHelpClick = { /* no implementation yet */ }

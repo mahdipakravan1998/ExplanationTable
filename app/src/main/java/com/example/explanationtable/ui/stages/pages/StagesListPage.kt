@@ -24,7 +24,7 @@ import com.example.explanationtable.ui.stages.content.StagesListContent
  *
  * @param navController The NavController used for navigation.
  * @param difficulty The current difficulty level.
- * @param diamonds The number of diamonds to display.
+ * @param gems The number of gems to display.
  * @param onSettingsClick Callback for when the settings icon is clicked.
  * @param isDarkTheme Whether the dark theme is enabled.
  */
@@ -32,7 +32,7 @@ import com.example.explanationtable.ui.stages.content.StagesListContent
 fun StagesListPage(
     navController: NavController,
     difficulty: Difficulty = Difficulty.EASY,
-    diamonds: Int = +999,
+    gems: Int = 1000,
     onSettingsClick: () -> Unit = {},
     isDarkTheme: Boolean
 ) {
@@ -52,7 +52,7 @@ fun StagesListPage(
                 isHomePage = false,
                 isDarkTheme = isDarkTheme,
                 title = stringResource(id = R.string.stages_list),
-                diamonds = diamonds,
+                gems = gems,
                 difficulty = difficulty,
                 onSettingsClick = { showSettingsDialog = true },
                 iconTint = MaterialTheme.colorScheme.onSurface
