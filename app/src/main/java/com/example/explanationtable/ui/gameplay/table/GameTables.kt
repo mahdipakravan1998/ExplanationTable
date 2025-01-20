@@ -13,6 +13,14 @@ import com.example.explanationtable.data.easy.easyLevelTables
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.EasyLevelTable
 import kotlin.random.Random
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.runtime.*
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 
 /**
  * Data class representing a cell's position in the table.
@@ -237,9 +245,32 @@ fun SquareWithDirectionalSign(
     squareSize: Dp = 80.dp,
     signSize: Dp = 16.dp
 ) {
+    // Handle StackedSquare3D animation for the square
+    var isPressed by remember { mutableStateOf(false) }
+    val pressOffsetY by animateFloatAsState(
+        targetValue = if (isPressed) with(LocalDensity.current) { 2.dp.toPx() } else 0f,
+        animationSpec = tween(durationMillis = 30), // smooth transition
+        label = "" // no label needed here
+    )
+
+    // Convert to dp for the UI
+    val density = LocalDensity.current
+    val pressOffsetDp = with(density) { pressOffsetY.toDp() }
+
     Box(
         modifier = Modifier
-            .size(squareSize),
+            .size(squareSize)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown()
+                    isPressed = true
+                    val upOrCancel = waitForUpOrCancellation()
+                    isPressed = false
+                    if (upOrCancel != null) {
+                        // Optional: Handle click if needed
+                    }
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
         // Render the appropriate square type based on position
@@ -278,13 +309,14 @@ fun SquareWithDirectionalSign(
             }
         }
 
-        // Overlay Directional Signs based on position
+        // Overlay Directional Signs based on position and apply the animated offset
         when (position) {
             CellPosition(0, 1) -> {
                 DirectionalSign0_1(
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.TopEnd)
+                        .offset(y = pressOffsetDp) // Apply the same animated offset here
                         .padding(end = 4.dp, top = 16.dp) // Reduced padding
                 )
             }
@@ -292,6 +324,7 @@ fun SquareWithDirectionalSign(
                 DirectionalSign1_0(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
+                        .offset(y = pressOffsetDp) // Apply the same animated offset here
                         .padding(top = 4.dp)
                 )
             }
@@ -299,6 +332,7 @@ fun SquareWithDirectionalSign(
                 DirectionalSign1_2(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
+                        .offset(y = pressOffsetDp) // Apply the same animated offset here
                         .padding(top = 4.dp)
                 )
             }
@@ -307,6 +341,7 @@ fun SquareWithDirectionalSign(
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.BottomCenter)
+                        .offset(y = pressOffsetDp) // Apply the same animated offset here
                         .padding(bottom = 4.dp)
                 )
             }
@@ -317,6 +352,7 @@ fun SquareWithDirectionalSign(
         }
     }
 }
+
 
 /**
  * Placeholder for a future Medium table layout.

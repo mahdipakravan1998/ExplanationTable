@@ -1,8 +1,13 @@
 package com.example.explanationtable.ui.gameplay.table
 
 import android.content.res.Configuration
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -14,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -220,7 +227,6 @@ fun TextSeparatedSquare(
 
 /**
  * A three-layered stacked square (3D-ish effect) with a letter in the center.
- * Uses Vazirmatn font at 18.sp, bold by default.
  */
 @Composable
 fun StackedSquare3D(
@@ -235,10 +241,41 @@ fun StackedSquare3D(
     val frontColor = if (isDarkTheme) BackgroundDark else BackgroundLight
     val textColor = if (isDarkTheme) TextDarkMode else Eel
 
+    // 1) Track a pressed state + animate
+    val offsetY = 2.dp  // This is the amount you want to move down
+    var isPressed by remember { mutableStateOf(false) }
+    val pressOffsetY by animateFloatAsState(
+        targetValue = if (isPressed) with(LocalDensity.current) { 2.dp.toPx() } else 0f,
+        animationSpec = tween(durationMillis = 30), // smooth transition
+        label = "" // no label needed here
+    )
+
+    // Convert to dp for the UI
+    val density = LocalDensity.current
+    val pressOffsetDp = with(density) { pressOffsetY.toDp() }
+
+    // 2) Handle pointer input (press detection)
+    val gestureModifier = Modifier.pointerInput(Unit) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false)
+            isPressed = true
+
+            // Wait for finger up or cancel => pressed = false
+            val upOrCancel = waitForUpOrCancellation()
+            isPressed = false
+
+            // If the user actually lifted (not canceled), it's a click
+            if (upOrCancel != null) {
+                // Optional: Handle click if needed
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .width(80.dp)
-            .height(82.dp),
+            .height(82.dp)
+            .then(gestureModifier), // Add gesture modifier to detect clicks
         contentAlignment = Alignment.TopCenter
     ) {
         Box {
@@ -246,7 +283,7 @@ fun StackedSquare3D(
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .offset(y = 2.dp)
+                    .offset(y = offsetY)
                     .size(80.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(backColor)
@@ -256,6 +293,7 @@ fun StackedSquare3D(
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
+                    .offset(y = pressOffsetDp) // Apply the animated offset here
                     .size(80.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(middleColor)
@@ -265,8 +303,9 @@ fun StackedSquare3D(
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(76.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .offset(y = pressOffsetDp) // Apply the same animated offset here
+                    .size(75.dp)
+                    .clip(RoundedCornerShape(13.dp))
                     .background(frontColor),
                 contentAlignment = Alignment.Center
             ) {
