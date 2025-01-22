@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.explanationtable.data.easy.easyLevelTables
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.EasyLevelTable
@@ -377,24 +376,4 @@ fun HardTablePlaceholder(modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
         // Could be 5x5 or something else
     }
-}
-
-/**
- * Preview of the Easy 3x5 table,
- * passing stageNumber = 1 as an example.
- */
-@Preview(showBackground = true)
-@Composable
-fun EasyThreeByFiveTablePreview() {
-    EasyThreeByFiveTable(stageNumber = 1)
-}
-
-/**
- * Preview of the delegating composable for the EASY difficulty,
- * also passing stageNumber = 1 as an example.
- */
-@Preview(showBackground = true)
-@Composable
-fun GameTablePreview() {
-    GameTable(difficulty = Difficulty.EASY, stageNumber = 1)
 }

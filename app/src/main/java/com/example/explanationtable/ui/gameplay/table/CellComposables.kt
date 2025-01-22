@@ -236,8 +236,7 @@ fun StackedSquare3D(
     val mainViewModel: MainViewModel = viewModel()
     val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
 
-    val backColor = if (isDarkTheme) BorderDark else BorderLight
-    val middleColor = if (isDarkTheme) BorderDark else BorderLight
+    val borderColor = if (isDarkTheme) BorderDark else BorderLight
     val frontColor = if (isDarkTheme) BackgroundDark else BackgroundLight
     val textColor = if (isDarkTheme) TextDarkMode else Eel
 
@@ -286,7 +285,7 @@ fun StackedSquare3D(
                     .offset(y = offsetY)
                     .size(80.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(backColor)
+                    .background(borderColor)
             )
 
             // 2nd square (middle)
@@ -296,7 +295,7 @@ fun StackedSquare3D(
                     .offset(y = pressOffsetDp) // Apply the animated offset here
                     .size(80.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(middleColor)
+                    .background(borderColor)
             )
 
             // 1st square (front)
@@ -323,7 +322,6 @@ fun StackedSquare3D(
 
 /**
  * A bright green square with a letter in the center.
- * Uses fixed text size of 18.sp (bold), can wrap up to 2 lines.
  */
 @Composable
 fun BrightGreenSquare(

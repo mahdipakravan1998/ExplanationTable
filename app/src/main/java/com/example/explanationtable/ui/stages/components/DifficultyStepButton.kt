@@ -27,6 +27,7 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.theme.AppTypography
 import com.example.explanationtable.ui.theme.White
 import com.example.explanationtable.utils.toPersianDigits
+import androidx.compose.ui.geometry.Size
 
 data class StageButtonColors(
     // Circle #1 (behind) colors
@@ -83,17 +84,18 @@ fun DifficultyStepButton(
     }
 
     // 2) Track a pressed state + animate
-    // The behind circle is permanently offset by 16f
-    val behindOffsetY = 16f
+    // The behind circle is permanently offset by 6.dp
+    val behindOffsetY = 7.dp
+
+    val density = LocalDensity.current
 
     var isPressed by remember { mutableStateOf(false) }
     val pressOffsetY by animateFloatAsState(
-        targetValue = if (isPressed) behindOffsetY else 0f,
+        targetValue = if (isPressed) with(density) { behindOffsetY.toPx() } else 0f,
         animationSpec = tween(durationMillis = 30), label = "" // short, snappy animation
     )
 
     // Convert press offset to dp for text
-    val density = LocalDensity.current
     val pressOffsetDp = with(density) { pressOffsetY.toDp() }
 
     // 3) Pointer input for immediate press detection
@@ -116,7 +118,7 @@ fun DifficultyStepButton(
 
     // 4) Draw everything in a Box
     Box(
-        modifier = gestureModifier.size(90.dp),
+        modifier = gestureModifier.size(82.dp),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
@@ -130,7 +132,7 @@ fun DifficultyStepButton(
             val canvasCenter = center
 
             // Offsets for each circle
-            val behindCenter = Offset(canvasCenter.x, canvasCenter.y + behindOffsetY)
+            val behindCenter = Offset(canvasCenter.x, canvasCenter.y + behindOffsetY.toPx())
             val frontCenter = Offset(canvasCenter.x, canvasCenter.y + pressOffsetY)
 
             // 5) SINGLE diagonal path for all circles (ensures alignment):
@@ -140,7 +142,7 @@ fun DifficultyStepButton(
                 val leftX = canvasCenter.x - (shapePx / 2)
                 val topY = canvasCenter.y - (shapePx / 2)
                 val rightX = leftX + shapePx
-                val bottomY = topY + shapePx
+                val bottomY = topY + shapeDp.toPx()
 
                 moveTo(leftX, topY)         // top-left
                 lineTo(rightX, bottomY)     // bottom-right
@@ -151,7 +153,8 @@ fun DifficultyStepButton(
             // Circle #1 (behind)
             drawSplitCircleNoBorder(
                 center = behindCenter,
-                radius = outerRadius,
+                width = outerRadius * 2, // Full width (can be customized)
+                height = outerRadius * 1.8f, // Slightly smaller height for an elliptical effect
                 colorTopLeft = colors.behindTopLeft,
                 colorBottomRight = colors.behindBottomRight,
                 diagonalPath = diagonalPath
@@ -160,7 +163,8 @@ fun DifficultyStepButton(
             // Circle #2 (front / largest)
             drawSplitCircleNoBorder(
                 center = frontCenter,
-                radius = outerRadius,
+                width = outerRadius * 2, // Full width
+                height = outerRadius * 1.8f, // Slightly smaller height
                 colorTopLeft = colors.frontTopLeft,
                 colorBottomRight = colors.frontBottomRight,
                 diagonalPath = diagonalPath
@@ -169,11 +173,13 @@ fun DifficultyStepButton(
             // Circle #3 (inner / smaller)
             drawSplitCircleNoBorder(
                 center = frontCenter,
-                radius = innerRadius,
+                width = innerRadius * 2, // Full width of inner circle
+                height = innerRadius * 1.8f, // Slightly smaller height
                 colorTopLeft = colors.innerTopLeft,
                 colorBottomRight = colors.innerBottomRight,
                 diagonalPath = diagonalPath
             )
+
         }
 
         // Step number text (moves with the front circle)
@@ -199,7 +205,8 @@ fun DifficultyStepButton(
  */
 private fun DrawScope.drawSplitCircleNoBorder(
     center: Offset,
-    radius: Float,
+    width: Float,  // Custom width for the ellipse
+    height: Float, // Custom height for the ellipse
     colorTopLeft: Color,
     colorBottomRight: Color,
     diagonalPath: Path
@@ -209,11 +216,11 @@ private fun DrawScope.drawSplitCircleNoBorder(
         paint = Paint()
     )
 
-    // 1) Draw entire circle in the "bottom-right" color
-    drawCircle(
+    // 1) Draw entire ellipse in the "bottom-right" color
+    drawOval(
         color = colorBottomRight,
-        center = center,
-        radius = radius,
+        topLeft = Offset(center.x - width / 2, center.y - height / 2), // Adjusted for ellipse center
+        size = Size(width, height), // Custom width and height for the ellipse
         style = Fill,
         blendMode = BlendMode.Src
     )
@@ -221,10 +228,10 @@ private fun DrawScope.drawSplitCircleNoBorder(
     // 2) Clip to the diagonal path => top-left region
     clipPath(diagonalPath, clipOp = ClipOp.Intersect) {
         // 3) Overwrite top-left region with the "top-left" color
-        drawCircle(
+        drawOval(
             color = colorTopLeft,
-            center = center,
-            radius = radius,
+            topLeft = Offset(center.x - width / 2, center.y - height / 2), // Adjusted for ellipse center
+            size = Size(width, height), // Custom width and height for the ellipse
             style = Fill,
             blendMode = BlendMode.Src
         )

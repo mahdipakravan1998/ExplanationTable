@@ -126,3 +126,14 @@ val BorderLight = Color(0xFFE5E5E5)
 
 // Define the dark mode text color
 val TextDarkMode = Color(0xFFF1F7FB)
+
+// ------------------------------
+// Selection Mode Colors
+// ------------------------------
+val Turtle = Color(0xFFA5ED6E)
+val SeaSponge = Color(0xFFD7FFB8)
+val TreeFrog = Color(0xFF58A700)
+
+val DarkGreenBorder = Color(0xFF5F8428)
+val DarkBackground = Color(0xFF202F36)
+val DarkGreenText = Color(0xFF79B933)
