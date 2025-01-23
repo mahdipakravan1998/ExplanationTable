@@ -37,6 +37,8 @@ import com.example.explanationtable.ui.gameplay.table.components.cells.direction
 fun SquareWithDirectionalSign(
     position: CellPosition,
     shuffledTableData: Map<CellPosition, List<String>>,
+    isSelected: Boolean, // New parameter to indicate selection
+    handleSquareClick: () -> Unit, // Handle click to select square
     squareSize: Dp = 80.dp,
     signSize: Dp = 16.dp
 ) {
@@ -62,7 +64,7 @@ fun SquareWithDirectionalSign(
                     val upOrCancel = waitForUpOrCancellation()
                     isPressed = false
                     if (upOrCancel != null) {
-                        // Optional: Handle click if needed
+                        handleSquareClick() // Trigger the square click handler
                     }
                 }
             },
@@ -99,6 +101,7 @@ fun SquareWithDirectionalSign(
                 val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
                 StackedSquare3D(
                     letter = letter,
+                    isSelected = isSelected,
                     modifier = Modifier.fillMaxSize()
                 )
             }

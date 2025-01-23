@@ -1,5 +1,6 @@
 package com.example.explanationtable.ui.gameplay.table.components.layout
 
+import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +73,33 @@ fun EasyThreeByFiveTable(
         )
     }
 
+    // Track the selection of squares
+    var firstSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
+    var secondSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
+    var isSelectionComplete by remember { mutableStateOf(false) }
+
+    // Function to handle square selection
+    fun handleSquareClick(position: CellPosition) {
+        if (firstSelectedCell == null) {
+            // Select first cell
+            firstSelectedCell = position
+        } else if (secondSelectedCell == null && position != firstSelectedCell) {
+            // Select second cell and finalize the selection
+            secondSelectedCell = position
+            isSelectionComplete = true
+        }
+    }
+
+    // Function to reset the selection after two cells are selected
+    fun resetSelection() {
+        if (isSelectionComplete) {
+            // Reset the state for a new round of selection
+            firstSelectedCell = null
+            secondSelectedCell = null
+            isSelectionComplete = false
+        }
+    }
+
     // Render the table UI with adjusted spacing and horizontal centering
     Column(
         modifier = modifier
@@ -90,11 +119,18 @@ fun EasyThreeByFiveTable(
                     SquareWithDirectionalSign(
                         position = currentPosition,
                         shuffledTableData = shuffledTableData,
+                        isSelected = (firstSelectedCell == currentPosition || secondSelectedCell == currentPosition),
+                        handleSquareClick = { handleSquareClick(currentPosition) },
                         squareSize = 80.dp,
                         signSize = 16.dp
                     )
                 }
             }
         }
+    }
+
+    // Reset selection after both cells are selected
+    if (isSelectionComplete) {
+        resetSelection()
     }
 }

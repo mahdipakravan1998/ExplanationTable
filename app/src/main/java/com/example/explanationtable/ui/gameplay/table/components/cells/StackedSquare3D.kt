@@ -1,6 +1,6 @@
 package com.example.explanationtable.ui.gameplay.table.components.cells
 
-import android.content.res.Configuration
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,9 +34,14 @@ import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
 import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
+import com.example.explanationtable.ui.theme.DarkBackground
+import com.example.explanationtable.ui.theme.DarkGreenBorder
+import com.example.explanationtable.ui.theme.DarkGreenText
 import com.example.explanationtable.ui.theme.Eel
-import com.example.explanationtable.ui.theme.ExplanationTableTheme
+import com.example.explanationtable.ui.theme.SeaSponge
 import com.example.explanationtable.ui.theme.TextDarkMode
+import com.example.explanationtable.ui.theme.TreeFrog
+import com.example.explanationtable.ui.theme.Turtle
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 
 /**
@@ -46,14 +50,21 @@ import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 @Composable
 fun StackedSquare3D(
     letter: String,
+    isSelected: Boolean,
     modifier: Modifier = Modifier
 ) {
     val mainViewModel: MainViewModel = viewModel()
     val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
 
-    val borderColor = if (isDarkTheme) BorderDark else BorderLight
-    val frontColor = if (isDarkTheme) BackgroundDark else BackgroundLight
-    val textColor = if (isDarkTheme) TextDarkMode else Eel
+    // Colors based on the theme and selection state
+    val (frontColor, borderColor, textColor) = remember(isSelected, isDarkTheme) {
+        when {
+            isSelected && isDarkTheme -> Triple(DarkBackground, DarkGreenBorder, DarkGreenText) // Night mode selected
+            !isSelected && isDarkTheme -> Triple(BackgroundDark, BorderDark, TextDarkMode) // Night mode not selected
+            isSelected && !isDarkTheme -> Triple(SeaSponge, Turtle, TreeFrog) // Day mode selected
+            else -> Triple(BackgroundLight, BorderLight, Eel) // Day mode not selected
+        }
+    }
 
     // 1) Track a pressed state + animate
     val offsetY = 2.dp  // This is the amount you want to move down
@@ -132,25 +143,5 @@ fun StackedSquare3D(
                 )
             }
         }
-    }
-}
-
-// ------- PREVIEWS (Optional) -------
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewStackedSquare3DLight() {
-    // Simulate light theme
-    ExplanationTableTheme(darkTheme = false) {
-        StackedSquare3D(letter = "A")
-    }
-}
-
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun PreviewStackedSquare3DDark() {
-    // Simulate dark theme
-    ExplanationTableTheme(darkTheme = true) {
-        StackedSquare3D(letter = "A")
     }
 }
