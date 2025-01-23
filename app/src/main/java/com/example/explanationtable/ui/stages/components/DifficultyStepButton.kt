@@ -84,7 +84,7 @@ fun DifficultyStepButton(
     }
 
     // 2) Track a pressed state + animate
-    // The behind circle is permanently offset by 6.dp
+    // The behind circle is permanently offset by 7.dp
     val behindOffsetY = 7.dp
 
     val density = LocalDensity.current
