@@ -8,7 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -19,7 +18,6 @@ import com.example.explanationtable.ui.main.components.MainContent
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.stages.dialogs.DifficultyDialog
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
-import com.example.explanationtable.ui.theme.ExplanationTableTheme
 
 /**
  * The main page composable that sets up the primary UI structure, including the top bar,
@@ -33,9 +31,9 @@ import com.example.explanationtable.ui.theme.ExplanationTableTheme
 @Composable
 fun MainPage(
     navController: NavController = rememberNavController(),
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = viewModel(),
+    isDarkTheme: Boolean
 ) {
-    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     val isMuted by viewModel.isMuted.collectAsState()
 
     var showDifficultyDialog by remember { mutableStateOf(false) }
@@ -85,7 +83,7 @@ fun MainPage(
                 SettingsDialog(
                     showDialog = showSettingsDialog,
                     onDismiss = { showSettingsDialog = false },
-                    currentTheme = isDarkTheme,
+                    isDarkTheme = isDarkTheme,
                     onToggleTheme = { viewModel.toggleTheme() },
                     isMuted = isMuted,
                     onToggleMute = { viewModel.toggleMute() },
@@ -96,15 +94,5 @@ fun MainPage(
                 )
             }
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainPagePreview() {
-    ExplanationTableTheme(darkTheme = false) {
-        val navController = rememberNavController()
-        val viewModel: MainViewModel = viewModel()
-        MainPage(navController = navController, viewModel = viewModel)
     }
 }

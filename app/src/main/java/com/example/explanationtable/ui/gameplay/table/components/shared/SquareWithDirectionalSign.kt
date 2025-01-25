@@ -35,12 +35,14 @@ import com.example.explanationtable.ui.gameplay.table.components.cells.direction
  */
 @Composable
 fun SquareWithDirectionalSign(
+    isDarkTheme: Boolean,
     position: CellPosition,
     shuffledTableData: Map<CellPosition, List<String>>,
     isSelected: Boolean, // New parameter to indicate selection
     handleSquareClick: () -> Unit, // Handle click to select square
     squareSize: Dp = 80.dp,
-    signSize: Dp = 16.dp
+    signSize: Dp = 16.dp,
+    clickable: Boolean = false // New parameter to control clickability
 ) {
     // Handle StackedSquare3D animation for the square
     val density = LocalDensity.current
@@ -58,13 +60,15 @@ fun SquareWithDirectionalSign(
         modifier = Modifier
             .size(squareSize)
             .pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitFirstDown()
-                    isPressed = true
-                    val upOrCancel = waitForUpOrCancellation()
-                    isPressed = false
-                    if (upOrCancel != null) {
-                        handleSquareClick() // Trigger the square click handler
+                if (clickable) {
+                    awaitEachGesture {
+                        awaitFirstDown()
+                        isPressed = true
+                        val upOrCancel = waitForUpOrCancellation()
+                        isPressed = false
+                        if (upOrCancel != null) {
+                            handleSquareClick() // Trigger the square click handler
+                        }
                     }
                 }
             },
@@ -100,6 +104,7 @@ fun SquareWithDirectionalSign(
             else -> {
                 val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
                 StackedSquare3D(
+                    isDarkTheme = isDarkTheme,
                     letter = letter,
                     isSelected = isSelected,
                     modifier = Modifier.fillMaxSize()
@@ -111,6 +116,7 @@ fun SquareWithDirectionalSign(
         when (position) {
             CellPosition(0, 1) -> {
                 DirectionalSign0_1(
+                    isDarkTheme = isDarkTheme,
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.TopEnd)
@@ -120,6 +126,7 @@ fun SquareWithDirectionalSign(
             }
             CellPosition(1, 0) -> {
                 DirectionalSign1_0(
+                    isDarkTheme = isDarkTheme,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .offset(y = pressOffsetDp) // Apply the same animated offset here
@@ -128,6 +135,7 @@ fun SquareWithDirectionalSign(
             }
             CellPosition(1, 2) -> {
                 DirectionalSign1_2(
+                    isDarkTheme = isDarkTheme,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .offset(y = pressOffsetDp) // Apply the same animated offset here
@@ -136,6 +144,7 @@ fun SquareWithDirectionalSign(
             }
             CellPosition(3, 2) -> {
                 DirectionalSign3_2(
+                    isDarkTheme = isDarkTheme,
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.BottomCenter)

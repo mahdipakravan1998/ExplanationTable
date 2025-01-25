@@ -9,7 +9,10 @@ import androidx.compose.ui.Modifier
  * Only the order/arrangement of cells will differ.
  */
 @Composable
-fun MediumTablePlaceholder(modifier: Modifier = Modifier) {
+fun MediumTablePlaceholder(
+    isDarkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
     // TODO: Implement medium table arrangement here
     Box(modifier = modifier) {
         // Could be 3x5, 4x5, etc. with different arrangement

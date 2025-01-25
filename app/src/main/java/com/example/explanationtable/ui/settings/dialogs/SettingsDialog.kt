@@ -20,7 +20,7 @@ import com.example.explanationtable.ui.theme.DialogBackgroundLight
  *
  * @param showDialog Whether the settings dialog should be shown.
  * @param onDismiss Callback invoked when the dialog is dismissed.
- * @param currentTheme True if dark theme is active, false otherwise.
+ * @param isDarkTheme True if dark theme is active, false otherwise.
  * @param onToggleTheme Callback to toggle the theme.
  * @param isMuted True if the app is muted, false otherwise.
  * @param onToggleMute Callback to toggle the mute state.
@@ -30,7 +30,7 @@ import com.example.explanationtable.ui.theme.DialogBackgroundLight
 fun SettingsDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    currentTheme: Boolean, // True if Dark, false if Light
+    isDarkTheme: Boolean, // True if Dark, false if Light
     onToggleTheme: () -> Unit,
     isMuted: Boolean,
     onToggleMute: () -> Unit,
@@ -63,7 +63,7 @@ fun SettingsDialog(
             text = {
                 SettingsOptions(
                     onDismiss = onDismiss,
-                    currentTheme = currentTheme,
+                    currentTheme = isDarkTheme,
                     onToggleTheme = onToggleTheme,
                     isMuted = isMuted,
                     onToggleMute = onToggleMute,
@@ -75,7 +75,7 @@ fun SettingsDialog(
             },
             confirmButton = {},
             // Set the container color based on the theme
-            containerColor = if (currentTheme) DialogBackgroundDark else DialogBackgroundLight,
+            containerColor = if (isDarkTheme) DialogBackgroundDark else DialogBackgroundLight,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             textContentColor = MaterialTheme.colorScheme.onSurface,
             // Adjust shape and elevation to prevent theme overlays

@@ -19,6 +19,7 @@ import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWi
 import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
 import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
+import kotlinx.coroutines.delay
 
 /**
  * Easy level table layout (3 columns by 5 rows).
@@ -26,6 +27,7 @@ import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
  */
 @Composable
 fun EasyThreeByFiveTable(
+    isDarkTheme: Boolean,
     stageNumber: Int,
     modifier: Modifier = Modifier
 ) {
@@ -91,14 +93,23 @@ fun EasyThreeByFiveTable(
     }
 
     // Function to reset the selection after two cells are selected
+    @Composable
     fun resetSelection() {
         if (isSelectionComplete) {
-            // Reset the state for a new round of selection
-            firstSelectedCell = null
-            secondSelectedCell = null
-            isSelectionComplete = false
+            // Allow the selected cells to hold their color before resetting
+            val firstCell = firstSelectedCell
+            val secondCell = secondSelectedCell
+
+            // Start the deselection/reset logic asynchronously
+            LaunchedEffect(firstCell, secondCell) {
+                delay(500) // Hold the selected color for 500ms (non-blocking)
+                firstSelectedCell = null
+                secondSelectedCell = null
+                isSelectionComplete = false
+            }
         }
     }
+
 
     // Render the table UI with adjusted spacing and horizontal centering
     Column(
@@ -116,13 +127,16 @@ fun EasyThreeByFiveTable(
             ) {
                 for (colIndex in 0 until 3) { // 3 columns
                     val currentPosition = CellPosition(rowIndex, colIndex)
+                    val isStackedSquare = !fixedPositions.contains(currentPosition) // Only movable cells are StackedSquare3D
                     SquareWithDirectionalSign(
+                        isDarkTheme = isDarkTheme,
                         position = currentPosition,
                         shuffledTableData = shuffledTableData,
                         isSelected = (firstSelectedCell == currentPosition || secondSelectedCell == currentPosition),
-                        handleSquareClick = { handleSquareClick(currentPosition) },
+                        handleSquareClick = { if (isStackedSquare) handleSquareClick(currentPosition) },
                         squareSize = 80.dp,
-                        signSize = 16.dp
+                        signSize = 16.dp,
+                        clickable = isStackedSquare // Only StackedSquare3D cells are clickable
                     )
                 }
             }

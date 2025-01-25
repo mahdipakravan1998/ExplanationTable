@@ -71,7 +71,7 @@ fun StagesListPage(
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss = { showSettingsDialog = false },
-                currentTheme = isDarkTheme,
+                isDarkTheme = isDarkTheme,
                 onToggleTheme = { viewModel.toggleTheme() },
                 isMuted = isMuted,
                 onToggleMute = { viewModel.toggleMute() },

@@ -17,13 +17,14 @@ data class CellPosition(val row: Int, val col: Int)
  */
 @Composable
 fun GameTable(
+    isDarkTheme: Boolean,
     difficulty: Difficulty,
     stageNumber: Int,
     modifier: Modifier = Modifier
 ) {
     when (difficulty) {
-        Difficulty.EASY -> EasyThreeByFiveTable(stageNumber, modifier)
-        Difficulty.MEDIUM -> MediumTablePlaceholder(modifier)
-        Difficulty.HARD -> HardTablePlaceholder(modifier)
+        Difficulty.EASY -> EasyThreeByFiveTable(isDarkTheme, stageNumber, modifier)
+        Difficulty.MEDIUM -> MediumTablePlaceholder(isDarkTheme, modifier)
+        Difficulty.HARD -> HardTablePlaceholder(isDarkTheme, modifier)
     }
 }

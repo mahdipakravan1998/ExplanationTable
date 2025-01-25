@@ -18,9 +18,10 @@ import com.example.explanationtable.ui.theme.TextDarkMode
  * Directional arrow sign composables (pure drawing, no text).
  */
 @Composable
-fun DirectionalSign0_1(modifier: Modifier = Modifier) {
-    val mainViewModel: MainViewModel = viewModel()
-    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+fun DirectionalSign0_1(
+    isDarkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
     val signColor = if (isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(20.dp)) {
@@ -62,9 +63,10 @@ fun DirectionalSign0_1(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun DirectionalSign1_0(modifier: Modifier = Modifier) {
-    val mainViewModel: MainViewModel = viewModel()
-    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+fun DirectionalSign1_0(
+    isDarkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
     val signColor = if (isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(10.dp)) {
@@ -99,15 +101,22 @@ fun DirectionalSign1_0(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun DirectionalSign1_2(modifier: Modifier = Modifier) {
+fun DirectionalSign1_2(
+    isDarkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
     // Reuse DirectionalSign1_0
-    DirectionalSign1_0(modifier)
+    DirectionalSign1_0(
+        isDarkTheme = isDarkTheme,
+        modifier
+    )
 }
 
 @Composable
-fun DirectionalSign3_2(modifier: Modifier = Modifier) {
-    val mainViewModel: MainViewModel = viewModel()
-    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+fun DirectionalSign3_2(
+    isDarkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
     val signColor = if (isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(20.dp)) {

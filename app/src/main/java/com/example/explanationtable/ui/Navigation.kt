@@ -26,7 +26,7 @@ fun AppNavHost(
         startDestination = Routes.MAIN
     ) {
         composable(Routes.MAIN) {
-            MainPage(navController, viewModel)
+            MainPage(navController, viewModel, isDarkTheme)
         }
 
         // Parameterized composable for the StagesListPage
@@ -65,9 +65,9 @@ fun AppNavHost(
                 else     -> Difficulty.EASY
             }
             GameplayPage(
+                isDarkTheme = isDarkTheme,
                 stageNumber = stageNumber,
-                difficulty = difficultyEnum,
-                isDarkTheme = isDarkTheme
+                difficulty = difficultyEnum
             )
         }
     }

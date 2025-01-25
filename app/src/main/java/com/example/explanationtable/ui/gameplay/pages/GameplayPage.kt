@@ -28,9 +28,9 @@ import com.example.explanationtable.utils.toPersianDigits
  */
 @Composable
 fun GameplayPage(
+    isDarkTheme: Boolean,
     stageNumber: Int,
     difficulty: Difficulty,
-    isDarkTheme: Boolean,
     gems: Int = 1000
 ) {
     val viewModel: MainViewModel = viewModel()
@@ -62,6 +62,7 @@ fun GameplayPage(
 
             // Pass both difficulty and stageNumber to the GameTable
             GameTable(
+                isDarkTheme = isDarkTheme,
                 difficulty = difficulty,
                 stageNumber = stageNumber  // <-- now passes the stage number
             )
@@ -71,7 +72,7 @@ fun GameplayPage(
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss = { showSettingsDialog = false },
-                currentTheme = isDarkTheme,
+                isDarkTheme = isDarkTheme,
                 onToggleTheme = { viewModel.toggleTheme() },
                 isMuted = isMuted,
                 onToggleMute = { viewModel.toggleMute() },

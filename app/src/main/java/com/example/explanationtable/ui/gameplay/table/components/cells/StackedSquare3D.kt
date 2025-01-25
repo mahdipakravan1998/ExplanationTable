@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,8 +28,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
 import com.example.explanationtable.ui.theme.BorderDark
@@ -43,26 +41,65 @@ import com.example.explanationtable.ui.theme.TextDarkMode
 import com.example.explanationtable.ui.theme.TreeFrog
 import com.example.explanationtable.ui.theme.Turtle
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
+import kotlinx.coroutines.delay
 
 /**
  * A three-layered stacked square (3D-ish effect) with a letter in the center.
  */
 @Composable
 fun StackedSquare3D(
+    isDarkTheme: Boolean,
     letter: String,
     isSelected: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val mainViewModel: MainViewModel = viewModel()
-    val isDarkTheme by mainViewModel.isDarkTheme.collectAsState()
+    // States for color management
+    val isHoldingSelection = remember { mutableStateOf(false) }
+    val isResetting = remember { mutableStateOf(false) }
 
-    // Colors based on the theme and selection state
-    val (frontColor, borderColor, textColor) = remember(isSelected, isDarkTheme) {
-        when {
-            isSelected && isDarkTheme -> Triple(DarkBackground, DarkGreenBorder, DarkGreenText) // Night mode selected
-            !isSelected && isDarkTheme -> Triple(BackgroundDark, BorderDark, TextDarkMode) // Night mode not selected
-            isSelected && !isDarkTheme -> Triple(SeaSponge, Turtle, TreeFrog) // Day mode selected
-            else -> Triple(BackgroundLight, BorderLight, Eel) // Day mode not selected
+    // Colors based on the theme and state
+    val frontColor by animateColorAsState(
+        targetValue = when {
+            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBackground else SeaSponge
+            isResetting.value -> if (isDarkTheme) BackgroundDark else BackgroundLight
+            else -> if (isDarkTheme) BackgroundDark else BackgroundLight
+        },
+        animationSpec = tween(durationMillis = 300), // Smooth transition over 300ms
+        label = "Front Color Animation"
+    )
+
+    val borderColor by animateColorAsState(
+        targetValue = when {
+            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkGreenBorder else Turtle
+            isResetting.value -> if (isDarkTheme) BorderDark else BorderLight
+            else -> if (isDarkTheme) BorderDark else BorderLight
+        },
+        animationSpec = tween(durationMillis = 300),
+        label = "Border Color Animation"
+    )
+
+    val textColor by animateColorAsState(
+        targetValue = when {
+            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkGreenText else TreeFrog
+            isResetting.value -> if (isDarkTheme) TextDarkMode else Eel
+            else -> if (isDarkTheme) TextDarkMode else Eel
+        },
+        animationSpec = tween(durationMillis = 300),
+        label = "Text Color Animation"
+    )
+
+    // Handle the selection and hold logic
+    LaunchedEffect(isSelected) {
+        if (isSelected) {
+            // Hold the selected color for a while
+            isHoldingSelection.value = true
+            delay(500) // Keep the selected color visible for 500ms (non-blocking)
+            isHoldingSelection.value = false
+
+            // Start resetting after the hold period
+            isResetting.value = true
+            delay(300) // Matches `animationSpec` duration (non-blocking)
+            isResetting.value = false
         }
     }
 
