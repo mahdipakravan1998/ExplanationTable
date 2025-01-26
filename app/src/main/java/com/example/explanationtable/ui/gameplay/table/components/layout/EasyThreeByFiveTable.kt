@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
@@ -15,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.data.easy.easyLevelTables
 import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.ui.gameplay.table.components.cells.BrightGreenSquare
+import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
+import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
 import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWithDirectionalSign
 import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
@@ -32,13 +36,11 @@ fun EasyThreeByFiveTable(
     modifier: Modifier = Modifier
 ) {
     // Define the fixed positions of certain cells
-    val fixedPositions = remember {
-        setOf(
-            CellPosition(0, 0),
-            CellPosition(0, 2),
-            CellPosition(4, 2)
-        )
-    }
+    val fixedPositions = setOf(
+        CellPosition(0, 0),
+        CellPosition(0, 2),
+        CellPosition(4, 2)
+    )
 
     // Retrieve the original table data based on the current stage number
     val originalTableData = remember {
@@ -59,36 +61,52 @@ fun EasyThreeByFiveTable(
         derangeList(movableData)
     }
 
-    // Prepare fixed cells data
-    val fixedCellsData = mapOf(
-        CellPosition(0, 0) to (originalTableData.rows[0]?.get(0) ?: listOf("?")),
-        CellPosition(0, 2) to (originalTableData.rows[0]?.get(2) ?: listOf("?")),
-        CellPosition(4, 2) to (originalTableData.rows[4]?.get(2) ?: listOf("?"))
-    )
-
-    // Create shuffled table data by combining fixed and shuffled movable data
-    val shuffledTableData = remember {
-        createShuffledTable(
-            shuffledMovableData,
-            movablePositions,
-            fixedCellsData
-        )
+    // Use SnapshotStateMap for recomposition-safe mutable state handling
+    val currentTableData = remember {
+        mutableStateMapOf<CellPosition, List<String>>().apply {
+            putAll(
+                createShuffledTable(
+                    shuffledMovableData,
+                    movablePositions,
+                    mapOf() // Fixed positions are excluded
+                )
+            )
+        }
     }
+
+    // Track correctly placed cells
+    val correctlyPlacedCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
 
     // Track the selection of squares
     var firstSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var secondSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var isSelectionComplete by remember { mutableStateOf(false) }
 
-    // Function to handle square selection
+    // Handle square selection and swapping
     fun handleSquareClick(position: CellPosition) {
         if (firstSelectedCell == null) {
-            // Select first cell
             firstSelectedCell = position
         } else if (secondSelectedCell == null && position != firstSelectedCell) {
-            // Select second cell and finalize the selection
             secondSelectedCell = position
             isSelectionComplete = true
+
+            // Swap letters between the two selected cells
+            val firstCell = firstSelectedCell
+            val secondCell = secondSelectedCell
+            if (firstCell != null && secondCell != null) {
+                val temp = currentTableData[firstCell]
+                currentTableData[firstCell] = currentTableData[secondCell] ?: listOf("?")
+                currentTableData[secondCell] = temp ?: listOf("?")
+            }
+
+            // Check if any movable cell is now correctly placed
+            movablePositions.forEach { cellPosition ->
+                val originalData = originalTableData.rows[cellPosition.row]?.get(cellPosition.col)
+                if (currentTableData[cellPosition] == originalData) {
+                    correctlyPlacedCells[cellPosition] = originalData ?: listOf("?")
+                    currentTableData.remove(cellPosition) // Remove from movable cells
+                }
+            }
         }
     }
 
@@ -111,33 +129,63 @@ fun EasyThreeByFiveTable(
     }
 
 
-    // Render the table UI with adjusted spacing and horizontal centering
+// Render the table UI
     Column(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         for (rowIndex in 0 until 5) { // 5 rows
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .wrapContentHeight()
+                modifier = Modifier.wrapContentWidth().wrapContentHeight()
             ) {
                 for (colIndex in 0 until 3) { // 3 columns
                     val currentPosition = CellPosition(rowIndex, colIndex)
-                    val isStackedSquare = !fixedPositions.contains(currentPosition) // Only movable cells are StackedSquare3D
-                    SquareWithDirectionalSign(
-                        isDarkTheme = isDarkTheme,
-                        position = currentPosition,
-                        shuffledTableData = shuffledTableData,
-                        isSelected = (firstSelectedCell == currentPosition || secondSelectedCell == currentPosition),
-                        handleSquareClick = { if (isStackedSquare) handleSquareClick(currentPosition) },
-                        squareSize = 80.dp,
-                        signSize = 16.dp,
-                        clickable = isStackedSquare // Only StackedSquare3D cells are clickable
-                    )
+
+                    when {
+                        fixedPositions.contains(currentPosition) -> {
+                            // Render fixed cells based on their predefined types
+                            when (currentPosition) {
+                                CellPosition(0, 0), CellPosition(4, 2) -> {
+                                    ColoredSquare(
+                                        text = originalTableData.rows[rowIndex]?.get(colIndex)?.joinToString(", ") ?: "?",
+                                        modifier = Modifier.size(80.dp)
+                                    )
+                                }
+                                CellPosition(0, 2) -> {
+                                    val cellData = originalTableData.rows[rowIndex]?.get(colIndex)
+                                    val topText = cellData?.getOrNull(0) ?: "?"
+                                    val bottomText = cellData?.getOrNull(1) ?: "?"
+                                    TextSeparatedSquare(
+                                        topText = topText,
+                                        bottomText = bottomText,
+                                        modifier = Modifier.size(80.dp)
+                                    )
+                                }
+                            }
+                        }
+                        correctlyPlacedCells.containsKey(currentPosition) -> {
+                            // Render BrightGreenSquare for correctly placed cells
+                            BrightGreenSquare(
+                                letter = correctlyPlacedCells[currentPosition]?.joinToString(", ") ?: "?",
+                                modifier = Modifier.size(80.dp)
+                            )
+                        }
+                        else -> {
+                            // Render movable or stacked square
+                            SquareWithDirectionalSign(
+                                isDarkTheme = isDarkTheme,
+                                position = currentPosition,
+                                shuffledTableData = currentTableData,
+                                isSelected = (firstSelectedCell == currentPosition || secondSelectedCell == currentPosition),
+                                handleSquareClick = { handleSquareClick(currentPosition) },
+                                squareSize = 80.dp,
+                                signSize = 16.dp,
+                                clickable = true
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -22,9 +22,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.ui.gameplay.table.CellPosition
-import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.StackedSquare3D
-import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign0_1
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign1_0
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign1_2
@@ -74,43 +72,14 @@ fun SquareWithDirectionalSign(
             },
         contentAlignment = Alignment.Center
     ) {
-        // Render the appropriate square type based on position
-        when (position) {
-            // Fixed Cells
-            CellPosition(0, 0) -> {
-                ColoredSquare(
-                    text = shuffledTableData[position]?.joinToString(", ") ?: "?",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            CellPosition(0, 2) -> {
-                val cellData = shuffledTableData[position]
-                val topText = cellData?.getOrNull(0) ?: "?"
-                val bottomText = cellData?.getOrNull(1) ?: "?"
-                TextSeparatedSquare(
-                    topText = topText,
-                    bottomText = bottomText,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            CellPosition(4, 2) -> {
-                ColoredSquare(
-                    text = shuffledTableData[position]?.joinToString(", ") ?: "?",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            // Movable Cells
-            else -> {
-                val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
-                StackedSquare3D(
-                    isDarkTheme = isDarkTheme,
-                    letter = letter,
-                    isSelected = isSelected,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
+        // Render movable cells (StackedSquare3D)
+        val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
+        StackedSquare3D(
+            isDarkTheme = isDarkTheme,
+            letter = letter,
+            isSelected = isSelected,
+            modifier = Modifier.fillMaxSize()
+        )
 
         // Overlay Directional Signs based on position and apply the animated offset
         when (position) {

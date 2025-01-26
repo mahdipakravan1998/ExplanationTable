@@ -173,9 +173,9 @@ fun StackedSquare3D(
             ) {
                 Text(
                     text = letter,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
                     color = textColor,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                     fontFamily = VazirmatnFontFamily
                 )
             }

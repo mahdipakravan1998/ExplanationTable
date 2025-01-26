@@ -100,11 +100,3 @@ fun TextSeparatedSquare(
         }
     }
 }
-
-// ------- PREVIEW (Optional) -------
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewTextSeparatedSquare() {
-    TextSeparatedSquare(topText = "Hello World", bottomText = "This is a test")
-}
