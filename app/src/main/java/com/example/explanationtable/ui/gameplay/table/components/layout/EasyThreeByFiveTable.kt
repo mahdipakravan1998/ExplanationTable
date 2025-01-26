@@ -165,11 +165,18 @@ fun EasyThreeByFiveTable(
                                 }
                             }
                         }
+                        // Modified: Use SquareWithDirectionalSign for correct cells
                         correctlyPlacedCells.containsKey(currentPosition) -> {
-                            // Render BrightGreenSquare for correctly placed cells
-                            BrightGreenSquare(
-                                letter = correctlyPlacedCells[currentPosition]?.joinToString(", ") ?: "?",
-                                modifier = Modifier.size(80.dp)
+                            SquareWithDirectionalSign(
+                                isDarkTheme = isDarkTheme,
+                                position = currentPosition,
+                                shuffledTableData = correctlyPlacedCells,
+                                isSelected = false,
+                                handleSquareClick = {},
+                                squareSize = 80.dp,
+                                signSize = 16.dp,
+                                clickable = false,
+                                isCorrect = true // New parameter
                             )
                         }
                         else -> {

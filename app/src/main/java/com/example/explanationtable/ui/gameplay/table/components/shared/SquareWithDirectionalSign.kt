@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.ui.gameplay.table.components.cells.BrightGreenSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.StackedSquare3D
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign0_1
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign1_0
@@ -40,7 +41,8 @@ fun SquareWithDirectionalSign(
     handleSquareClick: () -> Unit, // Handle click to select square
     squareSize: Dp = 80.dp,
     signSize: Dp = 16.dp,
-    clickable: Boolean = false // New parameter to control clickability
+    clickable: Boolean = false, // New parameter to control clickability
+    isCorrect: Boolean = false // Added parameter
 ) {
     // Handle StackedSquare3D animation for the square
     val density = LocalDensity.current
@@ -74,18 +76,27 @@ fun SquareWithDirectionalSign(
     ) {
         // Render movable cells (StackedSquare3D)
         val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
-        StackedSquare3D(
-            isDarkTheme = isDarkTheme,
-            letter = letter,
-            isSelected = isSelected,
-            modifier = Modifier.fillMaxSize()
-        )
+        // Modified: Conditional square type based on isCorrect
+        if (isCorrect) {
+            BrightGreenSquare(
+                letter = letter,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            StackedSquare3D(
+                isDarkTheme = isDarkTheme,
+                letter = letter,
+                isSelected = isSelected,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         // Overlay Directional Signs based on position and apply the animated offset
         when (position) {
             CellPosition(0, 1) -> {
                 DirectionalSign0_1(
                     isDarkTheme = isDarkTheme,
+                    isOnCorrectSquare = isCorrect, // Pass the correct state
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.TopEnd)
@@ -96,6 +107,7 @@ fun SquareWithDirectionalSign(
             CellPosition(1, 0) -> {
                 DirectionalSign1_0(
                     isDarkTheme = isDarkTheme,
+                    isOnCorrectSquare = isCorrect, // Pass the correct state
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .offset(y = pressOffsetDp) // Apply the same animated offset here
@@ -105,6 +117,7 @@ fun SquareWithDirectionalSign(
             CellPosition(1, 2) -> {
                 DirectionalSign1_2(
                     isDarkTheme = isDarkTheme,
+                    isOnCorrectSquare = isCorrect, // Pass the correct state
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .offset(y = pressOffsetDp) // Apply the same animated offset here
@@ -114,6 +127,7 @@ fun SquareWithDirectionalSign(
             CellPosition(3, 2) -> {
                 DirectionalSign3_2(
                     isDarkTheme = isDarkTheme,
+                    isOnCorrectSquare = isCorrect, // Pass the correct state
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.BottomCenter)

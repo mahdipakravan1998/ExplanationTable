@@ -20,9 +20,10 @@ import com.example.explanationtable.ui.theme.TextDarkMode
 @Composable
 fun DirectionalSign0_1(
     isDarkTheme: Boolean,
+    isOnCorrectSquare: Boolean = false, // New parameter
     modifier: Modifier = Modifier
 ) {
-    val signColor = if (isDarkTheme) TextDarkMode else Eel
+    val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(20.dp)) {
         val stroke = 2.dp.toPx()
@@ -65,9 +66,10 @@ fun DirectionalSign0_1(
 @Composable
 fun DirectionalSign1_0(
     isDarkTheme: Boolean,
+    isOnCorrectSquare: Boolean = false, // New parameter
     modifier: Modifier = Modifier
 ) {
-    val signColor = if (isDarkTheme) TextDarkMode else Eel
+    val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(10.dp)) {
         val stroke = 2.dp.toPx()
@@ -103,11 +105,13 @@ fun DirectionalSign1_0(
 @Composable
 fun DirectionalSign1_2(
     isDarkTheme: Boolean,
+    isOnCorrectSquare: Boolean = false, // New parameter
     modifier: Modifier = Modifier
 ) {
     // Reuse DirectionalSign1_0
     DirectionalSign1_0(
         isDarkTheme = isDarkTheme,
+        isOnCorrectSquare = isOnCorrectSquare,
         modifier
     )
 }
@@ -115,9 +119,10 @@ fun DirectionalSign1_2(
 @Composable
 fun DirectionalSign3_2(
     isDarkTheme: Boolean,
+    isOnCorrectSquare: Boolean = false, // New parameter
     modifier: Modifier = Modifier
 ) {
-    val signColor = if (isDarkTheme) TextDarkMode else Eel
+    val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(20.dp)) {
         val stroke = 2.dp.toPx()
