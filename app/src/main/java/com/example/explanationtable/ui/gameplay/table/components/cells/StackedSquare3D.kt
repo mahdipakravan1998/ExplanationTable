@@ -30,17 +30,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
+import com.example.explanationtable.ui.theme.BlueJay
 import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
-import com.example.explanationtable.ui.theme.DarkBackground
+import com.example.explanationtable.ui.theme.DarkBlueBackground
+import com.example.explanationtable.ui.theme.DarkBlueBorder
+import com.example.explanationtable.ui.theme.DarkBlueText
+import com.example.explanationtable.ui.theme.DarkGreenBackground
 import com.example.explanationtable.ui.theme.DarkGreenBorder
 import com.example.explanationtable.ui.theme.DarkGreenText
 import com.example.explanationtable.ui.theme.Eel
+import com.example.explanationtable.ui.theme.Iguana
 import com.example.explanationtable.ui.theme.SeaSponge
 import com.example.explanationtable.ui.theme.TextDarkMode
 import com.example.explanationtable.ui.theme.TreeFrog
 import com.example.explanationtable.ui.theme.Turtle
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
+import com.example.explanationtable.ui.theme.Whale
 import kotlinx.coroutines.delay
 
 /**
@@ -51,6 +57,7 @@ fun StackedSquare3D(
     isDarkTheme: Boolean,
     letter: String,
     isSelected: Boolean,
+    isTransitioningToCorrect: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // States for color management
@@ -60,31 +67,55 @@ fun StackedSquare3D(
     // Colors based on the theme and state
     val frontColor by animateColorAsState(
         targetValue = when {
-            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBackground else SeaSponge
+            // A) Selected state
+            isSelected || isHoldingSelection.value -> {
+                if (isDarkTheme) DarkBlueBackground else Iguana
+            }
+            // C) Transitioning to correct
+            isTransitioningToCorrect -> {
+                if (isDarkTheme) DarkGreenBackground else SeaSponge
+            }
+            // Resetting or default
             isResetting.value -> if (isDarkTheme) BackgroundDark else BackgroundLight
             else -> if (isDarkTheme) BackgroundDark else BackgroundLight
         },
-        animationSpec = tween(durationMillis = 300), // Smooth transition over 300ms
+        animationSpec = tween(durationMillis = 150), // Smooth transition
         label = "Front Color Animation"
     )
 
     val borderColor by animateColorAsState(
         targetValue = when {
-            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkGreenBorder else Turtle
+            // A) Selected state
+            isSelected || isHoldingSelection.value -> {
+                if (isDarkTheme) DarkBlueBorder else BlueJay
+            }
+            // C) Transitioning to correct
+            isTransitioningToCorrect -> {
+                if (isDarkTheme) DarkGreenBorder else Turtle
+            }
+            // Resetting or default
             isResetting.value -> if (isDarkTheme) BorderDark else BorderLight
             else -> if (isDarkTheme) BorderDark else BorderLight
         },
-        animationSpec = tween(durationMillis = 300),
+        animationSpec = tween(durationMillis = 150),
         label = "Border Color Animation"
     )
 
     val textColor by animateColorAsState(
         targetValue = when {
-            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkGreenText else TreeFrog
+            // A) Selected state
+            isSelected || isHoldingSelection.value -> {
+                if (isDarkTheme) DarkBlueText else Whale
+            }
+            // C) Transitioning to correct
+            isTransitioningToCorrect -> {
+                if (isDarkTheme) DarkGreenText else TreeFrog
+            }
+            // Resetting or default
             isResetting.value -> if (isDarkTheme) TextDarkMode else Eel
             else -> if (isDarkTheme) TextDarkMode else Eel
         },
-        animationSpec = tween(durationMillis = 300),
+        animationSpec = tween(durationMillis = 150),
         label = "Text Color Animation"
     )
 
@@ -93,12 +124,12 @@ fun StackedSquare3D(
         if (isSelected) {
             // Hold the selected color for a while
             isHoldingSelection.value = true
-            delay(500) // Keep the selected color visible for 500ms (non-blocking)
+            delay(250) // Keep the selected color visible for 500ms (non-blocking)
             isHoldingSelection.value = false
 
             // Start resetting after the hold period
             isResetting.value = true
-            delay(300) // Matches `animationSpec` duration (non-blocking)
+            delay(150) // Matches `animationSpec` duration (non-blocking)
             isResetting.value = false
         }
     }

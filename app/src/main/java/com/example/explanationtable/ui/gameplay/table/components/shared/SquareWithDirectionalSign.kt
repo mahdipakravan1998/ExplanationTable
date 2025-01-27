@@ -42,7 +42,9 @@ fun SquareWithDirectionalSign(
     squareSize: Dp = 80.dp,
     signSize: Dp = 16.dp,
     clickable: Boolean = false, // New parameter to control clickability
-    isCorrect: Boolean = false // Added parameter
+    isCorrect: Boolean = false,
+    // NEW: indicates we’re in that short “C” transition
+    isTransitioning: Boolean = false
 ) {
     // Handle StackedSquare3D animation for the square
     val density = LocalDensity.current
@@ -87,6 +89,7 @@ fun SquareWithDirectionalSign(
                 isDarkTheme = isDarkTheme,
                 letter = letter,
                 isSelected = isSelected,
+                isTransitioningToCorrect = isTransitioning,
                 modifier = Modifier.fillMaxSize()
             )
         }

@@ -130,10 +130,18 @@ val TextDarkMode = Color(0xFFF1F7FB)
 // ------------------------------
 // Selection Mode Colors
 // ------------------------------
-val Turtle = Color(0xFFA5ED6E)
-val SeaSponge = Color(0xFFD7FFB8)
-val TreeFrog = Color(0xFF58A700)
+val Turtle = Color(0xFFA5ED6E)      //green borderColor (light mode)
+val SeaSponge = Color(0xFFD7FFB8)   //green frontColor (light mode)
+val TreeFrog = Color(0xFF58A700)    //green textColor (light mode)
 
-val DarkGreenBorder = Color(0xFF5F8428)
-val DarkBackground = Color(0xFF202F36)
-val DarkGreenText = Color(0xFF79B933)
+val DarkGreenBorder = Color(0xFF5F8428)     //green borderColor (dark mode)
+val DarkGreenBackground = Color(0xFF202F36)      //green frontColor (dark mode)
+val DarkGreenText = Color(0xFF79B933)       //green textColor (dark mode)
+
+val Iguana = Color(0xFFDDF4FF)  //Blue frontColor (light mode)
+val BlueJay = Color(0xFF84D8FF) //Blue borderColor (light mode)
+val Whale = Color(0xFF1899D6)   //Blue textColor (light mode)
+
+val DarkBlueBackground = Color(0xFF202F36)  //Blue frontColor (dark mode)
+val DarkBlueBorder = Color(0xFF84D8FF)  //Blue borderColor (dark mode)
+val DarkBlueText = Color(0xFF1899D6)    //Blue textColor (dark mode)
