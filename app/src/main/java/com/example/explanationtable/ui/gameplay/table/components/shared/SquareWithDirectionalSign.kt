@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -58,16 +59,27 @@ fun SquareWithDirectionalSign(
     // Convert to dp for the UI
     val pressOffsetDp = with(density) { pressOffsetY.toDp() }
 
+    // Handle scale animation
+    var scale by remember { mutableStateOf(1f) }
+    val scaleAnimation by animateFloatAsState(
+        targetValue = scale,
+        animationSpec = tween(durationMillis = 30),
+        label = "Scale Animation"
+    )
+
     Box(
         modifier = Modifier
             .size(squareSize)
+            .scale(scaleAnimation) // Apply scale animation
             .pointerInput(Unit) {
                 if (clickable) {
                     awaitEachGesture {
                         awaitFirstDown()
                         isPressed = true
+                        scale = 1.1f
                         val upOrCancel = waitForUpOrCancellation()
                         isPressed = false
+                        scale = 1f
                         if (upOrCancel != null) {
                             handleSquareClick() // Trigger the square click handler
                         }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -134,6 +135,14 @@ fun StackedSquare3D(
         }
     }
 
+    // Handle the scale animation on click
+    var scale by remember { mutableStateOf(1f) }
+    val scaleAnimation by animateFloatAsState(
+        targetValue = scale,
+        animationSpec = tween(durationMillis = 30),
+        label = "Scale Animation"
+    )
+
     // 1) Track a pressed state + animate
     val offsetY = 2.dp  // This is the amount you want to move down
     var isPressed by remember { mutableStateOf(false) }
@@ -168,6 +177,7 @@ fun StackedSquare3D(
         modifier = modifier
             .width(80.dp)
             .height(82.dp)
+            .scale(scaleAnimation) // Apply scale animation
             .then(gestureModifier), // Add gesture modifier to detect clicks
         contentAlignment = Alignment.TopCenter
     ) {
