@@ -35,29 +35,20 @@ fun AppTopBar(
 ) {
     val topBarHeight = 80.dp
 
-    // Define container color
-    val containerColor = if (isHomePage) {
-        Color.Transparent
-    } else {
-        // For non-home pages, get color based on difficulty
-        difficultyColors(difficulty!!).backgroundColor
-    }
+    // Container color based on the page type and difficulty
+    val containerColor = if (isHomePage) Color.Transparent else difficultyColors(difficulty!!).backgroundColor
 
-    // Define divider color for non-home pages
-    val dividerColor = if (isHomePage) {
-        Color.Transparent
-    } else {
-        difficultyColors(difficulty!!).dividerColor
-    }
+    // Divider color for non-home pages
+    val dividerColor = if (isHomePage) Color.Transparent else difficultyColors(difficulty!!).dividerColor
 
-    // Define settings button background color based on isDarkTheme and isHomePage
+    // Settings button styles for different themes and page types
     val settingsButtonBackgroundColor = if (isHomePage) {
         if (isDarkTheme) ButtonBackgroundLight else ButtonBackgroundDark
     } else {
         Color.Transparent
     }
 
-    // Define settings button icon tint based on isDarkTheme and isHomePage
+    // Icon tint for the settings button
     val settingsButtonIconTint = if (isHomePage) {
         if (isDarkTheme) ButtonIconDark else ButtonIconLight
     } else {
@@ -70,18 +61,18 @@ fun AppTopBar(
             .height(topBarHeight)
             .background(containerColor)
     ) {
-        // Left Side: GemGroup or Spacer
+        // Left section: Display gem count or spacer
         if (!isHomePage) {
             gems?.let { gemCount ->
+                // Increase the left padding here to push gem count further away from the left side
                 GemGroup(
                     gems = gemCount,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = 16.dp)
+                        .padding(start = 28.dp)  // Increased padding on the left
                 )
             }
         } else {
-            // Spacer to match GemGroup width
             Spacer(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -89,10 +80,10 @@ fun AppTopBar(
             )
         }
 
-        // Title: Always Centered
-        if (title != null) {
+        // Title displayed in the center
+        title?.let {
             Text(
-                text = title,
+                text = it,
                 fontSize = 18.sp,
                 color = if (!isHomePage && difficulty != null) {
                     difficultyColors(difficulty).textColor
@@ -104,20 +95,20 @@ fun AppTopBar(
             )
         }
 
-        // Right Side: Help Icon (optional) and Settings Icon
+        // Right section: Help and Settings icons with adjusted spacing
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 16.dp)
+                .padding(end = 28.dp) // Slightly reduced padding on the right side
         ) {
-            // HELP ICON (only if a callback is provided)
-            if (onHelpClick != null) {
+            // Help icon (visible only if onHelpClick is provided)
+            onHelpClick?.let {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .clickable { onHelpClick() },
+                        .clickable { it() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -129,7 +120,7 @@ fun AppTopBar(
                 }
             }
 
-            // SETTINGS ICON
+            // Settings icon
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -149,7 +140,7 @@ fun AppTopBar(
             }
         }
 
-        // Bottom divider for non-home pages
+        // Divider for non-home pages
         if (!isHomePage) {
             HorizontalDivider(
                 color = dividerColor,

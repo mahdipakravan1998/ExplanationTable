@@ -1,16 +1,7 @@
 package com.example.explanationtable.ui.gameplay.table.components.layout
 
 import androidx.compose.runtime.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -26,8 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Easy level table layout (3 columns by 5 rows).
- * Initializes the table with shuffled movable cells.
+ * Renders the easy-level 3x5 table with shuffled movable cells.
  */
 @Composable
 fun EasyThreeByFiveTable(
@@ -35,57 +25,47 @@ fun EasyThreeByFiveTable(
     stageNumber: Int,
     modifier: Modifier = Modifier
 ) {
-    // Define the fixed positions of certain cells
     val fixedPositions = setOf(
         CellPosition(0, 0),
         CellPosition(0, 2),
         CellPosition(4, 2)
     )
 
-    // Retrieve the original table data based on the current stage number
     val originalTableData = remember {
         easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
     }
 
-    // Extract movable cells data
     val movableDataList = remember {
         getMovableData(originalTableData, fixedPositions)
     }
 
-    // Separate positions and data for movable cells
     val movablePositions = remember { movableDataList.map { it.first } }
     val movableData = remember { movableDataList.map { it.second } }
 
-    // Shuffle movable data using derangement to prevent matching positions
     val shuffledMovableData = remember {
         derangeList(movableData)
     }
 
-    // Use SnapshotStateMap for recomposition-safe mutable state handling
     val currentTableData = remember {
         mutableStateMapOf<CellPosition, List<String>>().apply {
             putAll(
                 createShuffledTable(
                     shuffledMovableData,
                     movablePositions,
-                    mapOf() // Fixed positions are excluded
+                    mapOf()
                 )
             )
         }
     }
 
-    // Track correctly placed cells
     val correctlyPlacedCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
-
-    // NEW: Track transitioning cells (short “C” state) before they become correct
     val transitioningCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
 
-    // Track the selection of squares
     var firstSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var secondSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var isSelectionComplete by remember { mutableStateOf(false) }
 
-    // Handle square selection and swapping
+    // Handles the swapping of selected squares
     fun handleSquareClick(position: CellPosition) {
         if (firstSelectedCell == null) {
             firstSelectedCell = position
@@ -93,7 +73,6 @@ fun EasyThreeByFiveTable(
             secondSelectedCell = position
             isSelectionComplete = true
 
-            // Swap letters between the two selected cells
             val firstCell = firstSelectedCell
             val secondCell = secondSelectedCell
             if (firstCell != null && secondCell != null) {
@@ -102,25 +81,22 @@ fun EasyThreeByFiveTable(
                 currentTableData[secondCell] = temp ?: listOf("?")
             }
 
-            // Check if any movable cell is now correctly placed
             movablePositions.forEach { cellPosition ->
                 val originalData = originalTableData.rows[cellPosition.row]?.get(cellPosition.col)
                 if (currentTableData[cellPosition] == originalData) {
-                    // Instead of directly marking it correct, put it in the transitioning map
                     transitioningCells[cellPosition] = currentTableData[cellPosition]!!
-                    // Remove from the main map so it won't be moved again
                     currentTableData.remove(cellPosition)
                 }
             }
         }
     }
 
-    // Reset selection after two cells are selected
+    // Resets the selection after cells are swapped
     @Composable
     fun resetSelection() {
         if (isSelectionComplete) {
             LaunchedEffect(Unit) {
-                delay(300) // Briefly hold the selected color
+                delay(300)
                 firstSelectedCell = null
                 secondSelectedCell = null
                 isSelectionComplete = false
@@ -128,9 +104,8 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // After a cell enters transitioningCells, wait a short moment, then move it to correctlyPlacedCells
+    // Transition cells to the correctly placed state
     LaunchedEffect(transitioningCells.keys.toList()) {
-        // Launch each cell’s transition in a separate coroutine
         transitioningCells.keys.toList().forEach { pos ->
             val data = transitioningCells[pos] ?: return@forEach
             launch {
@@ -141,24 +116,22 @@ fun EasyThreeByFiveTable(
         }
     }
 
-
-// Render the table UI
+    // Render the table UI
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        for (rowIndex in 0 until 5) { // 5 rows
+        for (rowIndex in 0 until 5) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.wrapContentWidth().wrapContentHeight()
             ) {
-                for (colIndex in 0 until 3) { // 3 columns
+                for (colIndex in 0 until 3) {
                     val currentPosition = CellPosition(rowIndex, colIndex)
 
                     when {
                         fixedPositions.contains(currentPosition) -> {
-                            // Render fixed cells based on their predefined types
                             when (currentPosition) {
                                 CellPosition(0, 0), CellPosition(4, 2) -> {
                                     ColoredSquare(
@@ -178,7 +151,6 @@ fun EasyThreeByFiveTable(
                                 }
                             }
                         }
-                        // Modified: Use SquareWithDirectionalSign for correct cells
                         correctlyPlacedCells.containsKey(currentPosition) -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -189,10 +161,9 @@ fun EasyThreeByFiveTable(
                                 squareSize = 80.dp,
                                 signSize = 16.dp,
                                 clickable = false,
-                                isCorrect = true // New parameter
+                                isCorrect = true
                             )
                         }
-                        // 3) Cells in short “C” transition state
                         transitioningCells.containsKey(currentPosition) -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -203,12 +174,11 @@ fun EasyThreeByFiveTable(
                                 squareSize = 80.dp,
                                 signSize = 16.dp,
                                 clickable = false,
-                                isCorrect = false, // not yet final, but we show transition
+                                isCorrect = false,
                                 isTransitioning = true
                             )
                         }
                         else -> {
-                            // Render movable or stacked square
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
                                 position = currentPosition,
@@ -226,7 +196,6 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // Reset selection after both cells are selected
     if (isSelectionComplete) {
         resetSelection()
     }

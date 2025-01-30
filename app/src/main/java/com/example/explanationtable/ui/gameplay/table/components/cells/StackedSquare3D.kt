@@ -52,7 +52,7 @@ import com.example.explanationtable.ui.theme.Whale
 import kotlinx.coroutines.delay
 
 /**
- * A three-layered stacked square (3D-ish effect) with a letter in the center.
+ * A 3D-like stacked square with a letter displayed at the center.
  */
 @Composable
 fun StackedSquare3D(
@@ -62,128 +62,94 @@ fun StackedSquare3D(
     isTransitioningToCorrect: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    // States for color management
+    // Track selection and reset states
     val isHoldingSelection = remember { mutableStateOf(false) }
     val isResetting = remember { mutableStateOf(false) }
 
-    // Colors based on the theme and state
+    // Animated color changes based on the theme and state
     val frontColor by animateColorAsState(
         targetValue = when {
-            // A) Selected state
-            isSelected || isHoldingSelection.value -> {
-                if (isDarkTheme) DarkBlueBackground else Iguana
-            }
-            // C) Transitioning to correct
-            isTransitioningToCorrect -> {
-                if (isDarkTheme) DarkGreenBackground else SeaSponge
-            }
-            // Resetting or default
+            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBlueBackground else Iguana
+            isTransitioningToCorrect -> if (isDarkTheme) DarkGreenBackground else SeaSponge
             isResetting.value -> if (isDarkTheme) BackgroundDark else BackgroundLight
             else -> if (isDarkTheme) BackgroundDark else BackgroundLight
         },
-        animationSpec = tween(durationMillis = 150), // Smooth transition
-        label = "Front Color Animation"
+        animationSpec = tween(durationMillis = 150) // Smooth transition
     )
 
     val borderColor by animateColorAsState(
         targetValue = when {
-            // A) Selected state
-            isSelected || isHoldingSelection.value -> {
-                if (isDarkTheme) DarkBlueBorder else BlueJay
-            }
-            // C) Transitioning to correct
-            isTransitioningToCorrect -> {
-                if (isDarkTheme) DarkGreenBorder else Turtle
-            }
-            // Resetting or default
+            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBlueBorder else BlueJay
+            isTransitioningToCorrect -> if (isDarkTheme) DarkGreenBorder else Turtle
             isResetting.value -> if (isDarkTheme) BorderDark else BorderLight
             else -> if (isDarkTheme) BorderDark else BorderLight
         },
-        animationSpec = tween(durationMillis = 150),
-        label = "Border Color Animation"
+        animationSpec = tween(durationMillis = 150)
     )
 
     val textColor by animateColorAsState(
         targetValue = when {
-            // A) Selected state
-            isSelected || isHoldingSelection.value -> {
-                if (isDarkTheme) DarkBlueText else Whale
-            }
-            // C) Transitioning to correct
-            isTransitioningToCorrect -> {
-                if (isDarkTheme) DarkGreenText else TreeFrog
-            }
-            // Resetting or default
+            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBlueText else Whale
+            isTransitioningToCorrect -> if (isDarkTheme) DarkGreenText else TreeFrog
             isResetting.value -> if (isDarkTheme) TextDarkMode else Eel
             else -> if (isDarkTheme) TextDarkMode else Eel
         },
-        animationSpec = tween(durationMillis = 150),
-        label = "Text Color Animation"
+        animationSpec = tween(durationMillis = 150)
     )
 
-    // Handle the selection and hold logic
+    // Handle the selection effect and resetting after a delay
     LaunchedEffect(isSelected) {
         if (isSelected) {
-            // Hold the selected color for a while
             isHoldingSelection.value = true
-            delay(250) // Keep the selected color visible for 500ms (non-blocking)
+            delay(250) // Hold the selected state for a brief moment
             isHoldingSelection.value = false
 
-            // Start resetting after the hold period
+            // Start resetting after holding selection
             isResetting.value = true
-            delay(150) // Matches `animationSpec` duration (non-blocking)
+            delay(150) // Match reset animation duration
             isResetting.value = false
         }
     }
 
-    // Handle the scale animation on click
+    // Manage scale animation for click effect
     var scale by remember { mutableFloatStateOf(1f) }
     val scaleAnimation by animateFloatAsState(
         targetValue = scale,
-        animationSpec = tween(durationMillis = 50),
-        label = "Scale Animation"
+        animationSpec = tween(durationMillis = 50)
     )
 
-    // 1) Track a pressed state + animate
-    val offsetY = 2.dp  // This is the amount you want to move down
+    // Track press state and handle offset for pressed animation
+    val offsetY = 2.dp
     var isPressed by remember { mutableStateOf(false) }
     val pressOffsetY by animateFloatAsState(
         targetValue = if (isPressed) with(LocalDensity.current) { 2.dp.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 30), // smooth transition
-        label = "" // no label needed here
+        animationSpec = tween(durationMillis = 30)
     )
 
-    // Convert to dp for the UI
     val density = LocalDensity.current
     val pressOffsetDp = with(density) { pressOffsetY.toDp() }
 
-    // 2) Handle pointer input (press detection)
+    // Detect press gestures
     val gestureModifier = Modifier.pointerInput(Unit) {
         awaitEachGesture {
-            awaitFirstDown(requireUnconsumed = false)
+            awaitFirstDown()
             isPressed = true
-
-            // Wait for finger up or cancel => pressed = false
-            val upOrCancel = waitForUpOrCancellation()
+            waitForUpOrCancellation()
             isPressed = false
-
-            // If the user actually lifted (not canceled), it's a click
-            if (upOrCancel != null) {
-                // Optional: Handle click if needed
-            }
         }
     }
 
+    // Render the stacked squares with letter
     Box(
         modifier = modifier
             .width(80.dp)
             .height(82.dp)
-            .scale(scaleAnimation) // Apply scale animation
-            .then(gestureModifier), // Add gesture modifier to detect clicks
+            .scale(scaleAnimation) // Apply scale animation on click
+            .then(gestureModifier), // Detect click gesture
         contentAlignment = Alignment.TopCenter
     ) {
         Box {
-            // 3rd square (back)
+            // Background square (3rd layer)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -193,21 +159,21 @@ fun StackedSquare3D(
                     .background(borderColor)
             )
 
-            // 2nd square (middle)
+            // Middle square (2nd layer)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .offset(y = pressOffsetDp) // Apply the animated offset here
+                    .offset(y = pressOffsetDp) // Apply animated offset
                     .size(80.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(borderColor)
             )
 
-            // 1st square (front)
+            // Front square (1st layer)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .offset(y = pressOffsetDp) // Apply the same animated offset here
+                    .offset(y = pressOffsetDp) // Apply same offset here
                     .size(75.dp)
                     .clip(RoundedCornerShape(13.dp))
                     .background(frontColor),

@@ -36,61 +36,51 @@ import com.example.explanationtable.ui.gameplay.table.components.cells.direction
 import kotlinx.coroutines.delay
 
 /**
- * Helper composable to render squares with optional directional signs.
+ * Renders squares with optional directional signs and animations.
  */
 @Composable
 fun SquareWithDirectionalSign(
     isDarkTheme: Boolean,
     position: CellPosition,
     shuffledTableData: Map<CellPosition, List<String>>,
-    isSelected: Boolean, // New parameter to indicate selection
-    handleSquareClick: () -> Unit, // Handle click to select square
+    isSelected: Boolean,
+    handleSquareClick: () -> Unit,
     squareSize: Dp = 80.dp,
     signSize: Dp = 16.dp,
-    clickable: Boolean = false, // New parameter to control clickability
+    clickable: Boolean = false,
     isCorrect: Boolean = false,
-    // NEW: indicates we’re in that short “C” transition
     isTransitioning: Boolean = false
 ) {
-    // Handle StackedSquare3D animation for the square
     val density = LocalDensity.current
     var isPressed by remember { mutableStateOf(false) }
+
+    // Animated vertical offset for the press effect
     val pressOffsetY by animateFloatAsState(
         targetValue = if (isPressed) with(density) { 2.dp.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 30), // smooth transition
-        label = "" // no label needed here
+        animationSpec = tween(durationMillis = 30)
     )
-
-    // Convert to dp for the UI
     val pressOffsetDp = with(density) { pressOffsetY.toDp() }
 
-    // Create a more intense explosion effect by enlarging the cell rapidly
+    // Scale for explosion effect
     var scale by remember { mutableFloatStateOf(1f) }
     val scaleAnimation by animateFloatAsState(
         targetValue = scale,
-        animationSpec = tween(
-            durationMillis = 120, // Explosive animation duration
-            easing = FastOutLinearInEasing // Sharp explosion easing
-        ), label = "Explosion Scale Animation"
+        animationSpec = tween(durationMillis = 120, easing = FastOutLinearInEasing)
     )
 
+    // Transition scale when transitioning to correct state
     val transitionScale by animateFloatAsState(
         targetValue = if (isTransitioning) 1.15f else 1f,
-        animationSpec = tween(
-            durationMillis = 100, // Test with shorter duration first
-            easing = FastOutSlowInEasing
-        ),
-        label = "Transition Explosion Scale"
+        animationSpec = tween(durationMillis = 100, easing = FastOutSlowInEasing)
     )
 
-    // LaunchedEffect to handle delay and return to original size after enlargement
     val shouldReturnToOriginalSize = remember { mutableStateOf(false) }
 
-    // Trigger enlargement after click and wait before resetting size
+    // Trigger return to original size after enlargement
     LaunchedEffect(shouldReturnToOriginalSize.value) {
         if (shouldReturnToOriginalSize.value) {
-            delay(50) // Delay to keep the enlarged state for a short time
-            scale = 1f  // Reset to original size
+            delay(50) // Short delay before resetting size
+            scale = 1f
             shouldReturnToOriginalSize.value = false
         }
     }
@@ -98,35 +88,27 @@ fun SquareWithDirectionalSign(
     Box(
         modifier = Modifier
             .size(squareSize)
-            .scale(scaleAnimation * transitionScale) // Combine both animations
+            .scale(scaleAnimation * transitionScale) // Apply combined scaling
             .pointerInput(Unit) {
                 if (clickable) {
                     awaitEachGesture {
                         awaitFirstDown()
                         isPressed = true
                         val upOrCancel = waitForUpOrCancellation()
-                        isPressed = false // After release, enlarge the button
-                        // After release, enlarge the button
-                        scale = 1.1f  // Button enlarges after being released
-
-                        // Set the flag to trigger the reset of the size
+                        isPressed = false
+                        scale = 1.1f // Enlarge button on release
                         shouldReturnToOriginalSize.value = true
-                        if (upOrCancel != null) {
-                            handleSquareClick() // Trigger the square click handler
-                        }
+                        if (upOrCancel != null) handleSquareClick()
                     }
                 }
             },
         contentAlignment = Alignment.Center
     ) {
-        // Render movable cells (StackedSquare3D)
         val letter = shuffledTableData[position]?.joinToString(", ") ?: "?"
-        // Modified: Conditional square type based on isCorrect
+
+        // Render appropriate square based on correctness
         if (isCorrect) {
-            BrightGreenSquare(
-                letter = letter,
-                modifier = Modifier.fillMaxSize()
-            )
+            BrightGreenSquare(letter = letter, modifier = Modifier.fillMaxSize())
         } else {
             StackedSquare3D(
                 isDarkTheme = isDarkTheme,
@@ -137,54 +119,51 @@ fun SquareWithDirectionalSign(
             )
         }
 
-        // Overlay Directional Signs based on position and apply the animated offset
+        // Render directional signs based on cell position
         when (position) {
             CellPosition(0, 1) -> {
                 DirectionalSign0_1(
                     isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect, // Pass the correct state
+                    isOnCorrectSquare = isCorrect,
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.TopEnd)
-                        .offset(y = pressOffsetDp) // Apply the same animated offset here
-                        .padding(end = 4.dp, top = 16.dp) // Reduced padding
+                        .offset(y = pressOffsetDp)
+                        .padding(end = 4.dp, top = 16.dp)
                 )
             }
             CellPosition(1, 0) -> {
                 DirectionalSign1_0(
                     isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect, // Pass the correct state
+                    isOnCorrectSquare = isCorrect,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .offset(y = pressOffsetDp) // Apply the same animated offset here
+                        .offset(y = pressOffsetDp)
                         .padding(top = 4.dp)
                 )
             }
             CellPosition(1, 2) -> {
                 DirectionalSign1_2(
                     isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect, // Pass the correct state
+                    isOnCorrectSquare = isCorrect,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .offset(y = pressOffsetDp) // Apply the same animated offset here
+                        .offset(y = pressOffsetDp)
                         .padding(top = 4.dp)
                 )
             }
             CellPosition(3, 2) -> {
                 DirectionalSign3_2(
                     isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect, // Pass the correct state
+                    isOnCorrectSquare = isCorrect,
                     modifier = Modifier
                         .size(signSize)
                         .align(Alignment.BottomCenter)
-                        .offset(y = pressOffsetDp) // Apply the same animated offset here
+                        .offset(y = pressOffsetDp)
                         .padding(bottom = 4.dp)
                 )
             }
-            // Add more cases if needed
-            else -> {
-                // No directional sign for other positions
-            }
+            else -> { /* No directional sign for other positions */ }
         }
     }
 }

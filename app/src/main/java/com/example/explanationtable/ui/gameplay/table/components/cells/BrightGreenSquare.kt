@@ -30,31 +30,33 @@ import com.example.explanationtable.R
 import com.example.explanationtable.ui.theme.Polar
 
 /**
- * A bright green square with a letter in the center.
+ * A bright green square with a letter in the center, accompanied by a star animation.
  */
 @Composable
 fun BrightGreenSquare(
     letter: String,
     modifier: Modifier = Modifier
 ) {
-    // States to control star animation (starting at 0dp size and 0 rotation)
-    val star1ScaleAndRotation = remember { Animatable(0f) } // Large star
+    // Animatable for controlling scale and rotation of the star
+    val star1ScaleAndRotation = remember { Animatable(0f) }
 
-    // Start animation when the BrightGreenSquare is displayed
+    // Trigger animation on component load
     LaunchedEffect(Unit) {
-        // Slow growth: using FastOutSlowInEasing for a slow grow
+        // Grow the star with a slow animation
         val growSpec = tween<Float>(durationMillis = 1200, easing = FastOutSlowInEasing)
         star1ScaleAndRotation.animateTo(1f, animationSpec = growSpec)
 
-        // Fast shrink: using LinearEasing for fast shrink
+        // Shrink the star quickly
         val shrinkSpec = tween<Float>(durationMillis = 300, easing = LinearEasing)
         star1ScaleAndRotation.animateTo(0f, animationSpec = shrinkSpec)
     }
 
+    // Outer container for the square
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
+        // Green square with rounded corners containing the letter
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -71,7 +73,7 @@ fun BrightGreenSquare(
             )
         }
 
-        // Animate Stars: Large Star at top-left, Medium & Small Stars at bottom-right
+        // Animated star positioned at the top-left corner
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -86,7 +88,7 @@ fun BrightGreenSquare(
             Image(
                 painter = painterResource(id = R.drawable.star),
                 contentDescription = "Sparkling Star",
-                colorFilter = ColorFilter.tint(Polar) // Gold Color
+                colorFilter = ColorFilter.tint(Polar)
             )
         }
     }
