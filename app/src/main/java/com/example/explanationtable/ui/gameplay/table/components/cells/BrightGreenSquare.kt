@@ -1,6 +1,7 @@
 package com.example.explanationtable.ui.gameplay.table.components.cells
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -26,6 +27,7 @@ import com.example.explanationtable.ui.theme.FeatherGreen
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 import com.example.explanationtable.ui.theme.White
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.theme.Polar
 
 /**
  * A bright green square with a letter in the center.
@@ -40,13 +42,13 @@ fun BrightGreenSquare(
 
     // Start animation when the BrightGreenSquare is displayed
     LaunchedEffect(Unit) {
-        val animationSpec = tween<Float>(durationMillis = 500, easing = LinearEasing)
+        // Slow growth: using FastOutSlowInEasing for a slow grow
+        val growSpec = tween<Float>(durationMillis = 1200, easing = FastOutSlowInEasing)
+        star1ScaleAndRotation.animateTo(1f, animationSpec = growSpec)
 
-        star1ScaleAndRotation.animateTo(1f, animationSpec = animationSpec)
-
+        // Fast shrink: using LinearEasing for fast shrink
         val shrinkSpec = tween<Float>(durationMillis = 300, easing = LinearEasing)
         star1ScaleAndRotation.animateTo(0f, animationSpec = shrinkSpec)
-
     }
 
     Box(
@@ -73,18 +75,18 @@ fun BrightGreenSquare(
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 6.dp, top = 4.dp)
+                .padding(start = 8.dp, top = 8.dp)
                 .graphicsLayer(
                     scaleX = star1ScaleAndRotation.value,
                     scaleY = star1ScaleAndRotation.value,
                     rotationZ = star1ScaleAndRotation.value * 360f
                 )
-                .size(20.dp)
+                .size(15.dp)
         ) {
             Image(
                 painter = painterResource(id = R.drawable.star),
-                contentDescription = "Star 1",
-                colorFilter = ColorFilter.tint(White)
+                contentDescription = "Sparkling Star",
+                colorFilter = ColorFilter.tint(Polar) // Gold Color
             )
         }
     }

@@ -1,5 +1,7 @@
 package com.example.explanationtable.ui.gameplay.table.components.shared
 
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -11,7 +13,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,6 +33,7 @@ import com.example.explanationtable.ui.gameplay.table.components.cells.direction
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign1_0
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign1_2
 import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign3_2
+import kotlinx.coroutines.delay
 
 /**
  * Helper composable to render squares with optional directional signs.
@@ -59,27 +64,53 @@ fun SquareWithDirectionalSign(
     // Convert to dp for the UI
     val pressOffsetDp = with(density) { pressOffsetY.toDp() }
 
-    // Handle scale animation
-    var scale by remember { mutableStateOf(1f) }
+    // Create a more intense explosion effect by enlarging the cell rapidly
+    var scale by remember { mutableFloatStateOf(1f) }
     val scaleAnimation by animateFloatAsState(
         targetValue = scale,
-        animationSpec = tween(durationMillis = 30),
-        label = "Scale Animation"
+        animationSpec = tween(
+            durationMillis = 120, // Explosive animation duration
+            easing = FastOutLinearInEasing // Sharp explosion easing
+        ), label = "Explosion Scale Animation"
     )
+
+    val transitionScale by animateFloatAsState(
+        targetValue = if (isTransitioning) 1.15f else 1f,
+        animationSpec = tween(
+            durationMillis = 100, // Test with shorter duration first
+            easing = FastOutSlowInEasing
+        ),
+        label = "Transition Explosion Scale"
+    )
+
+    // LaunchedEffect to handle delay and return to original size after enlargement
+    val shouldReturnToOriginalSize = remember { mutableStateOf(false) }
+
+    // Trigger enlargement after click and wait before resetting size
+    LaunchedEffect(shouldReturnToOriginalSize.value) {
+        if (shouldReturnToOriginalSize.value) {
+            delay(50) // Delay to keep the enlarged state for a short time
+            scale = 1f  // Reset to original size
+            shouldReturnToOriginalSize.value = false
+        }
+    }
 
     Box(
         modifier = Modifier
             .size(squareSize)
-            .scale(scaleAnimation) // Apply scale animation
+            .scale(scaleAnimation * transitionScale) // Combine both animations
             .pointerInput(Unit) {
                 if (clickable) {
                     awaitEachGesture {
                         awaitFirstDown()
                         isPressed = true
-                        scale = 1.1f
                         val upOrCancel = waitForUpOrCancellation()
-                        isPressed = false
-                        scale = 1f
+                        isPressed = false // After release, enlarge the button
+                        // After release, enlarge the button
+                        scale = 1.1f  // Button enlarges after being released
+
+                        // Set the flag to trigger the reset of the size
+                        shouldReturnToOriginalSize.value = true
                         if (upOrCancel != null) {
                             handleSquareClick() // Trigger the square click handler
                         }

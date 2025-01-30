@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -136,10 +137,10 @@ fun StackedSquare3D(
     }
 
     // Handle the scale animation on click
-    var scale by remember { mutableStateOf(1f) }
+    var scale by remember { mutableFloatStateOf(1f) }
     val scaleAnimation by animateFloatAsState(
         targetValue = scale,
-        animationSpec = tween(durationMillis = 30),
+        animationSpec = tween(durationMillis = 50),
         label = "Scale Animation"
     )
 
