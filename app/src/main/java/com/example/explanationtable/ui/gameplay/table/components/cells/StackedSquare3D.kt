@@ -74,7 +74,7 @@ fun StackedSquare3D(
             isResetting.value -> if (isDarkTheme) BackgroundDark else BackgroundLight
             else -> if (isDarkTheme) BackgroundDark else BackgroundLight
         },
-        animationSpec = tween(durationMillis = 150) // Smooth transition
+        animationSpec = tween(durationMillis = 150), label = "" // Smooth transition
     )
 
     val borderColor by animateColorAsState(
@@ -84,7 +84,7 @@ fun StackedSquare3D(
             isResetting.value -> if (isDarkTheme) BorderDark else BorderLight
             else -> if (isDarkTheme) BorderDark else BorderLight
         },
-        animationSpec = tween(durationMillis = 150)
+        animationSpec = tween(durationMillis = 150), label = ""
     )
 
     val textColor by animateColorAsState(
@@ -94,7 +94,7 @@ fun StackedSquare3D(
             isResetting.value -> if (isDarkTheme) TextDarkMode else Eel
             else -> if (isDarkTheme) TextDarkMode else Eel
         },
-        animationSpec = tween(durationMillis = 150)
+        animationSpec = tween(durationMillis = 150), label = ""
     )
 
     // Handle the selection effect and resetting after a delay
@@ -115,7 +115,7 @@ fun StackedSquare3D(
     var scale by remember { mutableFloatStateOf(1f) }
     val scaleAnimation by animateFloatAsState(
         targetValue = scale,
-        animationSpec = tween(durationMillis = 50)
+        animationSpec = tween(durationMillis = 50), label = ""
     )
 
     // Track press state and handle offset for pressed animation
@@ -123,7 +123,7 @@ fun StackedSquare3D(
     var isPressed by remember { mutableStateOf(false) }
     val pressOffsetY by animateFloatAsState(
         targetValue = if (isPressed) with(LocalDensity.current) { 2.dp.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 30)
+        animationSpec = tween(durationMillis = 30), label = ""
     )
 
     val density = LocalDensity.current

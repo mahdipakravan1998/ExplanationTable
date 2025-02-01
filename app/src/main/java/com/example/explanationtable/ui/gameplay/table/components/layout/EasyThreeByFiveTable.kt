@@ -109,7 +109,7 @@ fun EasyThreeByFiveTable(
         transitioningCells.keys.toList().forEach { pos ->
             val data = transitioningCells[pos] ?: return@forEach
             launch {
-                delay(150)
+                delay(50)
                 correctlyPlacedCells[pos] = data
                 transitioningCells.remove(pos)
             }

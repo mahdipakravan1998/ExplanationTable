@@ -81,7 +81,7 @@ fun BrightGreenSquare(
                 .graphicsLayer(
                     scaleX = star1ScaleAndRotation.value,
                     scaleY = star1ScaleAndRotation.value,
-                    rotationZ = star1ScaleAndRotation.value * 360f
+                    rotationZ = star1ScaleAndRotation.value * 180f
                 )
                 .size(15.dp)
         ) {
