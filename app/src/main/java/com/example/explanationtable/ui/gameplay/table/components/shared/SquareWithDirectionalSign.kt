@@ -130,7 +130,38 @@ fun SquareWithDirectionalSign(
                         .padding(end = 4.dp, top = 16.dp)
                 )
             }
-            // Handle other directional signs similarly...
+            CellPosition(1, 0) -> {
+                DirectionalSign1_0(
+                    isDarkTheme = isDarkTheme,
+                    isOnCorrectSquare = isCorrect,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = pressOffsetDp)
+                        .padding(top = 4.dp)
+                )
+            }
+            CellPosition(1, 2) -> {
+                DirectionalSign1_2(
+                    isDarkTheme = isDarkTheme,
+                    isOnCorrectSquare = isCorrect,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = pressOffsetDp)
+                        .padding(top = 4.dp)
+                )
+            }
+            CellPosition(3, 2) -> {
+                DirectionalSign3_2(
+                    isDarkTheme = isDarkTheme,
+                    isOnCorrectSquare = isCorrect,
+                    modifier = Modifier
+                        .size(signSize)
+                        .align(Alignment.BottomCenter)
+                        .offset(y = pressOffsetDp)
+                        .padding(bottom = 4.dp)
+                )
+            }
+            else -> { /* No directional sign for other positions */ }
         }
     }
 }
