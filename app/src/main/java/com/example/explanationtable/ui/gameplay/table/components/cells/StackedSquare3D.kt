@@ -62,11 +62,9 @@ fun StackedSquare3D(
     isTransitioningToCorrect: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    // Track selection and reset states
     val isHoldingSelection = remember { mutableStateOf(false) }
     val isResetting = remember { mutableStateOf(false) }
 
-    // Animated color changes based on the theme and state
     val frontColor by animateColorAsState(
         targetValue = when {
             isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBlueBackground else Iguana
@@ -97,39 +95,33 @@ fun StackedSquare3D(
         animationSpec = tween(durationMillis = 150), label = ""
     )
 
-    // Handle the selection effect and resetting after a delay
     LaunchedEffect(isSelected) {
         if (isSelected) {
             isHoldingSelection.value = true
-            delay(250) // Hold the selected state for a brief moment
+            delay(150) // Shorter duration
             isHoldingSelection.value = false
-
-            // Start resetting after holding selection
             isResetting.value = true
-            delay(150) // Match reset animation duration
+            delay(100) // Match reset animation duration
             isResetting.value = false
         }
     }
 
-    // Manage scale animation for click effect
     var scale by remember { mutableFloatStateOf(1f) }
     val scaleAnimation by animateFloatAsState(
         targetValue = scale,
-        animationSpec = tween(durationMillis = 50), label = ""
+        animationSpec = tween(durationMillis = 100), label = ""
     )
 
-    // Track press state and handle offset for pressed animation
     val offsetY = 2.dp
     var isPressed by remember { mutableStateOf(false) }
     val pressOffsetY by animateFloatAsState(
         targetValue = if (isPressed) with(LocalDensity.current) { 2.dp.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 30), label = ""
+        animationSpec = tween(durationMillis = 50), label = ""
     )
 
     val density = LocalDensity.current
     val pressOffsetDp = with(density) { pressOffsetY.toDp() }
 
-    // Detect press gestures
     val gestureModifier = Modifier.pointerInput(Unit) {
         awaitEachGesture {
             awaitFirstDown()
@@ -139,17 +131,15 @@ fun StackedSquare3D(
         }
     }
 
-    // Render the stacked squares with letter
     Box(
         modifier = modifier
             .width(80.dp)
             .height(82.dp)
-            .scale(scaleAnimation) // Apply scale animation on click
-            .then(gestureModifier), // Detect click gesture
+            .scale(scaleAnimation)
+            .then(gestureModifier),
         contentAlignment = Alignment.TopCenter
     ) {
         Box {
-            // Background square (3rd layer)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -159,21 +149,19 @@ fun StackedSquare3D(
                     .background(borderColor)
             )
 
-            // Middle square (2nd layer)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .offset(y = pressOffsetDp) // Apply animated offset
+                    .offset(y = pressOffsetDp)
                     .size(80.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(borderColor)
             )
 
-            // Front square (1st layer)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .offset(y = pressOffsetDp) // Apply same offset here
+                    .offset(y = pressOffsetDp)
                     .size(75.dp)
                     .clip(RoundedCornerShape(13.dp))
                     .background(frontColor),

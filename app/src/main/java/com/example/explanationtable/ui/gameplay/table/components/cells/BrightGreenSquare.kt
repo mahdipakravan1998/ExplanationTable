@@ -1,7 +1,7 @@
 package com.example.explanationtable.ui.gameplay.table.components.cells
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -37,26 +37,20 @@ fun BrightGreenSquare(
     letter: String,
     modifier: Modifier = Modifier
 ) {
-    // Animatable for controlling scale and rotation of the star
     val star1ScaleAndRotation = remember { Animatable(0f) }
 
-    // Trigger animation on component load
     LaunchedEffect(Unit) {
-        // Grow the star with a slow animation
-        val growSpec = tween<Float>(durationMillis = 1200, easing = FastOutSlowInEasing)
+        val growSpec = tween<Float>(durationMillis = 1000, easing = FastOutLinearInEasing)
         star1ScaleAndRotation.animateTo(1f, animationSpec = growSpec)
 
-        // Shrink the star quickly
         val shrinkSpec = tween<Float>(durationMillis = 300, easing = LinearEasing)
         star1ScaleAndRotation.animateTo(0f, animationSpec = shrinkSpec)
     }
 
-    // Outer container for the square
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        // Green square with rounded corners containing the letter
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -73,7 +67,6 @@ fun BrightGreenSquare(
             )
         }
 
-        // Animated star positioned at the top-left corner
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)

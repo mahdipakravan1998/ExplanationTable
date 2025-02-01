@@ -96,7 +96,7 @@ fun EasyThreeByFiveTable(
     fun resetSelection() {
         if (isSelectionComplete) {
             LaunchedEffect(Unit) {
-                delay(300)
+                delay(200) // Delay to simulate reset duration
                 firstSelectedCell = null
                 secondSelectedCell = null
                 isSelectionComplete = false
@@ -120,11 +120,11 @@ fun EasyThreeByFiveTable(
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp) // Reduced spacing for smoother appearance
     ) {
         for (rowIndex in 0 until 5) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp), // Reduced row spacing
                 modifier = Modifier.wrapContentWidth().wrapContentHeight()
             ) {
                 for (colIndex in 0 until 3) {
