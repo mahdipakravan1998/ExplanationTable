@@ -4,16 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
 
 /**
- * The main content composable that displays primary action buttons.
+ * Displays the primary action buttons ("List of Steps" and "Start Game") centered on the screen.
  *
  * @param onListClicked Callback invoked when the "List of Steps" button is clicked.
  * @param onStartGameClicked Callback invoked when the "Start Game" button is clicked.
- * @param modifier Modifier to be applied to the Column layout.
+ * @param modifier Modifier to be applied to the overall layout.
  */
 @Composable
 fun MainContent(
@@ -21,35 +21,39 @@ fun MainContent(
     onStartGameClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Use a Column to arrange content vertically in the full available space.
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(bottom = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .fillMaxSize()        // Occupies the full size of its parent.
+            .padding(bottom = 48.dp), // Adds bottom padding for spacing.
+        horizontalAlignment = Alignment.CenterHorizontally, // Centers children horizontally.
+        verticalArrangement = Arrangement.Center          // Centers children vertically.
     ) {
+        // Top spacer to create balanced spacing above the button row.
         Spacer(modifier = Modifier.weight(1f))
 
+        // Row containing the two primary buttons with a fixed space between them.
         Row(
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(0.8f) // Adjust the width to maintain button ratio
+            modifier = Modifier.fillMaxWidth(0.8f), // Restricts the row to 80% of the parent's width.
+            horizontalArrangement = Arrangement.spacedBy(24.dp), // Sets 24.dp spacing between buttons.
+            verticalAlignment = Alignment.CenterVertically        // Aligns buttons vertically centered.
         ) {
-            // First Button: List of Steps
+            // Button for displaying the list of steps.
             MainButton(
                 iconId = R.drawable.ic_stages_list,
                 label = stringResource(id = R.string.stages_list),
-                onClick = onListClicked // Open Dialog
+                onClick = onListClicked // Callback to open the list dialog.
             )
 
-            // Second Button: Start Game
+            // Button for starting the game.
             MainButton(
                 iconId = R.drawable.ic_start_game,
                 label = stringResource(id = R.string.start_game),
-                onClick = onStartGameClicked // Navigate to StartGame screen
+                onClick = onStartGameClicked // Callback to navigate to the game screen.
             )
         }
 
+        // Bottom spacer to create balanced spacing below the button row.
         Spacer(modifier = Modifier.weight(1f))
     }
 }

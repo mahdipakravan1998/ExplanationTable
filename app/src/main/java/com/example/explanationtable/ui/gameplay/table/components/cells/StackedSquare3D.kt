@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,7 +51,16 @@ import com.example.explanationtable.ui.theme.Whale
 import kotlinx.coroutines.delay
 
 /**
- * A 3D-like stacked square with a letter displayed at the center.
+ * A composable representing a 3D-like stacked square with a centered letter.
+ *
+ * This composable creates a tactile, layered effect using multiple Box layers,
+ * smooth color transitions via Compose's animation APIs, and gesture handling for press feedback.
+ *
+ * @param isDarkTheme Determines the theme for color selection.
+ * @param letter The letter to be displayed at the center.
+ * @param isSelected Indicates if the square is currently selected.
+ * @param isTransitioningToCorrect Indicates if the square is transitioning to a correct state.
+ * @param modifier Modifier for external styling and layout adjustments.
  */
 @Composable
 fun StackedSquare3D(
@@ -62,108 +70,134 @@ fun StackedSquare3D(
     isTransitioningToCorrect: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val isHoldingSelection = remember { mutableStateOf(false) }
-    val isResetting = remember { mutableStateOf(false) }
+    // --- State and Animation Setup ---
 
+    // Temporary state to drive the selection animation.
+    val isHoldingSelection = remember { mutableStateOf(false) }
+
+    // Animate the front background color based on the selection and transition states.
     val frontColor by animateColorAsState(
         targetValue = when {
-            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBlueBackground else Iguana
-            isTransitioningToCorrect -> if (isDarkTheme) DarkGreenBackground else SeaSponge
-            isResetting.value -> if (isDarkTheme) BackgroundDark else BackgroundLight
-            else -> if (isDarkTheme) BackgroundDark else BackgroundLight
+            isSelected || isHoldingSelection.value ->
+                if (isDarkTheme) DarkBlueBackground else Iguana
+            isTransitioningToCorrect ->
+                if (isDarkTheme) DarkGreenBackground else SeaSponge
+            else ->
+                if (isDarkTheme) BackgroundDark else BackgroundLight
         },
-        animationSpec = tween(durationMillis = 150), label = "" // Smooth transition
+        animationSpec = tween(durationMillis = 150)
     )
 
+    // Animate the border color based on the selection and transition states.
     val borderColor by animateColorAsState(
         targetValue = when {
-            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBlueBorder else BlueJay
-            isTransitioningToCorrect -> if (isDarkTheme) DarkGreenBorder else Turtle
-            isResetting.value -> if (isDarkTheme) BorderDark else BorderLight
-            else -> if (isDarkTheme) BorderDark else BorderLight
+            isSelected || isHoldingSelection.value ->
+                if (isDarkTheme) DarkBlueBorder else BlueJay
+            isTransitioningToCorrect ->
+                if (isDarkTheme) DarkGreenBorder else Turtle
+            else ->
+                if (isDarkTheme) BorderDark else BorderLight
         },
-        animationSpec = tween(durationMillis = 150), label = ""
+        animationSpec = tween(durationMillis = 150)
     )
 
+    // Animate the text color based on the selection and transition states.
     val textColor by animateColorAsState(
         targetValue = when {
-            isSelected || isHoldingSelection.value -> if (isDarkTheme) DarkBlueText else Whale
-            isTransitioningToCorrect -> if (isDarkTheme) DarkGreenText else TreeFrog
-            isResetting.value -> if (isDarkTheme) TextDarkMode else Eel
-            else -> if (isDarkTheme) TextDarkMode else Eel
+            isSelected || isHoldingSelection.value ->
+                if (isDarkTheme) DarkBlueText else Whale
+            isTransitioningToCorrect ->
+                if (isDarkTheme) DarkGreenText else TreeFrog
+            else ->
+                if (isDarkTheme) TextDarkMode else Eel
         },
-        animationSpec = tween(durationMillis = 150), label = ""
+        animationSpec = tween(durationMillis = 150)
     )
 
+    // Trigger a temporary selection effect when the square is selected.
     LaunchedEffect(isSelected) {
         if (isSelected) {
             isHoldingSelection.value = true
-            delay(150) // Shorter duration
+            delay(150)
             isHoldingSelection.value = false
-            isResetting.value = true
-            delay(100) // Match reset animation duration
-            isResetting.value = false
         }
     }
 
-    var scale by remember { mutableFloatStateOf(1f) }
+    // A constant scale animation (currently static at 1f) for future enhancements.
     val scaleAnimation by animateFloatAsState(
-        targetValue = scale,
-        animationSpec = tween(durationMillis = 100), label = ""
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 100)
     )
 
-    val offsetY = 2.dp
+    // --- Layout Dimensions ---
+    val cellSize = 80.dp
+    val innerSize = 75.dp
+    val outerHeight = 82.dp
+    val cornerRadius = 16.dp
+    val innerCornerRadius = 13.dp
+    val defaultOffsetY = 2.dp
+
+    // --- Press Feedback Animation Setup ---
+
+    // Track whether the cell is currently pressed.
     var isPressed by remember { mutableStateOf(false) }
-    val pressOffsetY by animateFloatAsState(
-        targetValue = if (isPressed) with(LocalDensity.current) { 2.dp.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 50), label = ""
-    )
+    val density = LocalDensity.current // For dp <-> px conversions
 
-    val density = LocalDensity.current
+    // Animate vertical offset to simulate a tactile press effect.
+    val pressOffsetY by animateFloatAsState(
+        targetValue = if (isPressed) with(density) { defaultOffsetY.toPx() } else 0f,
+        animationSpec = tween(durationMillis = 50)
+    )
+    // Convert the animated offset from pixels back to dp.
     val pressOffsetDp = with(density) { pressOffsetY.toDp() }
 
+    // Define gesture handling to update the press state.
     val gestureModifier = Modifier.pointerInput(Unit) {
         awaitEachGesture {
-            awaitFirstDown()
+            awaitFirstDown() // Wait for the initial touch down.
             isPressed = true
-            waitForUpOrCancellation()
+            waitForUpOrCancellation() // Await the touch release or cancellation.
             isPressed = false
         }
     }
 
+    // --- Layout Composition ---
     Box(
         modifier = modifier
-            .width(80.dp)
-            .height(82.dp)
+            .width(cellSize)
+            .height(outerHeight)
             .scale(scaleAnimation)
             .then(gestureModifier),
         contentAlignment = Alignment.TopCenter
     ) {
         Box {
+            // Shadow Layer: creates a 3D-like shadow effect.
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .offset(y = offsetY)
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .offset(y = defaultOffsetY)
+                    .size(cellSize)
+                    .clip(RoundedCornerShape(cornerRadius))
                     .background(borderColor)
             )
 
+            // Dynamic Border Layer: shifts with press offset for tactile feedback.
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = pressOffsetDp)
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(cellSize)
+                    .clip(RoundedCornerShape(cornerRadius))
                     .background(borderColor)
             )
 
+            // Front Layer: contains the animated background and centered text.
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = pressOffsetDp)
-                    .size(75.dp)
-                    .clip(RoundedCornerShape(13.dp))
+                    .size(innerSize)
+                    .clip(RoundedCornerShape(innerCornerRadius))
                     .background(frontColor),
                 contentAlignment = Alignment.Center
             ) {

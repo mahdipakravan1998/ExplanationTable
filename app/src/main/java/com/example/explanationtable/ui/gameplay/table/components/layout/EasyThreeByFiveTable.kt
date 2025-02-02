@@ -1,7 +1,7 @@
 package com.example.explanationtable.ui.gameplay.table.components.layout
 
-import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -17,7 +17,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Renders the easy-level 3x5 table with shuffled movable cells.
+ * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
+ *
+ * @param isDarkTheme Boolean flag to determine if dark theme is active.
+ * @param stageNumber Stage number to select the corresponding table data.
+ * @param modifier Modifier for customizing the layout.
  */
 @Composable
 fun EasyThreeByFiveTable(
@@ -25,54 +29,69 @@ fun EasyThreeByFiveTable(
     stageNumber: Int,
     modifier: Modifier = Modifier
 ) {
+    // --- Initialization of Fixed and Movable Cell Data ---
+
+    // Define positions that remain fixed and are not swappable.
     val fixedPositions = setOf(
         CellPosition(0, 0),
         CellPosition(0, 2),
         CellPosition(4, 2)
     )
 
+    // Retrieve the original table data based on the stage number.
     val originalTableData = remember {
         easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
     }
 
+    // Extract the movable cell data (excluding fixed positions).
     val movableDataList = remember {
         getMovableData(originalTableData, fixedPositions)
     }
-
     val movablePositions = remember { movableDataList.map { it.first } }
     val movableData = remember { movableDataList.map { it.second } }
 
-    val shuffledMovableData = remember {
-        derangeList(movableData)
-    }
+    // Shuffle the movable data using a derangement algorithm to ensure no item remains in its original spot.
+    val shuffledMovableData = remember { derangeList(movableData) }
 
+    // Create the initial state of the table with shuffled movable data.
     val currentTableData = remember {
         mutableStateMapOf<CellPosition, List<String>>().apply {
-            putAll(
-                createShuffledTable(
-                    shuffledMovableData,
-                    movablePositions,
-                    mapOf()
-                )
-            )
+            putAll(createShuffledTable(shuffledMovableData, movablePositions, emptyMap()))
         }
     }
 
+    // --- State Tracking for Cell Transitions and Selections ---
+
+    // Map to track cells that have been correctly placed.
     val correctlyPlacedCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
+    // Map to track cells that are in the process of transitioning.
     val transitioningCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
 
+    // Variables to track the two selected cells for swapping.
     var firstSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var secondSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var isSelectionComplete by remember { mutableStateOf(false) }
 
-    // Handles the swapping of selected squares
+    // --- Cell Click Handling Logic ---
+
+    /**
+     * Processes a cell click event.
+     * - Records the first cell selection.
+     * - On the second distinct selection, swaps the data between cells,
+     *   then checks for any cells that now match their original content.
+     *
+     * @param position The position of the clicked cell.
+     */
     fun handleSquareClick(position: CellPosition) {
         if (firstSelectedCell == null) {
+            // Record the first cell selected.
             firstSelectedCell = position
         } else if (secondSelectedCell == null && position != firstSelectedCell) {
+            // Record the second selection and mark selection as complete.
             secondSelectedCell = position
             isSelectionComplete = true
 
+            // Swap the data between the two selected cells.
             val firstCell = firstSelectedCell
             val secondCell = secondSelectedCell
             if (firstCell != null && secondCell != null) {
@@ -81,6 +100,7 @@ fun EasyThreeByFiveTable(
                 currentTableData[secondCell] = temp ?: listOf("?")
             }
 
+            // Check each movable cell for correct placement and mark it for transition if correct.
             movablePositions.forEach { cellPosition ->
                 val originalData = originalTableData.rows[cellPosition.row]?.get(cellPosition.col)
                 if (currentTableData[cellPosition] == originalData) {
@@ -91,12 +111,15 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // Resets the selection after cells are swapped
+    /**
+     * Resets the selected cells after a swap is complete.
+     * A brief delay is introduced for visual feedback.
+     */
     @Composable
     fun resetSelection() {
         if (isSelectionComplete) {
             LaunchedEffect(Unit) {
-                delay(200) // Delay to simulate reset duration
+                delay(200) // Visual feedback delay before resetting the selection.
                 firstSelectedCell = null
                 secondSelectedCell = null
                 isSelectionComplete = false
@@ -104,41 +127,51 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // Transition cells to the correctly placed state
+    // --- Handle Transitioning Cells ---
+    // Move cells marked as transitioning to the correctly placed state after a short animation delay.
     LaunchedEffect(transitioningCells.keys.toList()) {
         transitioningCells.keys.toList().forEach { pos ->
             val data = transitioningCells[pos] ?: return@forEach
             launch {
-                delay(50)
+                delay(50) // Delay for transition animation.
                 correctlyPlacedCells[pos] = data
                 transitioningCells.remove(pos)
             }
         }
     }
 
-    // Render the table UI
+    // --- UI Rendering ---
+
+    // Render the table layout using a Column to arrange rows vertically.
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp) // Reduced spacing for smoother appearance
+        verticalArrangement = Arrangement.spacedBy(12.dp) // Spacing between rows.
     ) {
+        // Loop through each row (5 rows total).
         for (rowIndex in 0 until 5) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp), // Reduced row spacing
+                horizontalArrangement = Arrangement.spacedBy(12.dp), // Spacing between cells.
                 modifier = Modifier.wrapContentWidth().wrapContentHeight()
             ) {
+                // Loop through each column (3 columns total).
                 for (colIndex in 0 until 3) {
                     val currentPosition = CellPosition(rowIndex, colIndex)
 
                     when {
+                        // --- Fixed Cells Rendering ---
+                        // Render cells that are fixed (non-movable).
                         fixedPositions.contains(currentPosition) -> {
                             when (currentPosition) {
+                                // Render these fixed cells using a colored square.
                                 CellPosition(0, 0), CellPosition(4, 2) -> {
                                     ColoredSquare(
-                                        text = originalTableData.rows[rowIndex]?.get(colIndex)?.joinToString(", ") ?: "?",
+                                        text = originalTableData.rows[rowIndex]?.get(colIndex)
+                                            ?.joinToString(", ") ?: "?",
                                         modifier = Modifier.size(80.dp)
                                     )
                                 }
+                                // Render a specific fixed cell with two separate text areas.
                                 CellPosition(0, 2) -> {
                                     val cellData = originalTableData.rows[rowIndex]?.get(colIndex)
                                     val topText = cellData?.getOrNull(0) ?: "?"
@@ -151,6 +184,8 @@ fun EasyThreeByFiveTable(
                                 }
                             }
                         }
+                        // --- Correctly Placed Cells Rendering ---
+                        // Render cells that have been correctly placed (final state).
                         correctlyPlacedCells.containsKey(currentPosition) -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -164,6 +199,8 @@ fun EasyThreeByFiveTable(
                                 isCorrect = true
                             )
                         }
+                        // --- Transitioning Cells Rendering ---
+                        // Render cells that are transitioning to the correctly placed state.
                         transitioningCells.containsKey(currentPosition) -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -178,6 +215,8 @@ fun EasyThreeByFiveTable(
                                 isTransitioning = true
                             )
                         }
+                        // --- Movable (Active) Cells Rendering ---
+                        // Render active movable cells that are available for user interaction.
                         else -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -196,6 +235,7 @@ fun EasyThreeByFiveTable(
         }
     }
 
+    // Reset cell selections after a swap if selection is complete.
     if (isSelectionComplete) {
         resetSelection()
     }

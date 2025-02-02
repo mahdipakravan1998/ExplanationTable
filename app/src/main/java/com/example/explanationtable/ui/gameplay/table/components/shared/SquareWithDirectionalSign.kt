@@ -37,7 +37,18 @@ import com.example.explanationtable.ui.gameplay.table.components.cells.direction
 import kotlinx.coroutines.delay
 
 /**
- * Renders squares with optional directional signs and animations.
+ * Renders a square with optional directional signs and animations.
+ *
+ * @param isDarkTheme Indicates if the dark theme is active.
+ * @param position The cell's position used to determine which directional sign to display.
+ * @param shuffledTableData Optional mapping of cell positions to letter data.
+ * @param isSelected True if the square is selected.
+ * @param handleSquareClick Callback invoked when the square is clicked.
+ * @param squareSize The size of the square (default is 80.dp).
+ * @param signSize The size of the directional sign (default is 16.dp).
+ * @param clickable Determines if the square should respond to click gestures.
+ * @param isCorrect Indicates if the square is marked as correct.
+ * @param isTransitioning Indicates if the square is transitioning into a correct state.
  */
 @Composable
 fun SquareWithDirectionalSign(
@@ -52,62 +63,89 @@ fun SquareWithDirectionalSign(
     isCorrect: Boolean = false,
     isTransitioning: Boolean = false
 ) {
+    // Retrieve current density for converting between dp and pixels.
     val density = LocalDensity.current
+
+    // State variable to track if the square is pressed.
     var isPressed by remember { mutableStateOf(false) }
 
-    val pressOffsetY by animateFloatAsState(
+    // Animate the vertical offset (in pixels) for the press effect.
+    val pressOffsetPx by animateFloatAsState(
         targetValue = if (isPressed) with(density) { 2.dp.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 30), label = ""
+        animationSpec = tween(durationMillis = 30),
+        label = ""
     )
-    val pressOffsetDp = with(density) { pressOffsetY.toDp() }
+    // Convert the animated offset from pixels to dp.
+    val pressOffsetDp = with(density) { pressOffsetPx.toDp() }
 
-    var scale by remember { mutableFloatStateOf(1f) }
+    // State for the scaling effect triggered by a click.
+    var currentScale by remember { mutableFloatStateOf(1f) }
+    // Animate the click scale effect.
     val scaleAnimation by animateFloatAsState(
-        targetValue = scale,
-        animationSpec = tween(durationMillis = 100, easing = FastOutLinearInEasing), label = ""
+        targetValue = currentScale,
+        animationSpec = tween(durationMillis = 100, easing = FastOutLinearInEasing),
+        label = ""
     )
 
+    // Animate an additional scale effect for the transitioning state.
     val transitionScale by animateFloatAsState(
         targetValue = if (isTransitioning) 1.05f else 1f,
-        animationSpec = tween(durationMillis = 100, easing = FastOutSlowInEasing), label = ""
+        animationSpec = tween(durationMillis = 100, easing = FastOutSlowInEasing),
+        label = ""
     )
 
-    val clickQueue = remember { mutableIntStateOf(0) }
+    // Counter used to trigger a reset of the click scale effect after each click.
+    val clickCounter = remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(clickQueue.intValue) {
-        if (scale == 1.05f) {
+    // After a click (scale set to 1.05f), delay briefly and reset the scale to 1f.
+    LaunchedEffect(clickCounter.intValue) {
+        if (currentScale == 1.05f) {
             delay(50)
-            scale = 1f
+            currentScale = 1f
         }
     }
 
+    // Define a pointer input modifier to handle click gestures only if the square is clickable.
+    val gestureModifier = if (clickable) {
+        Modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                // Wait for the initial down press.
+                awaitFirstDown()
+                isPressed = true
+
+                // Wait until the pointer is lifted or the gesture is cancelled.
+                val upOrCancel = waitForUpOrCancellation()
+                isPressed = false
+
+                // Apply the scaling effect and update the click counter.
+                currentScale = 1.05f
+                clickCounter.value++
+
+                // If the gesture was completed (not cancelled), invoke the click handler.
+                if (upOrCancel != null) {
+                    handleSquareClick()
+                }
+            }
+        }
+    } else Modifier
+
+    // Retrieve the letter(s) for the current cell; default to "?" if no data is available.
+    val letter = shuffledTableData?.get(position)?.joinToString(", ") ?: "?"
+
+    // Main container for the square and its directional sign.
     Box(
         modifier = Modifier
             .size(squareSize)
             .scale(scaleAnimation * transitionScale)
-            .pointerInput(Unit) {
-                if (clickable) {
-                    awaitEachGesture {
-                        awaitFirstDown()
-                        isPressed = true
-                        val upOrCancel = waitForUpOrCancellation()
-                        isPressed = false
-
-                        scale = 1.05f
-                        clickQueue.value += 1
-
-                        if (upOrCancel != null) {
-                            handleSquareClick()
-                        }
-                    }
-                }
-            },
+            .then(gestureModifier),
         contentAlignment = Alignment.Center
     ) {
-        val letter = shuffledTableData?.get(position)?.joinToString(", ") ?: "?"
-
+        // Render the square with the appropriate style based on its correctness.
         if (isCorrect) {
-            BrightGreenSquare(letter = letter, modifier = Modifier.fillMaxSize())
+            BrightGreenSquare(
+                letter = letter,
+                modifier = Modifier.fillMaxSize()
+            )
         } else {
             StackedSquare3D(
                 isDarkTheme = isDarkTheme,
@@ -118,6 +156,7 @@ fun SquareWithDirectionalSign(
             )
         }
 
+        // Conditionally render a directional sign based on the cell's position.
         when (position) {
             CellPosition(0, 1) -> {
                 DirectionalSign0_1(
@@ -161,7 +200,9 @@ fun SquareWithDirectionalSign(
                         .padding(bottom = 4.dp)
                 )
             }
-            else -> { /* No directional sign for other positions */ }
+            else -> {
+                // No directional sign is rendered for other cell positions.
+            }
         }
     }
 }

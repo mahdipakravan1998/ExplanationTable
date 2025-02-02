@@ -2,7 +2,6 @@ package com.example.explanationtable.ui.main.viewmodel
 
 import android.app.Application
 import android.content.res.Configuration
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.explanationtable.data.DataStoreManager
@@ -10,28 +9,43 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the MainPage, managing UI-related data and state.
+ * ViewModel for the main page that manages UI-related data and state.
  *
  * @param application The application context.
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
+    // Instance of DataStoreManager to handle persistent settings (e.g., theme and mute state)
     private val dataStoreManager = DataStoreManager(application)
 
-    // Determine if the system is in Night Mode using the Configuration
-    private val nightModeFlags = application.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-    private val systemDark = (nightModeFlags == Configuration.UI_MODE_NIGHT_YES)
+    // Determine whether the system is using dark mode based on the current configuration.
+    private val systemDark: Boolean =
+        (application.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
-    // Map isDarkTheme Flow<Boolean?> to StateFlow<Boolean>, using systemDark as default
+    /**
+     * StateFlow representing the app's theme mode (dark or light).
+     *
+     * Observes the theme preference from DataStoreManager. If no preference is set,
+     * it falls back to the system default (systemDark).
+     *
+     * Note: Changed from SharingStarted.WhileSubscribed to SharingStarted.Eagerly so that
+     * the flow is always active. This ensures that changes to the theme are immediately
+     * reflected even on pages that may not have an active subscription at all times.
+     */
     val isDarkTheme: StateFlow<Boolean> = dataStoreManager.isDarkTheme
-        .map { it ?: systemDark } // Use systemDark if no preference is set
+        .map { it ?: systemDark }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = systemDark // Initial value based on system theme
+            started = SharingStarted.Eagerly,
+            initialValue = systemDark
         )
 
-    // Flow to observe mute state
+    /**
+     * StateFlow representing the app's mute state.
+     *
+     * Observes the mute preference from DataStoreManager with a default of 'false'.
+     * (Using WhileSubscribed is acceptable here if immediate updates are not critical.)
+     */
     val isMuted: StateFlow<Boolean> = dataStoreManager.isMuted
         .stateIn(
             scope = viewModelScope,
@@ -39,33 +53,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = false
         )
 
-    init {
-        // Logging for debugging purposes
-        viewModelScope.launch {
-            isDarkTheme.collect { theme ->
-                Log.d("MainViewModel", "Theme changed to: $theme")
-            }
-        }
-    }
-
     /**
-     * Toggles the mute state.
+     * Toggles the mute state by invoking the corresponding method in DataStoreManager.
      */
     fun toggleMute() {
         viewModelScope.launch {
             dataStoreManager.toggleMute()
-            Log.d("MainViewModel", "Mute state toggled")
         }
     }
 
     /**
-     * Toggles the app theme between dark and light.
+     * Toggles the app theme between dark and light modes.
+     *
+     * Reads the current theme from isDarkTheme and sets the opposite value.
      */
     fun toggleTheme() {
         viewModelScope.launch {
             val currentTheme = isDarkTheme.value
             dataStoreManager.setTheme(!currentTheme)
-            Log.d("MainViewModel", "Theme toggled to: ${!currentTheme}")
         }
     }
 }

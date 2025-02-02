@@ -19,12 +19,12 @@ import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.utils.toPersianDigits
 
 /**
- * A composable that represents the gameplay screen for a given stage.
+ * Composable function representing the gameplay screen for a specific stage.
  *
+ * @param isDarkTheme Boolean indicating whether the dark theme is enabled.
  * @param stageNumber The stage number to display in the top bar title.
- * @param difficulty The difficulty level of this stage.
- * @param isDarkTheme Whether the dark theme is enabled.
- * @param gems The number of gems to display in the top bar.
+ * @param difficulty The difficulty level for the current stage.
+ * @param gems The number of gems to display in the top bar (default is 1000).
  */
 @Composable
 fun GameplayPage(
@@ -33,21 +33,31 @@ fun GameplayPage(
     difficulty: Difficulty,
     gems: Int = 1000
 ) {
+    // Retrieve the main view model instance to manage UI state.
     val viewModel: MainViewModel = viewModel()
+
+    // Observe the mute state from the view model.
     val isMuted by viewModel.isMuted.collectAsState()
 
+    // State variable controlling the visibility of the settings dialog.
     var showSettingsDialog by remember { mutableStateOf(false) }
+
+    // Get the current context and safely cast it to an Activity for exit operations.
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Convert stageNumber to Persian digits when building the string
+    // Build the page title by combining a localized "stage" string with the stage number
+    // converted to Persian digits.
     val pageTitle = "${stringResource(id = R.string.stage)} ${stageNumber.toPersianDigits()}"
 
+    // Apply the custom background for the page.
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
+        // Arrange components vertically.
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Top bar displaying the title, gem count, and action buttons.
             AppTopBar(
                 isHomePage = false,
                 isDarkTheme = isDarkTheme,
@@ -55,20 +65,20 @@ fun GameplayPage(
                 gems = gems,
                 difficulty = difficulty,
                 onSettingsClick = { showSettingsDialog = true },
-                onHelpClick = { /* no implementation yet */ }
+                onHelpClick = { /* Help action not implemented yet */ }
             )
 
+            // Spacer for vertical spacing between the top bar and game table.
             Spacer(modifier = Modifier.height(72.dp))
 
-            // Pass both difficulty and stageNumber to the GameTable
+            // Main gameplay table that adapts to the current stage and difficulty.
             GameTable(
                 isDarkTheme = isDarkTheme,
                 difficulty = difficulty,
-                stageNumber = stageNumber  // <-- now passes the stage number
+                stageNumber = stageNumber
             )
 
-            // Any additional gameplay UI can be added here
-
+            // Settings dialog allowing theme toggling, mute toggling, and exit functionality.
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss = { showSettingsDialog = false },
@@ -77,6 +87,7 @@ fun GameplayPage(
                 isMuted = isMuted,
                 onToggleMute = { viewModel.toggleMute() },
                 onExit = {
+                    // Exit the application by finishing the current task.
                     activity?.finishAndRemoveTask()
                 }
             )

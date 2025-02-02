@@ -4,13 +4,15 @@ import androidx.compose.ui.graphics.Color
 
 // ------------------------------
 // Core Brand Colors
+// Primary brand colors that form the foundation of the design language.
 // ------------------------------
-val FeatherGreen = Color(0xFF58CC02)
-val MaskGreen = Color(0xFF89E219)
-val Eel = Color(0xFF4B4B4B)
+val FeatherGreen = Color(0xFF58CC02) // Used for success indications
+val MaskGreen = Color(0xFF89E219)    // Main brand accent color
+val Eel = Color(0xFF4B4B4B)          // Dark neutral, often used for text or contrast
 
 // ------------------------------
 // Secondary Palette
+// Secondary colors to complement the core brand colors for accents and highlights.
 // ------------------------------
 val Macaw = Color(0xFF1CB0F6)
 val Cardinal = Color(0xFFFF4B4B)
@@ -21,6 +23,7 @@ val Humpback = Color(0xFF2B70C9)
 
 // ------------------------------
 // Neutrals
+// Neutral colors used for backgrounds, borders, and subtle UI elements.
 // ------------------------------
 val Wolf = Color(0xFF777777)
 val Hare = Color(0xFFAFAFAF)
@@ -29,6 +32,7 @@ val Polar = Color(0xFFF7F7F7)
 
 // ------------------------------
 // Duo's Palette
+// Additional accent colors for specialized UI elements and details.
 // ------------------------------
 val WingOverlay = Color(0xFF43C000)
 val BeakInner = Color(0xFFB66E28)
@@ -40,6 +44,7 @@ val LimeGreen = Color(0xFF68A62F)
 
 // ------------------------------
 // Optional Legacy Colors
+// Legacy colors kept for backward compatibility or optional mappings.
 // ------------------------------
 val Purple200 = Color(0xFFBB86FC)
 val Purple500 = Color(0xFF6200EE)
@@ -49,99 +54,109 @@ val Teal700 = Color(0xFF018786)
 
 // ------------------------------
 // Common Colors
+// Universal colors used throughout the UI.
 // ------------------------------
 val Black = Color(0xFF000000)
 val White = Color(0xFFFFFFFF)
 
 // ------------------------------
 // Light Theme Colors
+// Define the color scheme for light mode.
 // ------------------------------
-val PrimaryLight = MaskGreen // Core Brand Colors
-val PrimaryContainerLight = LimeGreen
-val OnPrimaryLight = White
+val PrimaryLight = MaskGreen           // Core brand primary color
+val PrimaryContainerLight = LimeGreen    // Container color for primary components
+val OnPrimaryLight = White               // Content color displayed on primary-colored backgrounds
 
-val SecondaryLight = BeakUpper // Secondary Palette
-val SecondaryContainerLight = Fox // Secondary Palette
-val OnSecondaryLight = White
+val SecondaryLight = BeakUpper           // Secondary color from Duo's Palette
+val SecondaryContainerLight = Fox          // Secondary container color from Secondary Palette
+val OnSecondaryLight = White               // Content color displayed on secondary-colored backgrounds
 
-val TertiaryLight = Macaw // Duo's Palette
-val TertiaryContainerLight = Humpback // Duo's Palette
-val OnTertiaryLight = White
+val TertiaryLight = Macaw                // Tertiary accent color from Secondary Palette
+val TertiaryContainerLight = Humpback      // Container for tertiary elements
+val OnTertiaryLight = White               // Content color for tertiary components
 
-val BackgroundLight = Color(0xFFFFFDFD) // White
-val SurfaceLight = BackgroundLight // Same as BackgroundLight
-val OnBackgroundLight = Eel
-val OnSurfaceLight = Wolf
+val BackgroundLight = Color(0xFFFFFDFD)    // Light background (nearly white)
+val SurfaceLight = BackgroundLight         // Surface uses the same color as the background
+val OnBackgroundLight = Eel                // Content color on the background
+val OnSurfaceLight = Wolf                  // Content color on surfaces
 
-val AccentLight = PrimaryLight // Example mapping
-val HighlightLight = SecondaryLight // Example mapping
-val OverlayLight = Polar // Neutrals
-val ErrorLight = Color(0xFFB22222)
-val OnErrorLight = White
-val SuccessLight = FeatherGreen // Already defined
+val AccentLight = PrimaryLight             // Accent mapping example (reuses primary)
+val HighlightLight = SecondaryLight        // Highlight mapping example (reuses secondary)
+val OverlayLight = Polar                   // Overlay color from neutrals
+val ErrorLight = Color(0xFFB22222)          // Error state color
+val OnErrorLight = White                   // Content color on error backgrounds
+val SuccessLight = FeatherGreen            // Success state color from core brand
 
 // ------------------------------
 // Dark Theme Colors
+// Define the color scheme for dark mode.
 // ------------------------------
-val PrimaryDark = MaskGreen // Core Brand Colors
-val PrimaryContainerDark = LimeGreen // Core Brand Colors
-val OnPrimaryDark = White
+val PrimaryDark = MaskGreen              // Primary color (same as light mode)
+val PrimaryContainerDark = LimeGreen       // Container color for primary elements
+val OnPrimaryDark = White                  // Content color on primary dark backgrounds
 
-val SecondaryDark = BeakUpper // Secondary Palette
-val SecondaryContainerDark = Fox // Secondary Palette
-val OnSecondaryDark = White
+val SecondaryDark = BeakUpper              // Secondary color (same as light mode)
+val SecondaryContainerDark = Fox             // Container color for secondary elements
+val OnSecondaryDark = White                // Content color on secondary dark backgrounds
 
-val TertiaryDark = Macaw // Duo's Palette
-val TertiaryContainerDark = Humpback // Duo's Palette
-val OnTertiaryDark = White
+val TertiaryDark = Macaw                 // Tertiary accent color (same as light mode)
+val TertiaryContainerDark = Humpback       // Container color for tertiary elements
+val OnTertiaryDark = White                 // Content color on tertiary dark backgrounds
 
-val BackgroundDark = Color(0xFF141F23) // Night Mode Color
-val SurfaceDark = BackgroundDark // Same as BackgroundDark
-val OnBackgroundDark = Polar
-val OnSurfaceDark = Hare
+val BackgroundDark = Color(0xFF141F23)     // Dark background for dark mode
+val SurfaceDark = BackgroundDark           // Surface color mirrors the background
+val OnBackgroundDark = Polar               // Content color on dark backgrounds
+val OnSurfaceDark = Hare                   // Content color on dark surfaces
 
-val AccentDark = Teal200 // Optional Legacy Colors
-val HighlightDark = Humpback // Secondary Palette
-val OverlayDark = Color(0xB3000000) // Already defined
-val ErrorDark = Color(0xFFCD5C5C)
-val OnErrorDark = Color(0xFF000000)
-val SuccessDark = Color(0xFF2E8B57) // Already defined
+val AccentDark = Teal200                   // Accent color from legacy palette for dark mode
+val HighlightDark = Humpback               // Highlight color from secondary palette
+val OverlayDark = Color(0xB3000000)        // Semi-transparent overlay for dark mode
+val ErrorDark = Color(0xFFCD5C5C)           // Error color for dark mode
+val OnErrorDark = Color(0xFF000000)         // Content color on error backgrounds in dark mode
+val SuccessDark = Color(0xFF2E8B57)         // Success state color for dark mode
 
 // ------------------------------
 // UI Element Colors
+// Specific colors for UI elements such as buttons and dialogs.
 // ------------------------------
-val ButtonBackgroundLight = Color(0xDFFFFFFF)
-val ButtonBackgroundDark = BackgroundDark
+val ButtonBackgroundLight = Color(0xDFFFFFFF)  // Light mode button background with transparency
+val ButtonBackgroundDark = BackgroundDark      // Dark mode button background
 
-val ButtonIconLight = White
-val ButtonIconDark = Eel
+val ButtonIconLight = White                   // Button icon color for light mode
+val ButtonIconDark = Eel                      // Button icon color for dark mode
 
-// Dark Mode Colors
-val DialogBackgroundDark = Color(0xFF141F23)
-val BorderDark = Color(0xFF38464F)
+// Dark mode specific UI elements
+val DialogBackgroundDark = Color(0xFF141F23)    // Dialog background in dark mode
+val BorderDark = Color(0xFF38464F)             // Border color for dark mode elements
 
-// Light Mode Colors
-val DialogBackgroundLight = Color(0xFFFF_FFFD)
-val BorderLight = Color(0xFFE5E5E5)
+// Light mode specific UI elements
+val DialogBackgroundLight = Color(0xFFFFFFFD)   // Dialog background in light mode (nearly white)
+val BorderLight = Color(0xFFE5E5E5)            // Border color for light mode elements
 
-// Define the dark mode text color
-val TextDarkMode = Color(0xFFF1F7FB)
+// Text color optimized for dark mode
+val TextDarkMode = Color(0xFFF1F7FB)            // Used for text in dark mode
 
 // ------------------------------
 // Selection Mode Colors
+// Colors used to indicate selection states, with variants for light and dark modes.
 // ------------------------------
-val Turtle = Color(0xFFA5ED6E)      //green borderColor (light mode)
-val SeaSponge = Color(0xFFD7FFB8)   //green frontColor (light mode)
-val TreeFrog = Color(0xFF58A700)    //green textColor (light mode)
 
-val DarkGreenBorder = Color(0xFF5F8428)     //green borderColor (dark mode)
-val DarkGreenBackground = Color(0xFF202F36)      //green frontColor (dark mode)
-val DarkGreenText = Color(0xFF79B933)       //green textColor (dark mode)
+// Light mode selection colors (green-themed)
+val Turtle = Color(0xFFA5ED6E)      // Border color for selected items
+val SeaSponge = Color(0xFFD7FFB8)   // Background color for selected items
+val TreeFrog = Color(0xFF58A700)    // Text color for selected items
 
-val Iguana = Color(0xFFDDF4FF)  //Blue frontColor (light mode)
-val BlueJay = Color(0xFF84D8FF) //Blue borderColor (light mode)
-val Whale = Color(0xFF1899D6)   //Blue textColor (light mode)
+// Dark mode selection colors (green-themed)
+val DarkGreenBorder = Color(0xFF5F8428)     // Border color for selected items in dark mode
+val DarkGreenBackground = Color(0xFF202F36) // Background color for selected items in dark mode
+val DarkGreenText = Color(0xFF79B933)       // Text color for selected items in dark mode
 
-val DarkBlueBackground = Color(0xFF202F36)  //Blue frontColor (dark mode)
-val DarkBlueBorder = Color(0xFF84D8FF)  //Blue borderColor (dark mode)
-val DarkBlueText = Color(0xFF1899D6)    //Blue textColor (dark mode)
+// Light mode selection colors (blue-themed)
+val Iguana = Color(0xFFDDF4FF)   // Background color for blue-themed selection in light mode
+val BlueJay = Color(0xFF84D8FF)  // Border color for blue-themed selection in light mode
+val Whale = Color(0xFF1899D6)    // Text color for blue-themed selection in light mode
+
+// Dark mode selection colors (blue-themed)
+val DarkBlueBackground = Color(0xFF202F36)  // Background color for blue-themed selection in dark mode
+val DarkBlueBorder = Color(0xFF84D8FF)      // Border color for blue-themed selection in dark mode
+val DarkBlueText = Color(0xFF1899D6)        // Text color for blue-themed selection in dark mode

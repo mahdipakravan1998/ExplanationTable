@@ -14,33 +14,41 @@ import com.example.explanationtable.ui.gameplay.pages.GameplayPage
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.model.Difficulty
 
+/**
+ * Sets up the application's navigation host with defined routes and their corresponding UI pages.
+ *
+ * @param navController the navigation controller managing app navigation; defaults to a remembered controller.
+ * @param isDarkTheme flag indicating whether the dark theme is active.
+ */
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     isDarkTheme: Boolean
 ) {
+    // Obtain the MainViewModel instance for use within the composable destinations.
     val viewModel: MainViewModel = viewModel()
 
+    // Define the navigation graph with a starting destination.
     NavHost(
         navController = navController,
         startDestination = Routes.MAIN
     ) {
+        // Main application route
         composable(Routes.MAIN) {
-            MainPage(navController, viewModel, isDarkTheme)
+            MainPage(
+                navController = navController,
+                viewModel = viewModel,
+                isDarkTheme = isDarkTheme
+            )
         }
 
-        // Parameterized composable for the StagesListPage
+        // Route for the StagesListPage which takes a "difficulty" argument.
         composable(
             route = Routes.STAGES_LIST_WITH_ARG,
             arguments = listOf(navArgument("difficulty") { type = NavType.StringType })
         ) { backStackEntry ->
-            val difficultyArg = backStackEntry.arguments?.getString("difficulty") ?: "Easy"
-            val difficultyEnum = when (difficultyArg.lowercase()) {
-                "easy"   -> Difficulty.EASY
-                "medium" -> Difficulty.MEDIUM
-                "hard"   -> Difficulty.HARD
-                else     -> Difficulty.EASY
-            }
+            // Parse the "difficulty" argument from the navigation back stack.
+            val difficultyEnum = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
             StagesListPage(
                 navController = navController,
                 difficulty = difficultyEnum,
@@ -48,7 +56,7 @@ fun AppNavHost(
             )
         }
 
-        // New route for the GameplayPage with both stageNumber and difficulty
+        // Route for the GameplayPage which takes both "stageNumber" and "difficulty" arguments.
         composable(
             route = Routes.GAMEPLAY_WITH_ARGS,
             arguments = listOf(
@@ -56,19 +64,30 @@ fun AppNavHost(
                 navArgument("difficulty") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            // Retrieve the stage number with a default of 1 if not provided.
             val stageNumber = backStackEntry.arguments?.getInt("stageNumber") ?: 1
-            val difficultyArg = backStackEntry.arguments?.getString("difficulty") ?: "Easy"
-            val difficultyEnum = when (difficultyArg.lowercase()) {
-                "easy"   -> Difficulty.EASY
-                "medium" -> Difficulty.MEDIUM
-                "hard"   -> Difficulty.HARD
-                else     -> Difficulty.EASY
-            }
+            // Parse the "difficulty" argument from the navigation back stack.
+            val difficultyEnum = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
             GameplayPage(
                 isDarkTheme = isDarkTheme,
                 stageNumber = stageNumber,
                 difficulty = difficultyEnum
             )
         }
+    }
+}
+
+/**
+ * Converts a difficulty argument string into the corresponding Difficulty enum.
+ *
+ * @param difficultyArg the difficulty parameter as a nullable String.
+ * @return the matching Difficulty enum; defaults to Difficulty.EASY for null or unrecognized values.
+ */
+private fun parseDifficulty(difficultyArg: String?): Difficulty {
+    return when (difficultyArg?.lowercase()) {
+        "easy"   -> Difficulty.EASY
+        "medium" -> Difficulty.MEDIUM
+        "hard"   -> Difficulty.HARD
+        else     -> Difficulty.EASY
     }
 }

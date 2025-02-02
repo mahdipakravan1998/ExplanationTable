@@ -17,16 +17,54 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.gameplay.table.components.cells.utils.AutoResizingText
 import com.example.explanationtable.ui.theme.Bee
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 
+//-------------------------------------------------------------------------------------
+// Constants for cell text styling.
+// These values help maintain consistency and ease future style adjustments.
+//-------------------------------------------------------------------------------------
+private val cellTextColor = Color(0xFF5E3700)
+private val cellFontWeight = FontWeight.Bold
+private val cellMinTextSize = 10.sp
+private val cellMaxTextSize = 16.sp
+private const val cellMaxLines = 2
+
 /**
- * A 80×80 square that shows [topText], a divider, and [bottomText], each
- * trying to fit on two lines first, then resizing if necessary.
+ * Helper composable to render auto-resizing text with consistent styling.
+ *
+ * This function centralizes the text styling parameters so that both the top and bottom
+ * text areas share the same configuration.
+ *
+ * @param text The text content to display.
+ */
+@Composable
+private fun CellText(text: String) {
+    AutoResizingText(
+        text = text,
+        modifier = Modifier.fillMaxSize(),
+        color = cellTextColor,
+        fontWeight = cellFontWeight,
+        maxLines = cellMaxLines,
+        minTextSize = cellMinTextSize,
+        maxTextSize = cellMaxTextSize,
+        textAlign = TextAlign.Center,
+        fontFamily = VazirmatnFontFamily
+    )
+}
+
+/**
+ * A composable representing an 80×80 square cell with two auto-resizing text areas
+ * (top and bottom) separated by a horizontal divider.
+ *
+ * Each text area attempts to fit its content within two lines by adjusting its font size.
+ *
+ * @param topText The text to display in the top section.
+ * @param bottomText The text to display in the bottom section.
+ * @param modifier A [Modifier] for external styling or layout adjustments.
  */
 @Composable
 fun TextSeparatedSquare(
@@ -34,67 +72,48 @@ fun TextSeparatedSquare(
     bottomText: String,
     modifier: Modifier = Modifier
 ) {
+    // Outer container: sets a fixed size (80x80 dp) and centers its content.
     Box(
         modifier = modifier.size(80.dp),
         contentAlignment = Alignment.Center
     ) {
+        // Inner container: applies rounded corners, a background color, and padding.
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(16.dp))
-                .background(color = Bee)
+                .background(Bee)
                 .padding(8.dp)
         ) {
+            // Column layout: vertically arranges the top text, divider, and bottom text.
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top text
+                // Top text section: displays auto-resizing text centered within its area.
                 Box(
-                    modifier = Modifier
-                        .weight(1f, fill = true),
+                    modifier = Modifier.weight(1f, fill = true),
                     contentAlignment = Alignment.Center
                 ) {
-                    AutoResizingText(
-                        text = topText,
-                        modifier = Modifier.fillMaxSize(),
-                        color = Color(0xFF5E3700),
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,  // first try 2 lines
-                        minTextSize = 10.sp,
-                        maxTextSize = 16.sp,
-                        textAlign = TextAlign.Center,
-                        fontFamily = VazirmatnFontFamily
-                    )
+                    CellText(topText)
                 }
 
-                // Divider
+                // Divider: a horizontal line that separates the two text sections.
                 HorizontalDivider(
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .padding(vertical = 4.dp),
-                    color = Color(0xFF5E3700),
+                    color = cellTextColor,
                     thickness = 1.dp
                 )
 
-                // Bottom text
+                // Bottom text section: displays auto-resizing text centered within its area.
                 Box(
-                    modifier = Modifier
-                        .weight(1f, fill = true),
+                    modifier = Modifier.weight(1f, fill = true),
                     contentAlignment = Alignment.Center
                 ) {
-                    AutoResizingText(
-                        text = bottomText,
-                        modifier = Modifier.fillMaxSize(),
-                        color = Color(0xFF5E3700),
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2, // first try 2 lines
-                        minTextSize = 10.sp,
-                        maxTextSize = 16.sp,
-                        textAlign = TextAlign.Center,
-                        fontFamily = VazirmatnFontFamily
-                    )
+                    CellText(bottomText)
                 }
             }
         }

@@ -4,7 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +25,18 @@ import com.example.explanationtable.ui.theme.ButtonBackgroundLight
 import com.example.explanationtable.ui.theme.ButtonIconDark
 import com.example.explanationtable.ui.theme.ButtonIconLight
 
+/**
+ * A top app bar component that adapts its appearance based on the page type, theme, and difficulty.
+ *
+ * @param isHomePage Determines if the current page is the home page.
+ * @param isDarkTheme Specifies whether the dark theme is enabled.
+ * @param title Optional title text to display in the center.
+ * @param gems Optional gem count to display on non-home pages.
+ * @param difficulty Optional difficulty parameter; must be non-null on non-home pages.
+ * @param onSettingsClick Callback invoked when the settings icon is clicked.
+ * @param iconTint Default icon tint (unused in this implementation but kept for API compatibility).
+ * @param onHelpClick Optional callback for the help icon; if provided, the help icon is shown.
+ */
 @Composable
 fun AppTopBar(
     isHomePage: Boolean,
@@ -33,46 +48,67 @@ fun AppTopBar(
     iconTint: Color = MaterialTheme.colorScheme.onSurface,
     onHelpClick: (() -> Unit)? = null
 ) {
+    // Fixed height for the top bar.
     val topBarHeight = 80.dp
 
-    // Container color based on the page type and difficulty
-    val containerColor = if (isHomePage) Color.Transparent else difficultyColors(difficulty!!).backgroundColor
+    // Compute difficulty-based colors only if not on the home page.
+    // On non-home pages, 'difficulty' is guaranteed to be non-null.
+    val difficultyColorValues = if (!isHomePage) {
+        difficultyColors(difficulty!!)
+    } else {
+        null
+    }
 
-    // Divider color for non-home pages
-    val dividerColor = if (isHomePage) Color.Transparent else difficultyColors(difficulty!!).dividerColor
+    // Determine the container (background) color.
+    // Use transparent on the home page or a difficulty-based background on other pages.
+    val containerColor = if (isHomePage) {
+        Color.Transparent
+    } else {
+        difficultyColorValues!!.backgroundColor
+    }
 
-    // Settings button styles for different themes and page types
+    // Determine the divider color: transparent on home page or based on difficulty otherwise.
+    val dividerColor = if (isHomePage) {
+        Color.Transparent
+    } else {
+        difficultyColorValues!!.dividerColor
+    }
+
+    // Set the background color for the settings button:
+    // On the home page, use theme-dependent button backgrounds; otherwise, transparent.
     val settingsButtonBackgroundColor = if (isHomePage) {
         if (isDarkTheme) ButtonBackgroundLight else ButtonBackgroundDark
     } else {
         Color.Transparent
     }
 
-    // Icon tint for the settings button
+    // Determine the icon tint for settings (and help) buttons:
+    // Use theme-dependent colors on the home page; otherwise, use difficulty-based text color.
     val settingsButtonIconTint = if (isHomePage) {
         if (isDarkTheme) ButtonIconDark else ButtonIconLight
     } else {
-        difficultyColors(difficulty!!).textColor
+        difficultyColorValues!!.textColor
     }
 
+    // Main container Box for the top bar.
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(topBarHeight)
             .background(containerColor)
     ) {
-        // Left section: Display gem count or spacer
+        // LEFT SECTION: Display gem count (for non-home pages) or a spacer for alignment.
         if (!isHomePage) {
             gems?.let { gemCount ->
-                // Increase the left padding here to push gem count further away from the left side
                 GemGroup(
                     gems = gemCount,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = 28.dp)  // Increased padding on the left
+                        .padding(start = 28.dp) // Extra left padding for gem display.
                 )
             }
         } else {
+            // A spacer to preserve layout consistency on the home page.
             Spacer(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -80,35 +116,32 @@ fun AppTopBar(
             )
         }
 
-        // Title displayed in the center
-        title?.let {
+        // CENTER SECTION: Display the title text if provided.
+        title?.let { titleText ->
             Text(
-                text = it,
+                text = titleText,
                 fontSize = 18.sp,
-                color = if (!isHomePage && difficulty != null) {
-                    difficultyColors(difficulty).textColor
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
+                // Use difficulty text color on non-home pages; otherwise, default to onSurface color.
+                color = if (!isHomePage) difficultyColorValues!!.textColor else MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.align(Alignment.Center)
             )
         }
 
-        // Right section: Help and Settings icons with adjusted spacing
+        // RIGHT SECTION: Row containing optional Help and mandatory Settings icons.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 28.dp) // Slightly reduced padding on the right side
+                .padding(end = 28.dp) // Right padding for icon alignment.
         ) {
-            // Help icon (visible only if onHelpClick is provided)
-            onHelpClick?.let {
+            // Conditionally display the Help icon if an onHelpClick callback is provided.
+            onHelpClick?.let { onHelp ->
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .clickable { it() },
+                        .clickable { onHelp() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -120,7 +153,7 @@ fun AppTopBar(
                 }
             }
 
-            // Settings icon
+            // Display the Settings icon.
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -140,7 +173,7 @@ fun AppTopBar(
             }
         }
 
-        // Divider for non-home pages
+        // BOTTOM DIVIDER: For non-home pages, display a horizontal divider.
         if (!isHomePage) {
             HorizontalDivider(
                 color = dividerColor,

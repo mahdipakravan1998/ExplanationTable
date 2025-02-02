@@ -3,161 +3,218 @@ package com.example.explanationtable.ui.gameplay.table.components.cells.directio
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.theme.Eel
 import com.example.explanationtable.ui.theme.TextDarkMode
 
 /**
- * Directional arrow sign composables (pure drawing, no text).
+ * Renders a directional arrow sign with a horizontal component and a downward pointing arrowhead.
+ *
+ * The sign's color depends on whether it is on the correct square or if the dark theme is active.
+ *
+ * @param isDarkTheme Boolean flag to indicate if dark theme is enabled.
+ * @param isOnCorrectSquare Optional flag to indicate if the sign is on the correct square.
+ * @param modifier Modifier for styling and layout.
  */
 @Composable
 fun DirectionalSign0_1(
     isDarkTheme: Boolean,
-    isOnCorrectSquare: Boolean = false, // New parameter
+    isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    // Choose the appropriate color based on theme and square selection.
     val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(20.dp)) {
-        val stroke = 2.dp.toPx()
+        // Define stroke width and frequently used dp conversions.
+        val strokeWidth = 2.dp.toPx()
+        val horizontalOffset = 9.dp.toPx()
+        val arrowHeadOffset = 3.dp.toPx()
+        val verticalArrowLength = 10.dp.toPx()
+
+        // Draw the horizontal line from right to left.
         drawLine(
             color = signColor,
             start = Offset(x = size.width, y = size.height / 2),
-            end = Offset(x = size.width - 9.dp.toPx(), y = size.height / 2),
-            strokeWidth = stroke,
+            end = Offset(x = size.width - horizontalOffset, y = size.height / 2),
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
-        val arrowStartX = size.width - 9.dp.toPx()
-        val arrowStartY = size.height / 2
-        val arrowEndY = arrowStartY + 10.dp.toPx()
 
+        // Calculate the starting position for the vertical arrow component.
+        val arrowStartX = size.width - horizontalOffset
+        val arrowStartY = size.height / 2
+        val arrowEndY = arrowStartY + verticalArrowLength
+
+        // Draw the vertical line of the arrow.
         drawLine(
             color = signColor,
             start = Offset(x = arrowStartX, y = arrowStartY),
             end = Offset(x = arrowStartX, y = arrowEndY),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
-        // Arrowhead pointing down
+
+        // Draw the left side of the downward arrowhead.
         drawLine(
             color = signColor,
-            start = Offset(x = arrowStartX - 3.dp.toPx(), y = arrowEndY - 3.dp.toPx()),
+            start = Offset(x = arrowStartX - arrowHeadOffset, y = arrowEndY - arrowHeadOffset),
             end = Offset(x = arrowStartX, y = arrowEndY),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
+        // Draw the right side of the downward arrowhead.
         drawLine(
             color = signColor,
-            start = Offset(x = arrowStartX + 3.dp.toPx(), y = arrowEndY - 3.dp.toPx()),
+            start = Offset(x = arrowStartX + arrowHeadOffset, y = arrowEndY - arrowHeadOffset),
             end = Offset(x = arrowStartX, y = arrowEndY),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
     }
 }
 
+/**
+ * Renders a vertical directional arrow sign.
+ *
+ * The arrow comprises a vertical line with a downward pointing arrowhead.
+ * The sign's color depends on whether it is on the correct square or if the dark theme is active.
+ *
+ * @param isDarkTheme Boolean flag to indicate if dark theme is enabled.
+ * @param isOnCorrectSquare Optional flag to indicate if the sign is on the correct square.
+ * @param modifier Modifier for styling and layout.
+ */
 @Composable
 fun DirectionalSign1_0(
     isDarkTheme: Boolean,
-    isOnCorrectSquare: Boolean = false, // New parameter
+    isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    // Determine the color based on theme or selection.
     val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(10.dp)) {
-        val stroke = 2.dp.toPx()
-        val arrowHeight = size.height
+        // Define stroke width and conversion for the arrowhead offset.
+        val strokeWidth = 2.dp.toPx()
+        val arrowheadOffset = 2.dp.toPx()
         val arrowWidth = size.width
+        val arrowHeight = size.height
 
-        // Draw vertical line
+        // Draw the main vertical line of the arrow.
         drawLine(
             color = signColor,
             start = Offset(x = arrowWidth / 2, y = 0f),
             end = Offset(x = arrowWidth / 2, y = arrowHeight * 0.7f),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
-        // Arrowhead
+        // Draw the left side of the arrowhead.
         drawLine(
             color = signColor,
-            start = Offset(x = arrowWidth / 2 - 2.dp.toPx(), y = arrowHeight * 0.7f),
+            start = Offset(x = arrowWidth / 2 - arrowheadOffset, y = arrowHeight * 0.7f),
             end = Offset(x = arrowWidth / 2, y = arrowHeight),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
+        // Draw the right side of the arrowhead.
         drawLine(
             color = signColor,
-            start = Offset(x = arrowWidth / 2 + 2.dp.toPx(), y = arrowHeight * 0.7f),
+            start = Offset(x = arrowWidth / 2 + arrowheadOffset, y = arrowHeight * 0.7f),
             end = Offset(x = arrowWidth / 2, y = arrowHeight),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
     }
 }
 
+/**
+ * An alias for DirectionalSign1_0 to maintain consistency in design.
+ *
+ * This function reuses the implementation of DirectionalSign1_0.
+ *
+ * @param isDarkTheme Boolean flag to indicate if dark theme is enabled.
+ * @param isOnCorrectSquare Optional flag to indicate if the sign is on the correct square.
+ * @param modifier Modifier for styling and layout.
+ */
 @Composable
 fun DirectionalSign1_2(
     isDarkTheme: Boolean,
-    isOnCorrectSquare: Boolean = false, // New parameter
+    isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    // Reuse DirectionalSign1_0
+    // Reuse the vertical directional sign.
     DirectionalSign1_0(
         isDarkTheme = isDarkTheme,
         isOnCorrectSquare = isOnCorrectSquare,
-        modifier
+        modifier = modifier
     )
 }
 
+/**
+ * Renders a directional arrow sign with a vertical component and a leftward pointing arrowhead.
+ *
+ * The sign's color depends on whether it is on the correct square or if the dark theme is active.
+ *
+ * @param isDarkTheme Boolean flag to indicate if dark theme is enabled.
+ * @param isOnCorrectSquare Optional flag to indicate if the sign is on the correct square.
+ * @param modifier Modifier for styling and layout.
+ */
 @Composable
 fun DirectionalSign3_2(
     isDarkTheme: Boolean,
-    isOnCorrectSquare: Boolean = false, // New parameter
+    isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    // Select the sign color based on the state.
     val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(20.dp)) {
-        val stroke = 2.dp.toPx()
+        // Define stroke width and common dimension offsets.
+        val strokeWidth = 2.dp.toPx()
+        val verticalLineOffset = 9.dp.toPx()
+        val horizontalArrowLength = 10.dp.toPx()
+        val arrowheadOffset = 3.dp.toPx()
+
+        // Draw the vertical line (from bottom upward).
         drawLine(
             color = signColor,
             start = Offset(x = size.width / 2, y = size.height),
-            end = Offset(x = size.width / 2, y = size.height - 9.dp.toPx()),
-            strokeWidth = stroke,
+            end = Offset(x = size.width / 2, y = size.height - verticalLineOffset),
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
-        val arrowStartX = size.width / 2
-        val arrowStartY = size.height - 9.dp.toPx()
-        val arrowEndX = arrowStartX - 10.dp.toPx()
 
-        // Horizontal line
+        // Calculate starting point for the horizontal arrow line.
+        val arrowStartX = size.width / 2
+        val arrowStartY = size.height - verticalLineOffset
+        val arrowEndX = arrowStartX - horizontalArrowLength
+
+        // Draw the horizontal line of the arrow.
         drawLine(
             color = signColor,
             start = Offset(x = arrowStartX, y = arrowStartY),
             end = Offset(x = arrowEndX, y = arrowStartY),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
-        // Arrowhead pointing left
+
+        // Draw the upper part of the arrowhead pointing left.
         drawLine(
             color = signColor,
-            start = Offset(x = arrowEndX + 3.dp.toPx(), y = arrowStartY - 3.dp.toPx()),
+            start = Offset(x = arrowEndX + arrowheadOffset, y = arrowStartY - arrowheadOffset),
             end = Offset(x = arrowEndX, y = arrowStartY),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
+        // Draw the lower part of the arrowhead pointing left.
         drawLine(
             color = signColor,
-            start = Offset(x = arrowEndX + 3.dp.toPx(), y = arrowStartY + 3.dp.toPx()),
+            start = Offset(x = arrowEndX + arrowheadOffset, y = arrowStartY + arrowheadOffset),
             end = Offset(x = arrowEndX, y = arrowStartY),
-            strokeWidth = stroke,
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
     }

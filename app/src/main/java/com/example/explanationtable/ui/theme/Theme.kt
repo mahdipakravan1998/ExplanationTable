@@ -10,33 +10,40 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * Data class holding custom color definitions.
+ * Extend this class to add any additional custom colors as needed.
+ */
 @Immutable
 data class CustomColors(
     val success: Color,
     val accent: Color,
     val highlight: Color,
     val overlay: Color,
-    // Add more custom colors if needed
 )
 
+/**
+ * CompositionLocal for providing [CustomColors] throughout the composable hierarchy.
+ * Throws an error if no [CustomColors] is provided.
+ */
 val LocalCustomColors = staticCompositionLocalOf<CustomColors> {
     error("No CustomColors provided")
 }
 
-// Define your color schemes using the new palettes
+/**
+ * Dark theme color scheme using Material3's [darkColorScheme].
+ * Replace color variables (e.g. PrimaryDark) with your actual color definitions.
+ */
 private val DarkColors = darkColorScheme(
-    primary = PrimaryDark, // From Core Brand Colors
+    primary = PrimaryDark,               // Core Brand Color
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
-
-    secondary = SecondaryDark, // From Secondary Palette
+    secondary = SecondaryDark,           // Secondary Palette
     onSecondary = OnSecondaryDark,
     secondaryContainer = SecondaryContainerDark,
-
-    tertiary = TertiaryDark, // From Duo's Palette or others
+    tertiary = TertiaryDark,             // Duo's Palette or similar
     onTertiary = OnTertiaryDark,
     tertiaryContainer = TertiaryContainerDark,
-
     background = BackgroundDark,
     surface = SurfaceDark,
     onBackground = OnBackgroundDark,
@@ -45,19 +52,20 @@ private val DarkColors = darkColorScheme(
     onError = OnErrorDark
 )
 
+/**
+ * Light theme color scheme using Material3's [lightColorScheme].
+ * Replace color variables (e.g. PrimaryLight) with your actual color definitions.
+ */
 private val LightColors = lightColorScheme(
-    primary = PrimaryLight, // From Core Brand Colors
+    primary = PrimaryLight,              // Core Brand Color
     onPrimary = OnPrimaryLight,
     primaryContainer = PrimaryContainerLight,
-
-    secondary = SecondaryLight, // From Secondary Palette
+    secondary = SecondaryLight,          // Secondary Palette
     onSecondary = OnSecondaryLight,
     secondaryContainer = SecondaryContainerLight,
-
-    tertiary = TertiaryLight, // From Duo's Palette or others
+    tertiary = TertiaryLight,            // Duo's Palette or similar
     onTertiary = OnTertiaryLight,
     tertiaryContainer = TertiaryContainerLight,
-
     background = BackgroundLight,
     surface = SurfaceLight,
     onBackground = OnBackgroundLight,
@@ -66,13 +74,26 @@ private val LightColors = lightColorScheme(
     onError = OnErrorLight
 )
 
+/**
+ * Applies the ExplanationTable theme to the provided content.
+ *
+ * This composable sets up the color scheme (with optional dynamic coloring), typography,
+ * and custom colors using a [CompositionLocalProvider].
+ *
+ * @param darkTheme Flag indicating whether to use the dark theme. Defaults to the system setting.
+ * @param dynamicColor Flag to enable dynamic colors (supported on Android S and above).
+ *                     This is disabled by default.
+ * @param content The composable content to which the theme will be applied.
+ */
 @Composable
 fun ExplanationTableTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Ensure dynamicColor is disabled
+    dynamicColor: Boolean = false, // Disabled by default; enable if supported and desired.
     content: @Composable () -> Unit
 ) {
+    // Determine the appropriate color scheme based on the dynamicColor flag and dark theme setting.
     val colorScheme = when {
+        // Use dynamic color if enabled and the device runs on Android S (API 31) or later.
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -81,6 +102,7 @@ fun ExplanationTableTheme(
         else -> LightColors
     }
 
+    // Define custom colors based on the current theme (dark or light).
     val customColors = if (darkTheme) {
         CustomColors(
             success = SuccessDark,
@@ -97,10 +119,12 @@ fun ExplanationTableTheme(
         )
     }
 
+    // Apply the MaterialTheme with the selected color scheme, typography, and custom colors.
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography, // Ensure AppTypography is defined or replace with your typography
+        typography = AppTypography, // Ensure AppTypography is defined or replace with your typography.
         content = {
+            // Provide custom colors to the composable hierarchy.
             CompositionLocalProvider(LocalCustomColors provides customColors) {
                 content()
             }
