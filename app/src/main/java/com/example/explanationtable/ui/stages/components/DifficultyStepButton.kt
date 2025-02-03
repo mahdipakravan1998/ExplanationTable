@@ -15,7 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.clipPath
@@ -27,162 +32,165 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.theme.AppTypography
 import com.example.explanationtable.ui.theme.White
 import com.example.explanationtable.utils.toPersianDigits
-import androidx.compose.ui.geometry.Size
 
+// Data class representing the gradient colors used for the button's three layered circles.
 data class StageButtonColors(
-    // Circle #1 (behind) colors
+    // Colors for the background (behind) circle.
     val behindTopLeft: Color,
     val behindBottomRight: Color,
-
-    // Circle #2 (front) colors
+    // Colors for the front circle.
     val frontTopLeft: Color,
     val frontBottomRight: Color,
-
-    // Circle #3 (inner/smaller) colors
+    // Colors for the inner (smaller) circle.
     val innerTopLeft: Color,
     val innerBottomRight: Color,
 )
 
+/**
+ * A custom composable button that visually represents a difficulty step.
+ *
+ * The button comprises three layered circles with diagonal color splits that animate when pressed.
+ * The color scheme is determined by the provided [difficulty]. When clicked, the [onClick] callback is triggered.
+ *
+ * @param difficulty The difficulty level, which dictates the button's color scheme.
+ * @param stepNumber The step number displayed on the button (converted to Persian digits).
+ * @param onClick Callback invoked upon a successful click gesture.
+ */
 @Composable
 fun DifficultyStepButton(
     difficulty: Difficulty,
     stepNumber: Int,
     onClick: () -> Unit = {}
 ) {
-    // 1) Pick colors based on difficulty
+    // Select the color scheme based on the provided difficulty level.
     val colors = when (difficulty) {
         Difficulty.EASY -> StageButtonColors(
             behindTopLeft = Color(0xFF75B11F),
             behindBottomRight = Color(0xFF63A700),
-
             frontTopLeft = Color(0xFF95E321),
             frontBottomRight = Color(0xFF87E003),
-
             innerTopLeft = Color(0xFF88CF1F),
             innerBottomRight = Color(0xFF78C900)
         )
         Difficulty.MEDIUM -> StageButtonColors(
             behindTopLeft = Color(0xFFFFD040),
             behindBottomRight = Color(0xFFFFC100),
-
             frontTopLeft = Color(0xFFFEEA66),
             frontBottomRight = Color(0xFFFEE333),
-
             innerTopLeft = Color(0xFFFED540),
             innerBottomRight = Color(0xFFFEC701)
         )
         Difficulty.HARD -> StageButtonColors(
             behindTopLeft = Color(0xFF1E9CD1),
             behindBottomRight = Color(0xFF008FCC),
-
             frontTopLeft = Color(0xFF5DCBFE),
             frontBottomRight = Color(0xFF46C4FF),
-
             innerTopLeft = Color(0xFF38BAF8),
             innerBottomRight = Color(0xFF1CB0F6)
         )
     }
 
-    // 2) Track a pressed state + animate
-    // The behind circle is permanently offset by 7.dp
-    val behindOffsetY = 7.dp
-
+    // Constant offset for the behind circle.
+    val behindOffset = 7.dp
     val density = LocalDensity.current
 
+    // State to track whether the button is pressed.
     var isPressed by remember { mutableStateOf(false) }
-    val pressOffsetY by animateFloatAsState(
-        targetValue = if (isPressed) with(density) { behindOffsetY.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 30), label = "" // short, snappy animation
+
+    // Animate the vertical offset for the front circle when pressed.
+    val animatedPressOffsetPx by animateFloatAsState(
+        targetValue = if (isPressed) with(density) { behindOffset.toPx() } else 0f,
+        animationSpec = tween(durationMillis = 30)
     )
+    // Convert the animated offset from pixels to dp for positioning the text.
+    val animatedPressOffsetDp = with(density) { animatedPressOffsetPx.toDp() }
 
-    // Convert press offset to dp for text
-    val pressOffsetDp = with(density) { pressOffsetY.toDp() }
-
-    // 3) Pointer input for immediate press detection
+    // Pointer input modifier to detect touch gestures.
     val gestureModifier = Modifier.pointerInput(Unit) {
         awaitEachGesture {
-            // Finger down => pressed = true
+            // Wait for the first finger down event.
             awaitFirstDown(requireUnconsumed = false)
             isPressed = true
 
-            // Wait for finger up or cancel => pressed = false
+            // Wait for the finger to lift or the gesture to be canceled.
             val upOrCancel = waitForUpOrCancellation()
             isPressed = false
 
-            // If the user actually lifted (not canceled), it's a click
+            // If the gesture was completed normally, invoke the onClick callback.
             if (upOrCancel != null) {
                 onClick()
             }
         }
     }
 
-    // 4) Draw everything in a Box
+    // Box layout that holds the button's visual elements.
     Box(
         modifier = gestureModifier.size(82.dp),
         contentAlignment = Alignment.Center
     ) {
+        // Canvas to draw the three layered circles with diagonal split colors.
         Canvas(modifier = Modifier.matchParentSize()) {
-            // Main circle diameter (in dp -> px)
-            val shapeDp = 75.dp
-            val shapePx = shapeDp.toPx()
-            val outerRadius = shapePx / 2f
+            // Define the dimensions of the main (outer) circle.
+            val mainDiameterDp = 75.dp
+            val mainDiameterPx = mainDiameterDp.toPx()
+            val outerRadius = mainDiameterPx / 2f
+            // The inner circle's radius is set to 77% of the outer circle's radius.
             val innerRadius = outerRadius * 0.77f
 
-            // Canvas center
+            // Calculate the canvas center.
             val canvasCenter = center
+            // Determine centers for the behind and front circles with their vertical offsets.
+            val behindCenter = Offset(canvasCenter.x, canvasCenter.y + behindOffset.toPx())
+            val frontCenter = Offset(canvasCenter.x, canvasCenter.y + animatedPressOffsetPx)
 
-            // Offsets for each circle
-            val behindCenter = Offset(canvasCenter.x, canvasCenter.y + behindOffsetY.toPx())
-            val frontCenter = Offset(canvasCenter.x, canvasCenter.y + pressOffsetY)
-
-            // 5) SINGLE diagonal path for all circles (ensures alignment):
-            //    We'll define it once, using the main circle's bounding box
-            //    around the *canvas* center (the original approach).
+            // Define a diagonal clipping path.
+            // The path forms a triangle that splits the circle from the top-left to the bottom-right.
             val diagonalPath = Path().apply {
-                val leftX = canvasCenter.x - (shapePx / 2)
-                val topY = canvasCenter.y - (shapePx / 2)
-                val rightX = leftX + shapePx
-                val bottomY = topY + shapeDp.toPx()
+                val halfDiameter = mainDiameterPx / 2f
+                val left = canvasCenter.x - halfDiameter
+                val top = canvasCenter.y - halfDiameter
+                val right = left + mainDiameterPx
+                val bottom = top + mainDiameterPx
 
-                moveTo(leftX, topY)         // top-left
-                lineTo(rightX, bottomY)     // bottom-right
-                lineTo(rightX, topY)        // top-right
+                moveTo(left, top)     // Top-left corner
+                lineTo(right, bottom) // Diagonal to bottom-right corner
+                lineTo(right, top)    // Top-right corner
                 close()
             }
 
-            // Circle #1 (behind)
+            // Draw the behind circle (first layer) with an elliptical shape.
             drawSplitCircleNoBorder(
                 center = behindCenter,
-                width = outerRadius * 2, // Full width (can be customized)
-                height = outerRadius * 1.8f, // Slightly smaller height for an elliptical effect
+                width = outerRadius * 2,
+                height = outerRadius * 1.8f,
                 colorTopLeft = colors.behindTopLeft,
                 colorBottomRight = colors.behindBottomRight,
                 diagonalPath = diagonalPath
             )
 
-            // Circle #2 (front / largest)
+            // Draw the front circle (second layer) using the same dimensions.
             drawSplitCircleNoBorder(
                 center = frontCenter,
-                width = outerRadius * 2, // Full width
-                height = outerRadius * 1.8f, // Slightly smaller height
+                width = outerRadius * 2,
+                height = outerRadius * 1.8f,
                 colorTopLeft = colors.frontTopLeft,
                 colorBottomRight = colors.frontBottomRight,
                 diagonalPath = diagonalPath
             )
 
-            // Circle #3 (inner / smaller)
+            // Draw the inner circle (third layer) with reduced dimensions.
             drawSplitCircleNoBorder(
                 center = frontCenter,
-                width = innerRadius * 2, // Full width of inner circle
-                height = innerRadius * 1.8f, // Slightly smaller height
+                width = innerRadius * 2,
+                height = innerRadius * 1.8f,
                 colorTopLeft = colors.innerTopLeft,
                 colorBottomRight = colors.innerBottomRight,
                 diagonalPath = diagonalPath
             )
-
         }
 
-        // Step number text (moves with the front circle)
+        // Render the step number text in the center of the button,
+        // adjusting its vertical position based on the press animation.
         Text(
             text = stepNumber.toPersianDigits(),
             style = AppTypography.headlineMedium.copy(
@@ -191,51 +199,58 @@ fun DifficultyStepButton(
             ),
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(y = pressOffsetDp)
+                .offset(y = animatedPressOffsetDp)
         )
     }
 }
 
 /**
- * Draws one circle, split diagonally by [diagonalPath] into two colors:
- * [colorTopLeft] and [colorBottomRight].
+ * Draws an ellipse split diagonally into two distinct color regions.
  *
- * Because we reuse the same [diagonalPath] for all circles, the color-splitting
- * line is consistent across all circles.
+ * The ellipse is first drawn completely in the bottom-right color, then its top-left
+ * region is overdrawn (via clipping with [diagonalPath]) with the top-left color.
+ *
+ * @param center The center point of the ellipse.
+ * @param width The overall width of the ellipse.
+ * @param height The overall height of the ellipse.
+ * @param colorTopLeft The color for the top-left region.
+ * @param colorBottomRight The color for the bottom-right region.
+ * @param diagonalPath The clipping path that defines the diagonal split.
  */
 private fun DrawScope.drawSplitCircleNoBorder(
     center: Offset,
-    width: Float,  // Custom width for the ellipse
-    height: Float, // Custom height for the ellipse
+    width: Float,
+    height: Float,
     colorTopLeft: Color,
     colorBottomRight: Color,
     diagonalPath: Path
 ) {
+    // Save the current canvas state into a new drawing layer.
     drawContext.canvas.saveLayer(
         bounds = Rect(Offset.Zero, size),
         paint = Paint()
     )
 
-    // 1) Draw entire ellipse in the "bottom-right" color
+    // Draw the full ellipse using the bottom-right color.
     drawOval(
         color = colorBottomRight,
-        topLeft = Offset(center.x - width / 2, center.y - height / 2), // Adjusted for ellipse center
-        size = Size(width, height), // Custom width and height for the ellipse
+        topLeft = Offset(center.x - width / 2, center.y - height / 2),
+        size = Size(width, height),
         style = Fill,
         blendMode = BlendMode.Src
     )
 
-    // 2) Clip to the diagonal path => top-left region
+    // Clip the drawing area to the diagonal path and overdraw with the top-left color.
     clipPath(diagonalPath, clipOp = ClipOp.Intersect) {
-        // 3) Overwrite top-left region with the "top-left" color
         drawOval(
             color = colorTopLeft,
-            topLeft = Offset(center.x - width / 2, center.y - height / 2), // Adjusted for ellipse center
-            size = Size(width, height), // Custom width and height for the ellipse
+            topLeft = Offset(center.x - width / 2, center.y - height / 2),
+            size = Size(width, height),
             style = Fill,
             blendMode = BlendMode.Src
         )
     }
 
+    // Restore the previous canvas state.
     drawContext.canvas.restore()
 }

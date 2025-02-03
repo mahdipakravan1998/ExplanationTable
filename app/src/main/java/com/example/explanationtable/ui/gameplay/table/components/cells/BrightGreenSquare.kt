@@ -32,17 +32,16 @@ import com.example.explanationtable.ui.theme.FeatherGreen
 import com.example.explanationtable.ui.theme.Polar
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 import com.example.explanationtable.ui.theme.White
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * A composable that displays a bright green square with a centered letter,
- * overlaid with an animated star icon.
+ * A composable that displays a bright green square with a centered letter
+ * overlaid by an animated star icon.
  *
- * The star icon undergoes a compound animation including:
- * - Translation: Moves diagonally in two phases.
+ * The star icon undergoes three simultaneous animations:
+ * - Translation: Moves diagonally (up-left) with a fast start and smooth deceleration.
  * - Rotation: Rotates from 0° to 90°.
- * - Scaling: Scales down to 0 after a delay.
+ * - Scaling: Quickly scales up from 0 to 1 (appearing) and then scales down to 0.
  *
  * @param letter The character displayed at the center of the square.
  * @param modifier Optional [Modifier] for additional styling.
@@ -53,43 +52,36 @@ fun BrightGreenSquare(
     modifier: Modifier = Modifier
 ) {
     // Animation configuration constants
-    val animationTotalDuration = 800            // Total duration in milliseconds
-    val phaseOneDuration = 440                  // Duration for the first phase of translation (milliseconds)
-    val translationDistance = 6.dp              // Maximum translation distance for the star
+    val animationTotalDuration = 800             // Total animation duration (ms)
+    val fastPhaseDuration = 200                  // Duration of the fast phase (first 25% of total time)
+    val translationDistance = 6.dp               // Maximum translation distance for the star
 
     // Layout size constants
-    val squareSize = 80.dp                      // Size of the green square
-    val starSize = 15.dp                        // Size of the star icon
+    val squareSize = 80.dp                       // Size of the bright green square
+    val starSize = 15.dp                         // Size of the star icon
 
-    // Animatables to control translation progress, rotation, and scaling
+    // Animatable values for translation, rotation, and scale animations.
     val translationProgress = remember { Animatable(0f) }
     val rotationAnim = remember { Animatable(0f) }
-    val scaleAnim = remember { Animatable(1f) }
+    val scaleAnim = remember { Animatable(0f) }
 
-    // Launch concurrent animations when the composable is first composed
+    // Launch animations concurrently when this composable is first composed.
     LaunchedEffect(Unit) {
-        // Animate translation in two phases:
-        // Phase 1: Keyframe animation to reach 60% progress with non-linear pacing.
+        // Animate translation progress using keyframes:
+        // - Reach 50% of the progress quickly (at fastPhaseDuration).
+        // - Complete translation by the end of the total duration.
         launch {
             translationProgress.animateTo(
-                targetValue = 0.6f,
-                animationSpec = keyframes {
-                    durationMillis = phaseOneDuration
-                    0.5f at 120 using FastOutSlowInEasing    // 50% progress at 120ms
-                    0.6f at phaseOneDuration using FastOutSlowInEasing  // 60% progress by end of phase one
-                }
-            )
-            // Phase 2: Tween animation to complete translation from 60% to 100%.
-            translationProgress.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = animationTotalDuration - phaseOneDuration,
-                    easing = FastOutSlowInEasing
-                )
+                animationSpec = keyframes {
+                    durationMillis = animationTotalDuration
+                    0.5f at fastPhaseDuration using FastOutSlowInEasing
+                    1f at animationTotalDuration using FastOutSlowInEasing
+                }
             )
         }
 
-        // Animate rotation from 0° to 90° over the entire duration.
+        // Animate rotation from 0° to 90° over the total duration with a linear easing.
         launch {
             rotationAnim.animateTo(
                 targetValue = 90f,
@@ -100,26 +92,36 @@ fun BrightGreenSquare(
             )
         }
 
-        // Animate scaling: wait for phase one to complete, then scale down to 0.
+        // Animate scaling:
+        // 1. Scale up quickly from 0 to 1 (appearing) during the fast phase.
+        // 2. Scale down from 1 to 0 over the remainder of the animation.
         launch {
-            delay(phaseOneDuration.toLong())
+            // Scale up (star "appearing")
+            scaleAnim.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = fastPhaseDuration,
+                    easing = FastOutSlowInEasing
+                )
+            )
+            // Scale down (star "disappearing")
             scaleAnim.animateTo(
                 targetValue = 0f,
                 animationSpec = tween(
-                    durationMillis = animationTotalDuration - phaseOneDuration,
+                    durationMillis = animationTotalDuration - fastPhaseDuration,
                     easing = LinearEasing
                 )
             )
         }
     }
 
-    // Calculate the current translation offsets based on animation progress.
-    // Negative values move the star icon upward and to the left.
+    // Calculate the current offset for the star icon based on the translation animation progress.
+    // Negative values shift the star upward and to the left.
     val currentOffset = translationDistance * translationProgress.value
     val offsetX = -currentOffset
     val offsetY = -currentOffset
 
-    // Main container with centered alignment for both the square and the star overlay.
+    // Main container aligning both the green square and the animated star at the center.
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
@@ -141,7 +143,7 @@ fun BrightGreenSquare(
             )
         }
 
-        // Animated star overlay that applies translation, rotation, and scaling.
+        // Animated star overlay applying translation, rotation, and scaling.
         Box(
             modifier = Modifier
                 .fillMaxSize()

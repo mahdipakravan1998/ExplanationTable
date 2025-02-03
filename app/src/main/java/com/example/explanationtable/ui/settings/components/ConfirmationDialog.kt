@@ -1,9 +1,11 @@
 package com.example.explanationtable.ui.settings.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,13 +18,13 @@ import com.example.explanationtable.R
 /**
  * A customizable confirmation dialog with a title, message, and action buttons.
  *
- * @param showDialog Whether the dialog should be shown.
+ * @param showDialog Whether the dialog should be displayed.
  * @param titleResId Resource ID for the dialog title.
  * @param messageResId Resource ID for the dialog message.
- * @param confirmTextResId Resource ID for the confirm button text.
- * @param dismissTextResId Resource ID for the dismiss button text.
+ * @param confirmTextResId Resource ID for the confirm button text (default is "Yes").
+ * @param dismissTextResId Resource ID for the dismiss button text (default is "No").
  * @param onConfirm Callback invoked when the confirm button is clicked.
- * @param onDismiss Callback invoked when the dismiss button is clicked or dialog is dismissed.
+ * @param onDismiss Callback invoked when the dismiss button is clicked or the dialog is dismissed.
  */
 @Composable
 fun ConfirmationDialog(
@@ -34,19 +36,22 @@ fun ConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    // Only show the dialog if the flag is true.
     if (showDialog) {
         Dialog(onDismissRequest = onDismiss) {
+            // Surface defines the background shape, color, and elevation.
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp
             ) {
+                // Column to arrange the title, message, and buttons vertically.
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    // Title
+                    // Dialog title text.
                     Text(
                         text = stringResource(id = titleResId),
                         style = MaterialTheme.typography.titleMedium,
@@ -55,9 +60,10 @@ fun ConfirmationDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    // Spacer between title and message.
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Message
+                    // Dialog message text.
                     Text(
                         text = stringResource(id = messageResId),
                         style = MaterialTheme.typography.bodyMedium,
@@ -66,30 +72,28 @@ fun ConfirmationDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    // Spacer before the action buttons.
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Buttons
+                    // Row to arrange action buttons horizontally.
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Confirm Button
-                        TextButton(
-                            onClick = onConfirm
-                        ) {
+                        // Confirm action button.
+                        TextButton(onClick = onConfirm) {
                             Text(
                                 text = stringResource(id = confirmTextResId),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
 
+                        // Spacer between the confirm and dismiss buttons.
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        // Dismiss Button
-                        TextButton(
-                            onClick = onDismiss
-                        ) {
+                        // Dismiss action button.
+                        TextButton(onClick = onDismiss) {
                             Text(
                                 text = stringResource(id = dismissTextResId),
                                 color = MaterialTheme.colorScheme.onSurface

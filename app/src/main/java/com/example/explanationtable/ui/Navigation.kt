@@ -1,11 +1,12 @@
 package com.example.explanationtable.ui
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.google.accompanist.navigation.animation.composable
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.explanationtable.ui.main.pages.MainPage
@@ -14,26 +15,48 @@ import com.example.explanationtable.ui.gameplay.pages.GameplayPage
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.model.Difficulty
 
-/**
- * Sets up the application's navigation host with defined routes and their corresponding UI pages.
- *
- * @param navController the navigation controller managing app navigation; defaults to a remembered controller.
- * @param isDarkTheme flag indicating whether the dark theme is active.
- */
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavHost(
-    navController: NavHostController = rememberNavController(),
+    navController: androidx.navigation.NavHostController = rememberAnimatedNavController(),
     isDarkTheme: Boolean
 ) {
-    // Obtain the MainViewModel instance for use within the composable destinations.
     val viewModel: MainViewModel = viewModel()
 
-    // Define the navigation graph with a starting destination.
-    NavHost(
+    // AnimatedNavHost adds the slide animations during navigation transitions.
+    AnimatedNavHost(
         navController = navController,
-        startDestination = Routes.MAIN
+        startDestination = Routes.MAIN,
+        // Slide in from the right when navigating forward.
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = tween(durationMillis = 300)
+            )
+        },
+        // Slide out to the left when navigating forward.
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = tween(durationMillis = 300)
+            )
+        },
+        // Slide in from the left when navigating back.
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = tween(durationMillis = 300)
+            )
+        },
+        // Slide out to the right when navigating back.
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { fullWidth -> fullWidth },
+                animationSpec = tween(durationMillis = 300)
+            )
+        }
     ) {
-        // Main application route
+        // Main route: renders the MainPage composable.
         composable(Routes.MAIN) {
             MainPage(
                 navController = navController,
@@ -42,21 +65,22 @@ fun AppNavHost(
             )
         }
 
-        // Route for the StagesListPage which takes a "difficulty" argument.
+        // StagesListPage route: expects a "difficulty" argument.
         composable(
             route = Routes.STAGES_LIST_WITH_ARG,
-            arguments = listOf(navArgument("difficulty") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("difficulty") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            // Parse the "difficulty" argument from the navigation back stack.
-            val difficultyEnum = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
+            val difficulty = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
             StagesListPage(
                 navController = navController,
-                difficulty = difficultyEnum,
+                difficulty = difficulty,
                 isDarkTheme = isDarkTheme
             )
         }
 
-        // Route for the GameplayPage which takes both "stageNumber" and "difficulty" arguments.
+        // GameplayPage route: expects both "stageNumber" and "difficulty" arguments.
         composable(
             route = Routes.GAMEPLAY_WITH_ARGS,
             arguments = listOf(
@@ -64,30 +88,22 @@ fun AppNavHost(
                 navArgument("difficulty") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            // Retrieve the stage number with a default of 1 if not provided.
             val stageNumber = backStackEntry.arguments?.getInt("stageNumber") ?: 1
-            // Parse the "difficulty" argument from the navigation back stack.
-            val difficultyEnum = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
+            val difficulty = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
             GameplayPage(
                 isDarkTheme = isDarkTheme,
                 stageNumber = stageNumber,
-                difficulty = difficultyEnum
+                difficulty = difficulty
             )
         }
     }
 }
 
-/**
- * Converts a difficulty argument string into the corresponding Difficulty enum.
- *
- * @param difficultyArg the difficulty parameter as a nullable String.
- * @return the matching Difficulty enum; defaults to Difficulty.EASY for null or unrecognized values.
- */
 private fun parseDifficulty(difficultyArg: String?): Difficulty {
     return when (difficultyArg?.lowercase()) {
-        "easy"   -> Difficulty.EASY
+        "easy" -> Difficulty.EASY
         "medium" -> Difficulty.MEDIUM
-        "hard"   -> Difficulty.HARD
-        else     -> Difficulty.EASY
+        "hard" -> Difficulty.HARD
+        else -> Difficulty.EASY
     }
 }

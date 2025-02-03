@@ -13,19 +13,23 @@ import com.example.explanationtable.model.difficultyStepCountMap
 import com.example.explanationtable.ui.stages.components.DifficultyStepButton
 
 /**
- * A composable that displays a scrollable list of step buttons with dynamic horizontal offsets.
+ * A composable function that displays a vertically scrollable list of stage buttons.
+ * Each button is horizontally offset according to a dynamic pattern.
  *
- * @param difficulty The current difficulty level.
- * @param onStageClick Callback triggered when a specific stage (step) is clicked.
+ * @param difficulty The current difficulty level, used to determine the number of stages.
+ * @param onStageClick Callback invoked with the stage number when a stage button is clicked.
  */
 @Composable
 fun StagesListContent(
     difficulty: Difficulty,
     onStageClick: (Int) -> Unit
 ) {
+    // Determine the total number of stages based on the provided difficulty.
+    // If the difficulty key is not found in the map, default to 9 stages.
     val totalSteps = difficultyStepCountMap[difficulty] ?: 9
 
-    // Define the base pattern of horizontal offsets
+    // Define a symmetric base pattern for horizontal offsets.
+    // This pattern creates a visually appealing staggered layout.
     val baseOffsetPattern = listOf(
         0.dp,
         40.dp,
@@ -38,9 +42,10 @@ fun StagesListContent(
         0.dp
     )
 
-    // Generate the stepOffsets list based on totalSteps
+    // Generate the list of horizontal offsets for each stage button.
     val stepOffsets: List<Dp> = generateStepOffsets(totalSteps, baseOffsetPattern)
 
+    // Create a vertically scrollable column to contain the stage buttons.
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -48,41 +53,47 @@ fun StagesListContent(
             .padding(vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Iterate over each step and apply the corresponding offset
-        stepOffsets.forEachIndexed { index, offsetX ->
+        // Iterate over each offset, generating a stage button with the corresponding horizontal position.
+        stepOffsets.forEachIndexed { index, offset ->
+            // Stage numbers are 1-indexed.
             val stageNumber = index + 1
+
+            // Use a Box to apply horizontal offset and vertical padding to each button.
             Box(
                 modifier = Modifier
-                    .offset(x = offsetX)
+                    .offset(x = offset)
                     .padding(vertical = 24.dp)
             ) {
+                // Display the stage button with its corresponding difficulty and stage number.
                 DifficultyStepButton(
                     difficulty = difficulty,
                     stepNumber = stageNumber,
-                    onClick = {
-                        onStageClick(stageNumber)
-                    }
+                    onClick = { onStageClick(stageNumber) }
                 )
             }
         }
+        // Add a spacer at the bottom of the list to provide extra padding.
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 /**
- * Generates a list of horizontal offsets for step buttons based on the total number of steps
- * and a predefined base pattern.
+ * Generates a list of horizontal offsets for stage buttons based on a predefined base pattern.
  *
- * @param totalSteps The total number of steps.
- * @param basePattern The base pattern of horizontal offsets.
- * @return A list of horizontal offsets corresponding to each step.
+ * If the total number of steps exceeds the base pattern length, the pattern is cycled
+ * (excluding the first element to maintain the symmetric design).
+ *
+ * @param totalSteps The total number of stage buttons to display.
+ * @param basePattern The predefined list of horizontal offsets.
+ * @return A list of horizontal offsets corresponding to each stage button.
  */
 fun generateStepOffsets(totalSteps: Int, basePattern: List<Dp>): List<Dp> {
     return List(totalSteps) { index ->
+        // For indices within the base pattern, use the predefined offset.
         if (index < basePattern.size) {
             basePattern[index]
         } else {
-            // Calculate the offset by cycling through the base pattern, excluding the first element to maintain symmetry
+            // For additional stages, cycle through the base pattern (skipping the first element).
             val cycleIndex = (index - 1) % (basePattern.size - 1) + 1
             basePattern[cycleIndex]
         }

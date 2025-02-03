@@ -3,9 +3,9 @@ package com.example.explanationtable.ui.gameplay.table.components.cells.utils
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,21 +17,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.style.TextOverflow.Companion
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 
 /**
- * A helper composable that automatically resizes text to fit within its constraints
- * while trying to keep it in up to [maxLines]. The priority is:
- *  1. Try to render the text in up to [maxLines] lines.
- *  2. If it still overflows, reduce the font size.
+ * A helper composable that automatically resizes text to fit within its constraints,
+ * trying first to render the text in up to [maxLines] lines. If it still overflows,
+ * the font size is reduced until it fits.
  *
- * By default, we set [maxLines] to 2 in the calling composables so it first
- * splits into two lines if needed, then shrinks if it doesn't fit within 2 lines.
+ * By default, [maxLines] is set to two so that text is split into two lines before
+ * reducing the font size.
  *
- * No ellipses are used (overflow is set to [TextOverflow.Clip]).
+ * Note: Ellipses are not used; overflow is set to [TextOverflow.Clip].
  */
 @Suppress("UnusedBoxWithConstraintsScope")
 @Composable
@@ -46,23 +44,28 @@ fun AutoResizingText(
     maxLines: Int = Int.MAX_VALUE,
     fontFamily: FontFamily = VazirmatnFontFamily
 ) {
-    var textSize by remember { mutableStateOf(maxTextSize) }
+    // State holding the current text size, starting at the maximum allowed size.
+    var currentTextSize by remember { mutableStateOf(maxTextSize) }
+
+    // Remember a text measurer to measure text dimensions without composing UI.
     val textMeasurer = rememberTextMeasurer()
 
     BoxWithConstraints(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        val c = constraints
-        var fits = false
-        var attempts = 0
+        // Obtain the current layout constraints (available width and height).
+        val constraints = this.constraints
 
-        // Attempt to reduce text size until it fits in the box up to [maxLines].
-        while (!fits && attempts < 20 && textSize >= minTextSize) {
-            val measureResult = textMeasurer.measure(
+        // Attempt to adjust the text size until it fits within the constraints.
+        // We limit the number of attempts to prevent an infinite loop.
+        var attempts = 0
+        while (attempts < 20 && currentTextSize >= minTextSize) {
+            // Measure the text with the current text style.
+            val measuredText = textMeasurer.measure(
                 text = AnnotatedString(text),
                 style = TextStyle(
-                    fontSize = textSize,
+                    fontSize = currentTextSize,
                     color = color,
                     fontWeight = fontWeight,
                     textAlign = textAlign,
@@ -71,27 +74,31 @@ fun AutoResizingText(
                 maxLines = maxLines
             )
 
-            if (measureResult.size.width <= c.maxWidth &&
-                measureResult.size.height <= c.maxHeight
+            // Check if the measured text fits within the available width and height.
+            if (measuredText.size.width <= constraints.maxWidth &&
+                measuredText.size.height <= constraints.maxHeight
             ) {
-                fits = true
+                // Text fits; exit the loop.
+                break
             } else {
-                textSize = (textSize.value - 1).sp
+                // Text does not fit; reduce the text size by 1 sp and try again.
+                currentTextSize = (currentTextSize.value - 1).sp
             }
             attempts++
         }
 
+        // Render the text with the adjusted text size.
+        // Overflow is clipped to avoid ellipses since size adjustments are handled above.
         Text(
             text = text,
             style = TextStyle(
-                fontSize = textSize,
+                fontSize = currentTextSize,
                 color = color,
                 fontWeight = fontWeight,
                 textAlign = textAlign,
                 fontFamily = fontFamily
             ),
             maxLines = maxLines,
-            // Use Clip to avoid ellipses. If text doesn't fit, the logic above reduces size.
             overflow = TextOverflow.Clip
         )
     }

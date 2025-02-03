@@ -19,12 +19,11 @@ import com.example.explanationtable.R
 import com.example.explanationtable.ui.stages.components.DifficultyOptions
 
 /**
- * A reusable composable for showing the difficulty selection dialog.
+ * Displays a dialog that allows the user to select a difficulty option.
  *
- * @param showDialog Whether the dialog should be shown.
- * @param onDismiss Callback when the dialog is dismissed.
- * @param onOptionSelected Callback when a difficulty option is selected.
- *        You can handle navigation or state updates outside this composable.
+ * @param showDialog Boolean flag indicating whether the dialog is visible.
+ * @param onDismiss Callback triggered when the dialog is dismissed.
+ * @param onOptionSelected Callback triggered when a difficulty option is selected.
  */
 @Composable
 fun DifficultyDialog(
@@ -32,36 +31,40 @@ fun DifficultyDialog(
     onDismiss: () -> Unit,
     onOptionSelected: (String) -> Unit
 ) {
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentSize(Alignment.TopEnd)
+    // Do not render anything if the dialog should not be shown.
+    if (!showDialog) return
+
+    AlertDialog(
+        // Called when the user dismisses the dialog (e.g., by clicking outside)
+        onDismissRequest = onDismiss,
+        // Title section containing a close button aligned at the top-end.
+        title = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth() // Occupies the full available width.
+                    .wrapContentSize(Alignment.TopEnd) // Aligns its content (the close button) to the top end.
+            ) {
+                IconButton(
+                    onClick = onDismiss, // Dismiss the dialog when clicked.
+                    modifier = Modifier.padding(4.dp) // Adds padding around the button.
                 ) {
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.padding(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(id = R.string.close),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Close, // Uses the default close icon.
+                        contentDescription = stringResource(id = R.string.close), // Accessibility description.
+                        tint = MaterialTheme.colorScheme.onSurface // Sets the icon color based on the theme.
+                    )
                 }
-            },
-            text = {
-                DifficultyOptions(
-                    onOptionSelected = onOptionSelected
-                )
-            },
-            confirmButton = {},
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurface
-        )
-    }
+            }
+        },
+        // Main content area displaying difficulty options.
+        text = {
+            DifficultyOptions(onOptionSelected = onOptionSelected)
+        },
+        // No explicit confirm button is needed for this dialog.
+        confirmButton = {},
+        // Apply the current theme's color scheme to the dialog.
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurface
+    )
 }

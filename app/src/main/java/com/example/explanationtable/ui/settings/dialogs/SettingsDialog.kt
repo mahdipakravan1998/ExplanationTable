@@ -16,13 +16,13 @@ import com.example.explanationtable.ui.theme.DialogBackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 
 /**
- * A composable that displays the settings dialog with various options and an exit confirmation.
+ * Displays the settings dialog with options and an exit confirmation prompt.
  *
- * @param showDialog Whether the settings dialog should be shown.
+ * @param showDialog Controls whether the settings dialog should be shown.
  * @param onDismiss Callback invoked when the dialog is dismissed.
- * @param isDarkTheme True if dark theme is active, false otherwise.
- * @param onToggleTheme Callback to toggle the theme.
- * @param isMuted True if the app is muted, false otherwise.
+ * @param isDarkTheme True if the dark theme is active.
+ * @param onToggleTheme Callback to toggle between themes.
+ * @param isMuted True if the app is muted.
  * @param onToggleMute Callback to toggle the mute state.
  * @param onExit Callback invoked when the user confirms exiting the app.
  */
@@ -30,70 +30,77 @@ import com.example.explanationtable.ui.theme.DialogBackgroundLight
 fun SettingsDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    isDarkTheme: Boolean, // True if Dark, false if Light
+    isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     isMuted: Boolean,
     onToggleMute: () -> Unit,
     onExit: () -> Unit
 ) {
-    // State to control the visibility of the confirmation dialog
+    // Manage the state for displaying the exit confirmation dialog.
     var showExitConfirmation by remember { mutableStateOf(false) }
 
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentSize(Alignment.TopEnd)
-                ) {
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.padding(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(id = R.string.close),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            },
-            text = {
-                SettingsOptions(
-                    onDismiss = onDismiss,
-                    currentTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme,
-                    isMuted = isMuted,
-                    onToggleMute = onToggleMute,
-                    onExit = {
-                        // Show the confirmation dialog instead of exiting immediately
-                        showExitConfirmation = true
-                    }
-                )
-            },
-            confirmButton = {},
-            // Set the container color based on the theme
-            containerColor = if (isDarkTheme) DialogBackgroundDark else DialogBackgroundLight,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurface,
-            // Adjust shape and elevation to prevent theme overlays
-            shape = MaterialTheme.shapes.medium,
-            tonalElevation = 0.dp
-        )
+    // If the dialog should not be shown, exit early.
+    if (!showDialog) return
 
-        // Confirmation Dialog for Exit Action
-        ConfirmationDialog(
-            showDialog = showExitConfirmation,
-            titleResId = R.string.confirm_exit_title,
-            messageResId = R.string.confirm_exit_message,
-            onConfirm = {
-                showExitConfirmation = false
-                onExit()
-                onDismiss() // Optionally dismiss the SettingsDialog after exiting
-            },
-            onDismiss = { showExitConfirmation = false }
-        )
-    }
+    // Main settings dialog using an AlertDialog.
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        // Title contains a close button aligned to the top-right.
+        title = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentSize(Alignment.TopEnd)
+            ) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.padding(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(id = R.string.close),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        },
+        // Content displays the settings options.
+        text = {
+            SettingsOptions(
+                onDismiss = onDismiss,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme,
+                isMuted = isMuted,
+                onToggleMute = onToggleMute,
+                onExit = {
+                    // Instead of immediate exit, show the confirmation dialog.
+                    showExitConfirmation = true
+                }
+            )
+        },
+        confirmButton = {}, // No explicit confirm button is used.
+        // Set the dialog's container color based on the current theme.
+        containerColor = if (isDarkTheme) DialogBackgroundDark else DialogBackgroundLight,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurface,
+        shape = MaterialTheme.shapes.medium, // Use a medium shape for consistency.
+        tonalElevation = 0.dp             // Remove elevation to avoid unwanted overlays.
+    )
+
+    // Exit confirmation dialog that appears when the user opts to exit.
+    ConfirmationDialog(
+        showDialog = showExitConfirmation,
+        titleResId = R.string.confirm_exit_title,
+        messageResId = R.string.confirm_exit_message,
+        onConfirm = {
+            // On confirmation, hide the confirmation dialog, execute exit logic, and dismiss the settings dialog.
+            showExitConfirmation = false
+            onExit()
+            onDismiss()
+        },
+        onDismiss = {
+            // Simply dismiss the confirmation dialog if the user cancels.
+            showExitConfirmation = false
+        }
+    )
 }
