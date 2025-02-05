@@ -60,6 +60,6 @@ fun difficultyColors(difficulty: Difficulty): DifficultyColors = when (difficult
  */
 val difficultyStepCountMap: Map<Difficulty, Int> = mapOf(
     Difficulty.EASY to 50,
-    Difficulty.MEDIUM to 72,
+    Difficulty.MEDIUM to 70,
     Difficulty.HARD to 100
 )
