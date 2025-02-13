@@ -1,4 +1,4 @@
-package com.example.explanationtable.model
+package com.example.explanationtable.model.easy
 
 /**
  * Represents a table for an easy level configuration.

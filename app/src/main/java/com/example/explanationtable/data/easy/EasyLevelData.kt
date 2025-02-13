@@ -1,6 +1,6 @@
 package com.example.explanationtable.data.easy
 
-import com.example.explanationtable.model.EasyLevelTable
+import com.example.explanationtable.model.easy.EasyLevelTable
 
 val easyLevelTables: List<EasyLevelTable> = listOf(
     EasyLevelTable(
