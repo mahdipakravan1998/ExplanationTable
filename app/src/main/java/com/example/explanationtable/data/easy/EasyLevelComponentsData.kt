@@ -2,6 +2,9 @@ package com.example.explanationtable.data.easy
 
 import com.example.explanationtable.model.easy.EasyLevelComponentsTable
 
+/**
+ * A list of EasyLevelComponentsTable that stores different components for each level.
+ */
 val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
     EasyLevelComponentsTable(
         id = 1,
@@ -454,3 +457,9 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
         )
     )
 )
+
+// A brief summary of what the code does:
+// This code defines a data structure `easyLevelComponentsData` that stores a list of `EasyLevelComponentsTable` objects.
+// Each object in the list represents an entry for a specific easy level (from 1 to 50), and each entry contains a map
+// associating indices with lists of Arabic words (components). The structure provides easy access to these components
+// based on the index and level ID for processing in your application.
