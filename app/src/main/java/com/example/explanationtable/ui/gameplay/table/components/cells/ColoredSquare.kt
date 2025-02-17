@@ -10,13 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.gameplay.table.components.cells.utils.AutoResizingText
 import com.example.explanationtable.ui.theme.Bee
+import com.example.explanationtable.ui.theme.DarkBrown
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 
 // Constants defining the dimensions and text sizing parameters for the square.
@@ -59,7 +59,7 @@ fun ColoredSquare(
         AutoResizingText(
             text = text,
             modifier = Modifier.fillMaxSize(), // Allow the text to occupy the full available space.
-            color = Color(0xFF5E3700), // Set the text color to a dark brown tone.
+            color = DarkBrown, // Set the text color to a dark brown tone.
             fontWeight = FontWeight.Bold, // Render text in bold.
             maxLines = 2, // Limit text to a maximum of 2 lines.
             minTextSize = MinTextSize, // Define the minimum font size for auto-resizing.

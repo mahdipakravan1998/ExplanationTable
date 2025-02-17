@@ -60,6 +60,12 @@ val Black = Color(0xFF000000)
 val White = Color(0xFFFFFFFF)
 
 // ------------------------------
+// Additional Colors
+// Color used for cell text in gameplay components.
+// ------------------------------
+val DarkBrown = Color(0xFF5E3700)
+
+// ------------------------------
 // Light Theme Colors
 // Define the color scheme for light mode.
 // ------------------------------
@@ -160,3 +166,22 @@ val Whale = Color(0xFF1899D6)    // Text color for blue-themed selection in ligh
 val DarkBlueBackground = Color(0xFF202F36)  // Background color for blue-themed selection in dark mode
 val DarkBlueBorder = Color(0xFF84D8FF)      // Border color for blue-themed selection in dark mode
 val DarkBlueText = Color(0xFF1899D6)        // Text color for blue-themed selection in dark mode
+
+// ------------------------------
+// Prize Box Colors
+// Colors used specifically for the PrizeBox composable.
+// ------------------------------
+val IconCircleDark = Color(0xFF7AB934)            // Icon circle color for dark theme in PrizeBox
+val CheckColorDark = Color(0xFF152024)              // Check icon color for dark theme in PrizeBox
+val PrizeButtonBackgroundDark = Color(0xFF93D334)   // Prize button background color for dark theme
+val PrizeButtonBackgroundLight = Color(0xFF57CC02)  // Prize button background color for light theme
+
+// New colors for StageReviewTable components
+val HeaderBackgroundLight = Color(0xFFBAE7FC)
+val HeaderBackgroundDark = Color(0xFF235063)
+
+val BorderColorLight = Color(0xFF84D7FF)
+val BorderColorDark = Color(0xFF3F85A7)
+
+val TextColorLight = Eel
+val TextColorDark = TextDarkMode

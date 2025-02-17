@@ -158,7 +158,7 @@ fun BrightGreenSquare(
                 .size(starSize)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.star),
+                painter = painterResource(id = R.drawable.ic_star),
                 contentDescription = "Sparkling Star",
                 colorFilter = ColorFilter.tint(Polar)
             )

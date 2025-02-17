@@ -24,4 +24,35 @@
 
     <string name="hint">راهنمایی</string>
     <string name="stage">مرحله</string>
+
+    <!-- New strings from StageReviewTable -->
+    <string name="error_no_data">No data available for stage %1$d</string>
+    <string name="header_left">واژه قرآنی</string>
+    <string name="header_right">متن فارسی</string>
+
+    <!-- String for AnimatedPrizeButton -->
+    <string name="prize_button_text">دریافت جایزه</string>
+
+    <string-array name="congratulatory_texts">
+        <item>آفرین به تو</item>
+        <item>بهت افتخار می‌کنم</item>
+        <item>خدا قوت</item>
+        <item>تو عالی هستی</item>
+        <item>تو بی‌نظیری</item>
+        <item>تو بهترینی</item>
+        <item>تو فوق‌العاده‌ای</item>
+        <item>تو شگفت‌انگیزی</item>
+        <item>باور نکردنی هستی</item>
+        <item>تو یک معجزه‌ای</item>
+        <item>تو یک قهرمانی</item>
+        <item>شجاعت و قدرت توی خونته</item>
+        <item>دمت گرم</item>
+        <item>دست‌مریزاد</item>
+        <item>قدرت درون تو بی‌پایانه</item>
+        <item>تو درخشانی</item>
+        <item>به تلاشت افتخار می‌کنم</item>
+        <item>حرف نداری</item>
+        <item>یادگیری تو عالیه</item>
+        <item>تو قوی‌تر از همیشه‌ای</item>
+    </string-array>
 </resources>

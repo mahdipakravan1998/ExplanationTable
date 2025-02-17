@@ -33,12 +33,13 @@ fun GameTable(
     isDarkTheme: Boolean,
     difficulty: Difficulty,
     stageNumber: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onGameComplete: () -> Unit = {}
 ) {
     when (difficulty) {
         Difficulty.EASY -> {
             // Render the easy level table with a fixed 3x5 layout and stage number.
-            EasyThreeByFiveTable(isDarkTheme, stageNumber, modifier)
+            EasyThreeByFiveTable(isDarkTheme, stageNumber, modifier, onGameComplete)
         }
         Difficulty.MEDIUM -> {
             // Render a placeholder layout for medium difficulty.

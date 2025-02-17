@@ -22,12 +22,14 @@ import kotlinx.coroutines.launch
  * @param isDarkTheme Boolean flag to determine if dark theme is active.
  * @param stageNumber Stage number to select the corresponding table data.
  * @param modifier Modifier for customizing the layout.
+ * @param onGameComplete Callback invoked when the game is completed (all cells are correctly placed).
  */
 @Composable
 fun EasyThreeByFiveTable(
     isDarkTheme: Boolean,
     stageNumber: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onGameComplete: () -> Unit = {}
 ) {
     // --- Initialization of Fixed and Movable Cell Data ---
 
@@ -71,6 +73,9 @@ fun EasyThreeByFiveTable(
     var firstSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var secondSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var isSelectionComplete by remember { mutableStateOf(false) }
+
+    // State variable to ensure onGameComplete is only called once.
+    var isGameOver by remember { mutableStateOf(false) }
 
     // --- Cell Click Handling Logic ---
 
@@ -137,6 +142,14 @@ fun EasyThreeByFiveTable(
                 correctlyPlacedCells[pos] = data
                 transitioningCells.remove(pos)
             }
+        }
+    }
+
+    // --- Check for Game Completion ---
+    LaunchedEffect(correctlyPlacedCells.size) {
+        if (!isGameOver && correctlyPlacedCells.size == movablePositions.size) {
+            isGameOver = true
+            onGameComplete()
         }
     }
 

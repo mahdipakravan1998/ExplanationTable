@@ -14,20 +14,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.gameplay.table.components.cells.utils.AutoResizingText
 import com.example.explanationtable.ui.theme.Bee
+import com.example.explanationtable.ui.theme.DarkBrown
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 
 //-------------------------------------------------------------------------------------
 // Constants for cell text styling.
 // These values help maintain consistency and ease future style adjustments.
 //-------------------------------------------------------------------------------------
-private val cellTextColor = Color(0xFF5E3700)
+private val cellTextColor = DarkBrown
 private val cellFontWeight = FontWeight.Bold
 private val cellMinTextSize = 10.sp
 private val cellMaxTextSize = 16.sp
