@@ -100,7 +100,7 @@ fun GameplayPage(
                             slideInHorizontally(
                                 initialOffsetX = { fullWidth -> fullWidth },
                                 animationSpec = tween(300)
-                            ) with slideOutHorizontally(
+                            ) togetherWith slideOutHorizontally(
                                 targetOffsetX = { fullWidth -> -fullWidth },
                                 animationSpec = tween(300)
                             )
@@ -108,14 +108,14 @@ fun GameplayPage(
                             slideInHorizontally(
                                 initialOffsetX = { fullWidth -> -fullWidth },
                                 animationSpec = tween(300)
-                            ) with slideOutHorizontally(
+                            ) togetherWith slideOutHorizontally(
                                 targetOffsetX = { fullWidth -> fullWidth },
                                 animationSpec = tween(300)
                             )
                         }.using(
                             SizeTransform(clip = false)
                         )
-                    }
+                    }, label = ""
                 ) { targetGameOver ->
                     if (!targetGameOver) {
                         GameTable(
