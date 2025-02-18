@@ -1,10 +1,28 @@
 package com.example.explanationtable.ui.gameplay.pages
 
 import android.app.Activity
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,10 +44,10 @@ import kotlinx.coroutines.delay
 /**
  * Composable function representing the gameplay screen for a specific stage.
  *
- * @param isDarkTheme Boolean indicating whether the dark theme is enabled.
- * @param stageNumber The stage number to display in the top bar title.
- * @param difficulty The difficulty level for the current stage.
- * @param gems The number of gems to display in the top bar (default is 1000).
+ * @param isDarkTheme Indicates if dark theme is enabled.
+ * @param stageNumber The stage number to display.
+ * @param difficulty  The difficulty level for the current stage.
+ * @param gems        The number of gems to display in the top bar (default is 1000).
  */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -39,46 +57,48 @@ fun GameplayPage(
     difficulty: Difficulty,
     gems: Int = 1000
 ) {
-    // Retrieve the main view model instance to manage UI state.
+    // Retrieve the main view model for managing UI state.
     val viewModel: MainViewModel = viewModel()
 
     // Observe the mute state from the view model.
     val isMuted by viewModel.isMuted.collectAsState()
 
-    // State variable controlling the visibility of the settings dialog.
+    // State controlling the visibility of the settings dialog.
     var showSettingsDialog by remember { mutableStateOf(false) }
 
-    // Get the current context and safely cast it to an Activity for exit operations.
+    // Get the current context and cast it to an Activity for exit operations.
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Build the page title by combining a localized "stage" string with the stage number
-    // converted to Persian digits.
+    // Construct the page title using a localized "stage" string and Persian digits.
     val pageTitle = "${stringResource(id = R.string.stage)} ${stageNumber.toPersianDigits()}"
 
-    // State to control game over.
-    var gameOver by remember { mutableStateOf(false) }
-    // State to control PrizeBox visibility.
-    var showPrizeBox by remember { mutableStateOf(false) }
+    // Common animation duration (in milliseconds) used across transitions.
+    val animationDuration = 300
 
-    // Trigger PrizeBox appearance after StageReviewTable animation completes.
-    LaunchedEffect(gameOver) {
-        if (gameOver) {
-            delay(300) // Wait for StageReviewTable to slide in
-            showPrizeBox = true
+    // State indicating whether the game is over.
+    var isGameOver by remember { mutableStateOf(false) }
+    // State controlling the visibility of the PrizeBox.
+    var isPrizeBoxVisible by remember { mutableStateOf(false) }
+
+    // Launch side-effect: after the game ends, delay briefly before showing the PrizeBox.
+    LaunchedEffect(isGameOver) {
+        if (isGameOver) {
+            delay(animationDuration.toLong())
+            isPrizeBoxVisible = true
         }
     }
 
-    // Apply the custom background for the page.
+    // Apply a custom background for the gameplay page.
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
-        // Use a Box to allow stacking components.
+        // Use a Box to stack UI components.
         Box(modifier = Modifier.fillMaxSize()) {
-            // Main content column.
+            // Main content column containing the top bar and animated game content.
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top bar displaying the title, gem count, and action buttons.
+                // Top bar with title, gem count, and action buttons.
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
@@ -86,45 +106,48 @@ fun GameplayPage(
                     gems = gems,
                     difficulty = difficulty,
                     onSettingsClick = { showSettingsDialog = true },
-                    onHelpClick = { /* Help action not implemented yet */ }
+                    onHelpClick = { /* TODO: Implement help action */ }
                 )
 
-                // Spacer for vertical spacing between the top bar and game table.
+                // Spacer for vertical separation between the top bar and game content.
                 Spacer(modifier = Modifier.height(72.dp))
 
-                // Animated content for GameTable and StageReviewTable transition.
+                // Animated content transitions between the GameTable and StageReviewTable.
                 AnimatedContent(
-                    targetState = gameOver,
+                    targetState = isGameOver,
                     transitionSpec = {
                         if (targetState) {
+                            // When the game ends: slide in from the right, slide out to the left.
                             slideInHorizontally(
                                 initialOffsetX = { fullWidth -> fullWidth },
-                                animationSpec = tween(300)
+                                animationSpec = tween(animationDuration)
                             ) togetherWith slideOutHorizontally(
                                 targetOffsetX = { fullWidth -> -fullWidth },
-                                animationSpec = tween(300)
+                                animationSpec = tween(animationDuration)
                             )
                         } else {
+                            // When the game is active: slide in from the left, slide out to the right.
                             slideInHorizontally(
                                 initialOffsetX = { fullWidth -> -fullWidth },
-                                animationSpec = tween(300)
+                                animationSpec = tween(animationDuration)
                             ) togetherWith slideOutHorizontally(
                                 targetOffsetX = { fullWidth -> fullWidth },
-                                animationSpec = tween(300)
+                                animationSpec = tween(animationDuration)
                             )
-                        }.using(
-                            SizeTransform(clip = false)
-                        )
-                    }, label = ""
+                        }.using(SizeTransform(clip = false))
+                    },
+                    label = ""
                 ) { targetGameOver ->
                     if (!targetGameOver) {
+                        // Display the game table while the game is active.
                         GameTable(
                             isDarkTheme = isDarkTheme,
                             difficulty = difficulty,
                             stageNumber = stageNumber,
-                            onGameComplete = { gameOver = true }
+                            onGameComplete = { isGameOver = true }
                         )
                     } else {
+                        // Display the stage review table after the game completes.
                         StageReviewTable(
                             stageNumber = stageNumber,
                             isDarkTheme = isDarkTheme
@@ -133,23 +156,23 @@ fun GameplayPage(
                 }
             }
 
-            // Animated PrizeBox that slides in from the bottom and sticks to the bottom.
+            // Animated visibility for the PrizeBox, which slides in from the bottom.
             AnimatedVisibility(
-                visible = showPrizeBox,
+                visible = isPrizeBoxVisible,
                 modifier = Modifier.align(Alignment.BottomCenter),
                 enter = slideInVertically(
                     initialOffsetY = { fullHeight -> fullHeight },
-                    animationSpec = tween(300)
+                    animationSpec = tween(animationDuration)
                 ),
                 exit = fadeOut()
             ) {
                 PrizeBox(
                     isDarkTheme = isDarkTheme,
-                    onPrizeButtonClick = { /* Handle prize receiving action here */ }
+                    onPrizeButtonClick = { /* TODO: Handle prize receiving action */ }
                 )
             }
 
-            // Settings dialog allowing theme toggling, mute toggling, and exit functionality.
+            // Settings dialog for theme toggling, mute control, and exiting the application.
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss = { showSettingsDialog = false },
