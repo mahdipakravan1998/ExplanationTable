@@ -281,61 +281,10 @@ fun solveWithAStar(
         transposition.clear()
         val (solution, newBound) = idaSearch(initialState, bound, targetTable, goalMap, transposition)
         if (solution != null) {
-            val path = reconstructPath(solution)
-            printSolutionPath(path)
             return solution.moves
         }
         if (newBound == Double.POSITIVE_INFINITY) break
         bound = newBound
     }
     return -1
-}
-
-/**
- * Reconstructs the solution path by following parent pointers from the final state back to the initial state.
- *
- * @param state The final (solution) state.
- * @return A list of states representing the solution path from the initial state to the final state.
- */
-fun reconstructPath(state: State): List<State> {
-    val path = mutableListOf<State>()
-    var current: State? = state
-    while (current != null) {
-        path.add(current)
-        current = current.parent
-    }
-    return path.reversed()
-}
-
-/**
- * Prints the solution path in a human-readable format.
- *
- * For each move, the function shows the board before and after the move,
- * indicates the swap or macro move details, and lists the fixed positions.
- *
- * @param path The sequence of states from initial to solution.
- */
-fun printSolutionPath(path: List<State>) {
-    for (i in 0 until path.size - 1) {
-        val current = path[i]
-        val next = path[i + 1]
-        println("Step ${i + 1}:")
-        println("Before move:")
-        println(current.table.joinToString(" "))
-
-        // Determine positions that changed.
-        val diffPositions = current.table.indices.filter { current.table[it] != next.table[it] }
-        if (diffPositions.size == 2) {
-            println("Swapping positions ${diffPositions[0]} and ${diffPositions[1]}")
-        } else {
-            println("Macro move fixing positions: ${diffPositions.joinToString(", ")}")
-        }
-        println("After move:")
-        println(next.table.joinToString(" "))
-        println("Fixed positions: ${next.fixedPositions}")
-        println("------")
-    }
-    println("Final state:")
-    println(path.last().table.joinToString(" "))
-    println("Total moves: ${path.last().moves}")
 }
