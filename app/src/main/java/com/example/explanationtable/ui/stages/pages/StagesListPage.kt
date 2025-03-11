@@ -35,12 +35,14 @@ import com.example.explanationtable.ui.stages.content.StagesListContent
 fun StagesListPage(
     navController: NavController,
     difficulty: Difficulty = Difficulty.EASY,
-    gems: Int = 1000,
     onSettingsClick: () -> Unit = {},
     isDarkTheme: Boolean
 ) {
     // Retrieve the MainViewModel instance for app-wide state management.
     val viewModel: MainViewModel = viewModel()
+
+    val diamonds by viewModel.diamonds.collectAsState()
+
     // Collect the current muted state from the ViewModel.
     val isMuted by viewModel.isMuted.collectAsState()
 
@@ -61,7 +63,7 @@ fun StagesListPage(
                 isHomePage = false,
                 isDarkTheme = isDarkTheme,
                 title = stringResource(id = R.string.stages_list),
-                gems = gems,
+                gems = diamonds,
                 difficulty = difficulty,
                 onSettingsClick = { showSettingsDialog = true },
                 iconTint = MaterialTheme.colorScheme.onSurface

@@ -13,12 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.components.PrimaryButton
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.CheckColorDark
 import com.example.explanationtable.ui.theme.DarkGreenBackground
@@ -126,11 +128,10 @@ fun PrizeBox(
         }
         Spacer(modifier = Modifier.height(22.dp))
         // Display the animated prize button.
-        AnimatedPrizeButton(
+        PrimaryButton(
+            isDarkTheme = isDarkTheme,
             onClick = onPrizeButtonClick,
-            backgroundColor = buttonBackgroundColor,
-            shadowColor = buttonShadowColor,
-            textColor = buttonTextColor,
+            text = stringResource(id = R.string.prize_button_text),
             modifier = Modifier.padding(horizontal = 32.dp)
         )
     }

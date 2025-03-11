@@ -11,11 +11,13 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Background
@@ -52,13 +55,15 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun GameplayPage(
+    navController: NavHostController,
     isDarkTheme: Boolean,
     stageNumber: Int,
-    difficulty: Difficulty,
-    gems: Int = 1000
+    difficulty: Difficulty
 ) {
     // Retrieve the main view model for managing UI state.
     val viewModel: MainViewModel = viewModel()
+
+    val diamonds by viewModel.diamonds.collectAsState()
 
     // Observe the mute state from the view model.
     val isMuted by viewModel.isMuted.collectAsState()
@@ -80,6 +85,11 @@ fun GameplayPage(
     var isGameOver by remember { mutableStateOf(false) }
     // State controlling the visibility of the PrizeBox.
     var isPrizeBoxVisible by remember { mutableStateOf(false) }
+
+    // Store the minimum moves, player moves, and elapsed time values.
+    var minMovesForThisScramble by remember { mutableStateOf(0) }
+    var playerMoves by remember { mutableStateOf(0) }
+    var elapsedTime by remember { mutableStateOf(0L) }
 
     // Launch side-effect: after the game ends, delay briefly before showing the PrizeBox.
     LaunchedEffect(isGameOver) {
@@ -103,7 +113,7 @@ fun GameplayPage(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
                     title = pageTitle,
-                    gems = gems,
+                    gems = diamonds,
                     difficulty = difficulty,
                     onSettingsClick = { showSettingsDialog = true },
                     onHelpClick = { /* TODO: Implement help action */ }
@@ -144,7 +154,15 @@ fun GameplayPage(
                             isDarkTheme = isDarkTheme,
                             difficulty = difficulty,
                             stageNumber = stageNumber,
-                            onGameComplete = { isGameOver = true }
+                            // Updated onGameComplete callback to match the expected signature (three parameters)
+                            onGameComplete = { minMoves, playerMoveCount, timeElapsed ->
+                                // Set isGameOver to true when the game is completed.
+                                isGameOver = true
+                                // Store the values.
+                                minMovesForThisScramble = minMoves
+                                playerMoves = playerMoveCount
+                                elapsedTime = timeElapsed
+                            }
                         )
                     } else {
                         // Display the stage review table after the game completes.
@@ -168,7 +186,12 @@ fun GameplayPage(
             ) {
                 PrizeBox(
                     isDarkTheme = isDarkTheme,
-                    onPrizeButtonClick = { /* TODO: Handle prize receiving action */ }
+                    onPrizeButtonClick = {
+                        // Navigate to the game rewards page with the game results values.
+                        navController.navigate(
+                            "game_rewards/${minMovesForThisScramble}/${playerMoves}/${elapsedTime}"
+                        )
+                    }
                 )
             }
 

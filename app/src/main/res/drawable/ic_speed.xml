@@ -1,0 +1,88 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="33.6dp"
+    android:height="40.96dp"
+    android:viewportWidth="33.6"
+    android:viewportHeight="40.96">
+
+    <!-- Rectangle (shifted from x=24.6396, y=11.3945) -->
+    <path
+        android:fillColor="#1CB0F6"
+        android:pathData="M13.44 3.93h6.72v6.73h-6.72z" />
+
+    <!-- Top bar (originally from 22.3997,8.51392 to 33.5997,12.5166) -->
+    <path
+        android:fillColor="#1CB0F6"
+        android:fillType="evenOdd"
+        android:pathData="
+            M11.20 1.05
+            C11.20 0.47 11.67 0 12.25 0
+            L21.35 0
+            C21.93 0 22.40 0.47 22.40 1.05
+            V4.00
+            C22.40 4.58 21.93 5.05 21.35 5.05
+            H12.25
+            C11.67 5.05 11.20 4.58 11.20 4.00
+            V1.05Z" />
+
+    <!-- Circle-like shape with stroke (originally spanning x=13.0326–42.9668) -->
+    <path
+        android:fillColor="#DDF4FF"
+        android:strokeColor="#1CB0F6"
+        android:strokeWidth="3.66577"
+        android:pathData="
+            M31.77 24.13
+            C31.77 32.42 25.06 39.13 16.80 39.13
+            C8.54 39.13 1.83 32.42 1.83 24.13
+            C1.83 15.84 8.54 9.13 16.80 9.13
+            C25.06 9.13 31.77 15.84 31.77 24.13Z" />
+
+    <!-- Complex blue path (originally starting at 27.7295,31.5676) -->
+    <path
+        android:fillColor="#84D8FF"
+        android:fillType="evenOdd"
+        android:pathData="
+            M16.53 24.10
+            C18.19 25.77 20.68 28.26 24.01 31.59
+            C28.16 27.43 28.16 20.68 24.01 16.52
+            C22.02 14.52 19.43 13.48 16.82 13.40" />
+
+    <!-- Small circular path (originally centered at 27.9998,34.4) -->
+    <path
+        android:fillColor="#1CB0F6"
+        android:fillType="evenOdd"
+        android:pathData="
+            M16.80 26.93
+            C15.25 26.93 14.00 25.68 14.00 24.13
+            C14.00 22.58 15.25 21.32 16.80 21.32
+            C18.35 21.32 19.60 22.58 19.60 24.13
+            C19.60 25.68 18.35 26.93 16.80 26.93Z" />
+
+    <!-- Stroked blue path (originally starting at 35.339,37.6417) -->
+    <path
+        android:fillColor="#1CB0F6"
+        android:fillType="evenOdd"
+        android:strokeColor="#1CB0F6"
+        android:strokeWidth="0.45863"
+        android:pathData="
+            M24.14 30.18
+            C24.55 30.58 24.55 31.25 24.14 31.65
+            L24.04 31.76
+            C23.63 32.17 22.96 32.17 22.55 31.76
+            L17.30 26.50
+            C16.89 26.09 16.89 25.43 17.30 25.02
+            L17.40 24.91
+            C17.81 24.50 18.48 24.50 18.89 24.91
+            L24.14 30.18Z" />
+
+    <!-- White stroke path (originally starting at 20.0823,28.1824) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.14209"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.75"
+        android:pathData="
+            M8.88 20.72
+            C8.45 21.78 8.23 22.95 8.28 24.17
+            C8.35 26.32 9.23 28.25 10.61 29.69" />
+</vector>

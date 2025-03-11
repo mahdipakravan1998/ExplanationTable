@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.gameplay.components
+package com.example.explanationtable.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -25,31 +25,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.explanationtable.R
+import com.example.explanationtable.ui.theme.BackgroundDark
+import com.example.explanationtable.ui.theme.DialogBackgroundLight
+import com.example.explanationtable.ui.theme.IconCircleDark
+import com.example.explanationtable.ui.theme.PrizeButtonBackgroundDark
+import com.example.explanationtable.ui.theme.PrizeButtonBackgroundLight
+import com.example.explanationtable.ui.theme.TreeFrog
 
 /**
  * A button with an animated press effect used for claiming a prize.
  *
  * @param onClick Callback invoked when the button is clicked.
- * @param backgroundColor The main color of the button.
- * @param shadowColor The color of the button's shadow.
- * @param textColor The color used for the button's text.
+ * @param text The text displayed on the button.
+ * @param isDarkTheme Boolean indicating if the dark theme is active.
  * @param modifier Modifier to be applied to the button container.
  */
 @Composable
-fun AnimatedPrizeButton(
+fun PrimaryButton(
+    isDarkTheme: Boolean,
     onClick: () -> Unit,
-    backgroundColor: Color,
-    shadowColor: Color,
-    textColor: Color,
+    text: String,
     modifier: Modifier = Modifier
 ) {
+    // Define your button colors internally based on the current theme.
+    val buttonBackgroundColor =
+        if (isDarkTheme) PrizeButtonBackgroundDark else PrizeButtonBackgroundLight
+    val buttonShadowColor =
+        if (isDarkTheme) IconCircleDark else TreeFrog
+    val buttonTextColor =
+        if (isDarkTheme) BackgroundDark else DialogBackgroundLight
+
     // Constants used in the button layout and animation.
     val shadowOffset = 4.dp       // Offset to simulate depth for shadow.
     val buttonHeight = 56.dp      // Fixed height for the button.
@@ -63,7 +72,7 @@ fun AnimatedPrizeButton(
     // Animate the vertical offset based on the press state to create a press effect.
     val pressOffsetY by animateDpAsState(
         targetValue = if (isPressed) shadowOffset else 0.dp,
-        animationSpec = tween(durationMillis = animationDuration)
+        animationSpec = tween(durationMillis = animationDuration), label = ""
     )
 
     // Gesture detector to handle press interactions.
@@ -97,7 +106,7 @@ fun AnimatedPrizeButton(
                 .fillMaxSize()
                 .offset(y = shadowOffset),
             shape = RoundedCornerShape(cornerRadius),
-            colors = CardDefaults.cardColors(containerColor = shadowColor),
+            colors = CardDefaults.cardColors(containerColor = buttonShadowColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             // No inner content required for the shadow.
@@ -108,7 +117,7 @@ fun AnimatedPrizeButton(
                 .fillMaxSize()
                 .offset(y = pressOffsetY),
             shape = RoundedCornerShape(cornerRadius),
-            colors = CardDefaults.cardColors(containerColor = backgroundColor),
+            colors = CardDefaults.cardColors(containerColor = buttonBackgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             // Centered text label within the button.
@@ -120,12 +129,12 @@ fun AnimatedPrizeButton(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = stringResource(id = R.string.prize_button_text),
+                    text = text,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Black,
                         fontSize = 16.sp
                     ),
-                    color = textColor
+                    color = buttonTextColor
                 )
             }
         }

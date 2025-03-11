@@ -14,6 +14,8 @@ import com.example.explanationtable.ui.stages.pages.StagesListPage
 import com.example.explanationtable.ui.gameplay.pages.GameplayPage
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.ui.rewards.pages.GameResultScreen
+import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -27,28 +29,24 @@ fun AppNavHost(
     AnimatedNavHost(
         navController = navController,
         startDestination = Routes.MAIN,
-        // Slide in from the right when navigating forward.
         enterTransition = {
             slideInHorizontally(
                 initialOffsetX = { fullWidth -> fullWidth },
                 animationSpec = tween(durationMillis = 300)
             )
         },
-        // Slide out to the left when navigating forward.
         exitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { fullWidth -> -fullWidth },
                 animationSpec = tween(durationMillis = 300)
             )
         },
-        // Slide in from the left when navigating back.
         popEnterTransition = {
             slideInHorizontally(
                 initialOffsetX = { fullWidth -> -fullWidth },
                 animationSpec = tween(durationMillis = 300)
             )
         },
-        // Slide out to the right when navigating back.
         popExitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { fullWidth -> fullWidth },
@@ -91,9 +89,30 @@ fun AppNavHost(
             val stageNumber = backStackEntry.arguments?.getInt("stageNumber") ?: 1
             val difficulty = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
             GameplayPage(
+                navController = navController, // Pass navController here.
                 isDarkTheme = isDarkTheme,
                 stageNumber = stageNumber,
                 difficulty = difficulty
+            )
+        }
+
+        // Game rewards/results page route: expects minMoves, playerMoves, and elapsedTime as arguments.
+        composable(
+            route = Routes.GAME_REWARDS_WITH_ARGS,
+            arguments = listOf(
+                navArgument("minMoves") { type = NavType.IntType },
+                navArgument("playerMoves") { type = NavType.IntType },
+                navArgument("elapsedTime") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val minMoves = backStackEntry.arguments?.getInt("minMoves") ?: 0
+            val playerMoves = backStackEntry.arguments?.getInt("playerMoves") ?: 0
+            val elapsedTime = backStackEntry.arguments?.getLong("elapsedTime") ?: 0L
+            GameResultScreen(
+                isDarkTheme = isDarkTheme,
+                minMoves = minMoves,
+                playerMoves = playerMoves,
+                elapsedTime = elapsedTime
             )
         }
     }

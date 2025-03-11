@@ -70,4 +70,6 @@ dependencies {
 
     implementation(libs.material)
     implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.constraintlayout.compose)
 }

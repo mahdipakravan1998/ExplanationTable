@@ -13,6 +13,7 @@ import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWi
 import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
 import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
+import com.example.explanationtable.ui.gameplay.table.utils.solveWithAStar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -29,12 +30,15 @@ fun EasyThreeByFiveTable(
     isDarkTheme: Boolean,
     stageNumber: Int,
     modifier: Modifier = Modifier,
-    onGameComplete: () -> Unit = {}
+    onGameComplete: (minMovesForThisScramble: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _ -> }
 ) {
     // --- Layout Constants ---
     val cellSize = 80.dp
     val spacing = 12.dp
     val signSize = 16.dp
+
+    // Record the start time when the game begins.
+    val gameStartTime = remember { System.currentTimeMillis() }
 
     // --- Fixed Cell Positions Setup ---
     // These positions remain fixed and non-swappable.
@@ -76,6 +80,14 @@ fun EasyThreeByFiveTable(
     // Flag to ensure onGameComplete is invoked only once.
     var isGameOver by remember { mutableStateOf(false) }
 
+    // Track player moves
+    var playerMoves by remember { mutableStateOf(0) }
+
+    // Track min moves for the current scramble
+    val minMovesForThisScramble = remember {
+        solveWithAStar(shuffledMovableData, movableData)
+    }
+
     // --- Cell Click Handling ---
     /**
      * Handles click events on a cell.
@@ -100,7 +112,10 @@ fun EasyThreeByFiveTable(
                 currentTableData[second] = temp ?: listOf("?")
             }
 
-            // Check for any movable cell that now has correct data.
+            // Increment player move count on valid swap
+            playerMoves++
+
+            // Check for any movable cell that now has correct data
             movablePositions.forEach { pos ->
                 val originalData = originalTableData.rows[pos.row]?.get(pos.col)
                 if (currentTableData[pos] == originalData) {
@@ -144,7 +159,9 @@ fun EasyThreeByFiveTable(
     LaunchedEffect(correctlyPlacedCells.size) {
         if (!isGameOver && correctlyPlacedCells.size == movablePositions.size) {
             isGameOver = true
-            onGameComplete()
+            val gameEndTime = System.currentTimeMillis()
+            val elapsedTime = gameEndTime - gameStartTime
+            onGameComplete(minMovesForThisScramble, playerMoves, elapsedTime)
         }
     }
 

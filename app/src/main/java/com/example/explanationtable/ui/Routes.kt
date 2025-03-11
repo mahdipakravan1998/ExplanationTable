@@ -32,4 +32,10 @@ object Routes {
     const val GAMEPLAY = "gameplay"
     // Parameterized route for the gameplay page that accepts both 'stageNumber' and 'difficulty' arguments.
     const val GAMEPLAY_WITH_ARGS = "gameplay/{stageNumber}/{difficulty}"
+
+    // -------------------------------------------------------------------------
+    // Game Rewards / Results Page Routes
+    // -------------------------------------------------------------------------
+    // New route that takes minMoves, playerMoves, and elapsedTime as parameters.
+    const val GAME_REWARDS_WITH_ARGS = "game_rewards/{minMoves}/{playerMoves}/{elapsedTime}"
 }

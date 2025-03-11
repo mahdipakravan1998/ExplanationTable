@@ -25,6 +25,14 @@ val VazirmatnFontFamily = FontFamily(
     Font(R.font.vazirmatn_black, FontWeight.Black)
 )
 
+val ShabnamFontFamily = FontFamily(
+    Font(R.font.shabnam_thin_fd_wol, FontWeight.Thin),
+    Font(R.font.shabnam_light_fd_wol, FontWeight.Light),
+    Font(R.font.shabnam_fd_wol, FontWeight.Normal),
+    Font(R.font.shabnam_medium_fd_wol, FontWeight.Medium),
+    Font(R.font.shabnam_bold_fd_wol, FontWeight.Bold)
+)
+
 /**
  * Custom Typography definition for the application using the Vazirmatn font family.
  *

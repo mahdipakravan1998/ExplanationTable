@@ -35,7 +35,7 @@ fun GameTable(
     difficulty: Difficulty,
     stageNumber: Int,
     modifier: Modifier = Modifier,
-    onGameComplete: () -> Unit = {}
+    onGameComplete: (minMovesForThisScramble: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _ -> }
 ) {
     when (difficulty) {
         // For easy difficulty, render the fixed 3x5 table layout.
