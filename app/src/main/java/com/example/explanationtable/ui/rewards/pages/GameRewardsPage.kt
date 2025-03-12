@@ -1,5 +1,6 @@
 package com.example.explanationtable.ui.rewards.pages
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -10,6 +11,9 @@ import com.example.explanationtable.ui.rewards.components.RewardsTable
 import com.example.explanationtable.ui.components.PrimaryButton
 import com.example.explanationtable.ui.components.SecondaryButton
 import androidx.compose.material3.Text
+import androidx.navigation.NavController
+import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.ui.Routes
 
 /**
  * Displays the game result screen with a rewards table and navigation buttons.
@@ -30,8 +34,19 @@ fun GameResultScreen(
     isDarkTheme: Boolean,
     minMoves: Int,
     playerMoves: Int,
-    elapsedTime: Long
+    elapsedTime: Long,
+    navController: NavController,
+    difficulty: Difficulty,
+    stageNumber: Int
 ) {
+    // Handle the back button press
+    BackHandler {
+        // Navigate to the stages list page with difficulty passed
+        navController.navigate("stages_list/${difficulty.name}") {
+            popUpTo(Routes.MAIN) { inclusive = true }
+        }
+    }
+
     // Apply the background with theme settings; not a home page.
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
         // Main container that fills the entire screen.
@@ -61,7 +76,15 @@ fun GameResultScreen(
                     // Primary button to navigate to the next page.
                     PrimaryButton(
                         isDarkTheme = isDarkTheme,
-                        onClick = { /* TODO: Navigate to the next page */ },
+                        onClick = {
+                            // Navigate to the next stage or another screen
+                            // Assuming you want to go to the next stage
+                            val nextStage = stageNumber + 1  // Increment the current stage number to get the next one
+                            navController.navigate("gameplay/$nextStage/${difficulty.name}") {
+                                // Optionally clear the back stack so that the user can't go back to the result page
+                                popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
+                            }
+                        },
                         text = "مرحله بعدی",
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -71,7 +94,12 @@ fun GameResultScreen(
                     // Secondary button to replay the game.
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
-                        onClick = { /* TODO: Navigate to replay game */ },
+                        onClick = {
+                            // Navigate back to the gameplay page and restart the game
+                            navController.navigate("gameplay/${stageNumber}/${difficulty.name}") {
+                                popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }  // Pop the current reward screen off the back stack
+                            }
+                        },
                         text = "دوباره بازی کن",
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -81,7 +109,12 @@ fun GameResultScreen(
                     // Secondary button to navigate back.
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
-                        onClick = { /* TODO: Navigate back */ },
+                        onClick = {
+                            // Navigate to the stages list page with difficulty passed
+                            navController.navigate("stages_list/${difficulty.name}") {
+                                popUpTo(Routes.MAIN) { inclusive = true } // Clear back stack if needed
+                            }
+                        },
                         text = "بازگشت",
                         modifier = Modifier.fillMaxWidth()
                     )

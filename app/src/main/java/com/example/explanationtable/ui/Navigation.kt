@@ -102,17 +102,24 @@ fun AppNavHost(
             arguments = listOf(
                 navArgument("minMoves") { type = NavType.IntType },
                 navArgument("playerMoves") { type = NavType.IntType },
-                navArgument("elapsedTime") { type = NavType.LongType }
+                navArgument("elapsedTime") { type = NavType.LongType },
+                navArgument("difficulty") { type = NavType.StringType },
+                navArgument("stageNumber") { type = NavType.IntType } // Add the stageNumber argument
             )
         ) { backStackEntry ->
             val minMoves = backStackEntry.arguments?.getInt("minMoves") ?: 0
             val playerMoves = backStackEntry.arguments?.getInt("playerMoves") ?: 0
             val elapsedTime = backStackEntry.arguments?.getLong("elapsedTime") ?: 0L
+            val difficulty = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
+            val stageNumber = backStackEntry.arguments?.getInt("stageNumber") ?: 1
             GameResultScreen(
                 isDarkTheme = isDarkTheme,
                 minMoves = minMoves,
                 playerMoves = playerMoves,
-                elapsedTime = elapsedTime
+                elapsedTime = elapsedTime,
+                navController = navController,
+                difficulty = difficulty,
+                stageNumber = stageNumber
             )
         }
     }

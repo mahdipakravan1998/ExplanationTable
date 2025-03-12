@@ -1,6 +1,7 @@
 package com.example.explanationtable.ui.gameplay.pages
 
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -35,6 +36,7 @@ import androidx.navigation.NavHostController
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Background
+import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.gameplay.components.PrizeBox
 import com.example.explanationtable.ui.gameplay.review.StageReviewTable
@@ -60,6 +62,14 @@ fun GameplayPage(
     stageNumber: Int,
     difficulty: Difficulty
 ) {
+    // Handle the back button press
+    BackHandler {
+        // Navigate to the stages list page with difficulty passed
+        navController.navigate("stages_list/${difficulty.name}") {
+            popUpTo(Routes.MAIN) { inclusive = true }
+        }
+    }
+
     // Retrieve the main view model for managing UI state.
     val viewModel: MainViewModel = viewModel()
 
@@ -90,6 +100,16 @@ fun GameplayPage(
     var minMovesForThisScramble by remember { mutableStateOf(0) }
     var playerMoves by remember { mutableStateOf(0) }
     var elapsedTime by remember { mutableStateOf(0L) }
+
+    // Reset game state whenever the stageNumber or difficulty changes
+    LaunchedEffect(stageNumber, difficulty) {
+        // Reset game variables when the game restarts
+        isGameOver = false
+        isPrizeBoxVisible = false
+        minMovesForThisScramble = 0
+        playerMoves = 0
+        elapsedTime = 0L
+    }
 
     // Launch side-effect: after the game ends, delay briefly before showing the PrizeBox.
     LaunchedEffect(isGameOver) {
@@ -189,7 +209,7 @@ fun GameplayPage(
                     onPrizeButtonClick = {
                         // Navigate to the game rewards page with the game results values.
                         navController.navigate(
-                            "game_rewards/${minMovesForThisScramble}/${playerMoves}/${elapsedTime}"
+                            "game_rewards/${minMovesForThisScramble}/${playerMoves}/${elapsedTime}/${difficulty.name}/$stageNumber"
                         )
                     }
                 )
