@@ -52,7 +52,6 @@ import kotlinx.coroutines.delay
  * @param isDarkTheme Indicates if dark theme is enabled.
  * @param stageNumber The stage number to display.
  * @param difficulty  The difficulty level for the current stage.
- * @param gems        The number of gems to display in the top bar (default is 1000).
  */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -62,56 +61,39 @@ fun GameplayPage(
     stageNumber: Int,
     difficulty: Difficulty
 ) {
-    // Handle the back button press
     BackHandler {
-        // Navigate to the stages list page with difficulty passed
         navController.navigate("stages_list/${difficulty.name}") {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
-    // Retrieve the main view model for managing UI state.
     val viewModel: MainViewModel = viewModel()
-
     val diamonds by viewModel.diamonds.collectAsState()
-
-    // Observe the mute state from the view model.
     val isMuted by viewModel.isMuted.collectAsState()
-
-    // State controlling the visibility of the settings dialog.
     var showSettingsDialog by remember { mutableStateOf(false) }
-
-    // Get the current context and cast it to an Activity for exit operations.
     val context = LocalContext.current
     val activity = context as? Activity
-
-    // Construct the page title using a localized "stage" string and Persian digits.
     val pageTitle = "${stringResource(id = R.string.stage)} ${stageNumber.toPersianDigits()}"
-
-    // Common animation duration (in milliseconds) used across transitions.
     val animationDuration = 300
 
-    // State indicating whether the game is over.
     var isGameOver by remember { mutableStateOf(false) }
-    // State controlling the visibility of the PrizeBox.
     var isPrizeBoxVisible by remember { mutableStateOf(false) }
 
-    // Store the minimum moves, player moves, and elapsed time values.
-    var minMovesForThisScramble by remember { mutableStateOf(0) }
+    // Separate state variables for the two types of accuracy-related values.
+    var optimalMoves by remember { mutableStateOf(0) }
+    var userAccuracy by remember { mutableStateOf(0) }
     var playerMoves by remember { mutableStateOf(0) }
     var elapsedTime by remember { mutableStateOf(0L) }
 
-    // Reset game state whenever the stageNumber or difficulty changes
     LaunchedEffect(stageNumber, difficulty) {
-        // Reset game variables when the game restarts
         isGameOver = false
         isPrizeBoxVisible = false
-        minMovesForThisScramble = 0
+        optimalMoves = 0
+        userAccuracy = 0
         playerMoves = 0
         elapsedTime = 0L
     }
 
-    // Launch side-effect: after the game ends, delay briefly before showing the PrizeBox.
     LaunchedEffect(isGameOver) {
         if (isGameOver) {
             delay(animationDuration.toLong())
@@ -119,16 +101,12 @@ fun GameplayPage(
         }
     }
 
-    // Apply a custom background for the gameplay page.
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
-        // Use a Box to stack UI components.
         Box(modifier = Modifier.fillMaxSize()) {
-            // Main content column containing the top bar and animated game content.
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top bar with title, gem count, and action buttons.
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
@@ -138,16 +116,11 @@ fun GameplayPage(
                     onSettingsClick = { showSettingsDialog = true },
                     onHelpClick = { /* TODO: Implement help action */ }
                 )
-
-                // Spacer for vertical separation between the top bar and game content.
                 Spacer(modifier = Modifier.height(72.dp))
-
-                // Animated content transitions between the GameTable and StageReviewTable.
                 AnimatedContent(
                     targetState = isGameOver,
                     transitionSpec = {
                         if (targetState) {
-                            // When the game ends: slide in from the right, slide out to the left.
                             slideInHorizontally(
                                 initialOffsetX = { fullWidth -> fullWidth },
                                 animationSpec = tween(animationDuration)
@@ -156,7 +129,6 @@ fun GameplayPage(
                                 animationSpec = tween(animationDuration)
                             )
                         } else {
-                            // When the game is active: slide in from the left, slide out to the right.
                             slideInHorizontally(
                                 initialOffsetX = { fullWidth -> -fullWidth },
                                 animationSpec = tween(animationDuration)
@@ -169,23 +141,19 @@ fun GameplayPage(
                     label = ""
                 ) { targetGameOver ->
                     if (!targetGameOver) {
-                        // Display the game table while the game is active.
                         GameTable(
                             isDarkTheme = isDarkTheme,
                             difficulty = difficulty,
                             stageNumber = stageNumber,
-                            // Updated onGameComplete callback to match the expected signature (three parameters)
-                            onGameComplete = { minMoves, playerMoveCount, timeElapsed ->
-                                // Set isGameOver to true when the game is completed.
+                            onGameComplete = { optimal, accuracy, playerMoveCount, timeElapsed ->
                                 isGameOver = true
-                                // Store the values.
-                                minMovesForThisScramble = minMoves
+                                optimalMoves = optimal
+                                userAccuracy = accuracy
                                 playerMoves = playerMoveCount
                                 elapsedTime = timeElapsed
                             }
                         )
                     } else {
-                        // Display the stage review table after the game completes.
                         StageReviewTable(
                             stageNumber = stageNumber,
                             isDarkTheme = isDarkTheme
@@ -193,8 +161,6 @@ fun GameplayPage(
                     }
                 }
             }
-
-            // Animated visibility for the PrizeBox, which slides in from the bottom.
             AnimatedVisibility(
                 visible = isPrizeBoxVisible,
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -207,15 +173,13 @@ fun GameplayPage(
                 PrizeBox(
                     isDarkTheme = isDarkTheme,
                     onPrizeButtonClick = {
-                        // Navigate to the game rewards page with the game results values.
+                        // In your GameplayPage (or wherever the navigation occurs):
                         navController.navigate(
-                            "game_rewards/${minMovesForThisScramble}/${playerMoves}/${elapsedTime}/${difficulty.name}/$stageNumber"
+                            "game_rewards/$optimalMoves/$userAccuracy/$playerMoves/$elapsedTime/${difficulty.name}/$stageNumber"
                         )
                     }
                 )
             }
-
-            // Settings dialog for theme toggling, mute control, and exiting the application.
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss = { showSettingsDialog = false },
@@ -224,7 +188,6 @@ fun GameplayPage(
                 isMuted = isMuted,
                 onToggleMute = { viewModel.toggleMute() },
                 onExit = {
-                    // Exit the application by finishing the current task.
                     activity?.finishAndRemoveTask()
                 }
             )

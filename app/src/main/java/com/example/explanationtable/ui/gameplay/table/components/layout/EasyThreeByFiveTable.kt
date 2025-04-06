@@ -14,8 +14,18 @@ import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
 import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
 import com.example.explanationtable.ui.gameplay.table.utils.solveWithAStar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+// Fallback accuracy function: calculates a score (0-10) based on the ratio of incorrect to correct moves.
+fun calculateFallbackAccuracy(correctMoves: Int, incorrectMoves: Int): Int {
+    if (correctMoves == 0) return 0 // Avoid division by zero.
+    val ratio = incorrectMoves.toFloat() / correctMoves.toFloat()
+    val score = (10f / (1 + ratio)).toInt()
+    return score.coerceIn(0, 10)
+}
 
 /**
  * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
@@ -23,14 +33,19 @@ import kotlinx.coroutines.launch
  * @param isDarkTheme Flag indicating if dark theme is active.
  * @param stageNumber Stage number to select the corresponding table data.
  * @param modifier Modifier for customizing the layout.
- * @param onGameComplete Callback invoked when the game is completed (all cells are correctly placed).
+ * @param onGameComplete Callback invoked when the game is completed.
+ *        It now provides four parameters:
+ *         - optimalMoves: The minimum number of moves computed by A*.
+ *         - userAccuracy: The user's accuracy score (fallback based on move tracking).
+ *         - playerMoves: The total number of moves the player made.
+ *         - elapsedTime: The elapsed time of the game.
  */
 @Composable
 fun EasyThreeByFiveTable(
     isDarkTheme: Boolean,
     stageNumber: Int,
     modifier: Modifier = Modifier,
-    onGameComplete: (minMovesForThisScramble: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _ -> }
+    onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> }
 ) {
     // --- Layout Constants ---
     val cellSize = 80.dp
@@ -41,7 +56,6 @@ fun EasyThreeByFiveTable(
     val gameStartTime = remember { System.currentTimeMillis() }
 
     // --- Fixed Cell Positions Setup ---
-    // These positions remain fixed and non-swappable.
     val fixedPositions = setOf(
         CellPosition(0, 0),
         CellPosition(0, 2),
@@ -49,19 +63,15 @@ fun EasyThreeByFiveTable(
     )
 
     // --- Table Data Initialization ---
-    // Retrieve the original table data based on the stage number.
     val originalTableData = remember {
         easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
     }
-    // Extract movable cell data excluding the fixed positions.
     val movableDataList = remember {
         getMovableData(originalTableData, fixedPositions)
     }
     val movablePositions = remember { movableDataList.map { it.first } }
     val movableData = remember { movableDataList.map { it.second } }
-    // Shuffle movable data ensuring no item stays in its original position.
     val shuffledMovableData = remember { derangeList(movableData) }
-    // Initialize the current table state with the shuffled movable data.
     val currentTableData = remember {
         mutableStateMapOf<CellPosition, List<String>>().apply {
             putAll(createShuffledTable(shuffledMovableData, movablePositions, emptyMap()))
@@ -69,33 +79,31 @@ fun EasyThreeByFiveTable(
     }
 
     // --- State Tracking ---
-    // Map for cells that are correctly placed.
     val correctlyPlacedCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
-    // Map for cells currently undergoing transition.
     val transitioningCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
-    // Variables to track selected cells for swapping.
     var firstSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var secondSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
     var isSelectionComplete by remember { mutableStateOf(false) }
-    // Flag to ensure onGameComplete is invoked only once.
     var isGameOver by remember { mutableStateOf(false) }
 
     // Track player moves
     var playerMoves by remember { mutableStateOf(0) }
 
-    // Track min moves for the current scramble
-    val minMovesForThisScramble = remember {
-        solveWithAStar(shuffledMovableData, movableData)
+    // Track move performance for fallback accuracy calculation.
+    var correctMoveCount by remember { mutableStateOf(0) }
+    var incorrectMoveCount by remember { mutableStateOf(0) }
+
+    // Track optimal moves computed by A*
+    var minMovesForThisScramble by remember { mutableStateOf<Int?>(null) }
+
+    LaunchedEffect(shuffledMovableData, movableData) {
+        val result = withContext(Dispatchers.Default) {
+            solveWithAStar(shuffledMovableData, movableData)
+        }
+        minMovesForThisScramble = result
     }
 
     // --- Cell Click Handling ---
-    /**
-     * Handles click events on a cell.
-     * - On first click, records the cell.
-     * - On second (distinct) click, swaps the two cells and checks for correct placement.
-     *
-     * @param position The position of the clicked cell.
-     */
     fun handleCellClick(position: CellPosition) {
         if (firstSelectedCell == null) {
             firstSelectedCell = position
@@ -112,28 +120,34 @@ fun EasyThreeByFiveTable(
                 currentTableData[second] = temp ?: listOf("?")
             }
 
-            // Increment player move count on valid swap
+            // Increment player move count.
             playerMoves++
 
-            // Check for any movable cell that now has correct data
+            // Check for any movable cell that now has correct data and count them.
+            var newlyCorrectCount = 0
             movablePositions.forEach { pos ->
                 val originalData = originalTableData.rows[pos.row]?.get(pos.col)
                 if (currentTableData[pos] == originalData) {
                     transitioningCells[pos] = currentTableData[pos]!!
                     currentTableData.remove(pos)
+                    newlyCorrectCount++
                 }
+            }
+
+            // Update move tracking based on newly correct cells.
+            if (newlyCorrectCount > 0) {
+                correctMoveCount++
+            } else {
+                incorrectMoveCount++
             }
         }
     }
 
-    /**
-     * Resets the cell selections after a swap, adding a brief delay for visual feedback.
-     */
     @Composable
     fun resetSelection() {
         if (isSelectionComplete) {
             LaunchedEffect(Unit) {
-                delay(200) // Visual feedback delay.
+                delay(200)
                 firstSelectedCell = null
                 secondSelectedCell = null
                 isSelectionComplete = false
@@ -141,27 +155,28 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // --- Transition Animation ---
-    // Animate cells marked as transitioning to the correctly placed state.
     LaunchedEffect(transitioningCells.keys.toList()) {
         transitioningCells.keys.toList().forEach { pos ->
             val data = transitioningCells[pos] ?: return@forEach
             launch {
-                delay(50) // Animation delay.
+                delay(50)
                 correctlyPlacedCells[pos] = data
                 transitioningCells.remove(pos)
             }
         }
     }
 
-    // --- Game Completion Check ---
-    // Invoke onGameComplete once all movable cells are correctly placed.
     LaunchedEffect(correctlyPlacedCells.size) {
         if (!isGameOver && correctlyPlacedCells.size == movablePositions.size) {
             isGameOver = true
             val gameEndTime = System.currentTimeMillis()
             val elapsedTime = gameEndTime - gameStartTime
-            onGameComplete(minMovesForThisScramble, playerMoves, elapsedTime)
+
+            // Retrieve the optimal moves computed by A* (if available).
+            val optimalMoves = minMovesForThisScramble ?: 0
+            // Calculate user accuracy using the fallback function.
+            val fallbackAccuracy = calculateFallbackAccuracy(correctMoveCount, incorrectMoveCount)
+            onGameComplete(optimalMoves, fallbackAccuracy, playerMoves, elapsedTime)
         }
     }
 
@@ -171,27 +186,21 @@ fun EasyThreeByFiveTable(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing)
     ) {
-        // Render each row.
         for (rowIndex in 0 until 5) {
             Row(
                 modifier = Modifier.wrapContentWidth().wrapContentHeight(),
                 horizontalArrangement = Arrangement.spacedBy(spacing)
             ) {
-                // Render each column in the current row.
                 for (colIndex in 0 until 3) {
                     val currentPosition = CellPosition(rowIndex, colIndex)
                     when {
-                        // --- Fixed Cells Rendering ---
-                        // Render cells that are fixed (non-movable).
                         currentPosition in fixedPositions -> {
                             when (currentPosition) {
-                                // Render fixed cells using a colored square.
                                 CellPosition(0, 0), CellPosition(4, 2) -> {
                                     val text = originalTableData.rows[rowIndex]?.get(colIndex)
                                         ?.joinToString(", ") ?: "?"
                                     ColoredSquare(text = text, modifier = Modifier.size(cellSize))
                                 }
-                                // Render a fixed cell with separate top and bottom text.
                                 CellPosition(0, 2) -> {
                                     val cellData = originalTableData.rows[rowIndex]?.get(colIndex)
                                     val topText = cellData?.getOrNull(0) ?: "?"
@@ -204,8 +213,6 @@ fun EasyThreeByFiveTable(
                                 }
                             }
                         }
-                        // --- Correctly Placed Cells Rendering ---
-                        // Render cells that have been correctly placed.
                         currentPosition in correctlyPlacedCells -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -219,8 +226,6 @@ fun EasyThreeByFiveTable(
                                 isCorrect = true
                             )
                         }
-                        // --- Transitioning Cells Rendering ---
-                        // Render cells that are transitioning.
                         currentPosition in transitioningCells -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -235,8 +240,6 @@ fun EasyThreeByFiveTable(
                                 isTransitioning = true
                             )
                         }
-                        // --- Active Movable Cells Rendering ---
-                        // Render active cells available for interaction.
                         else -> {
                             val isSelected = currentPosition == firstSelectedCell || currentPosition == secondSelectedCell
                             SquareWithDirectionalSign(
@@ -256,7 +259,6 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // Reset the cell selection after a swap if needed.
     if (isSelectionComplete) {
         resetSelection()
     }

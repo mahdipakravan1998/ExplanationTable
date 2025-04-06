@@ -72,10 +72,8 @@ fun StagesListPage(
             // Main content displaying the list of stages.
             // Navigates to the gameplay screen when a stage is clicked.
             StagesListContent(
-                difficulty = difficulty,
-                onStageClick = { stageNumber ->
-                    navController.navigate("${Routes.GAMEPLAY}/$stageNumber/${difficulty.name}")
-                }
+                navController = navController,
+                difficulty = difficulty
             )
 
             // Settings dialog allowing the user to toggle theme, mute, or exit the app.

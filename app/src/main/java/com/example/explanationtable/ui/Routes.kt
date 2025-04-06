@@ -37,5 +37,4 @@ object Routes {
     // Game Rewards / Results Page Routes
     // -------------------------------------------------------------------------
     // New route that takes minMoves, playerMoves, and elapsedTime as parameters.
-    const val GAME_REWARDS_WITH_ARGS = "game_rewards/{minMoves}/{playerMoves}/{elapsedTime}/{difficulty}/{stageNumber}"
-}
+    const val GAME_REWARDS_WITH_ARGS = "game_rewards/{optimalMoves}/{userAccuracy}/{playerMoves}/{elapsedTime}/{difficulty}/{stageNumber}"}

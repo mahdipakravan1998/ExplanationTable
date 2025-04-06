@@ -4,10 +4,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.difficultyStepCountMap
 import com.example.explanationtable.ui.stages.components.DifficultyStepButton
@@ -16,20 +21,22 @@ import com.example.explanationtable.ui.stages.components.DifficultyStepButton
  * A composable function that displays a vertically scrollable list of stage buttons.
  * Each button is horizontally offset according to a dynamic pattern.
  *
+ * @param navController The NavController used for navigation.
  * @param difficulty The current difficulty level, used to determine the number of stages.
- * @param onStageClick Callback invoked with the stage number when a stage button is clicked.
  */
 @Composable
 fun StagesListContent(
-    difficulty: Difficulty,
-    onStageClick: (Int) -> Unit
+    navController: NavController,
+    difficulty: Difficulty
 ) {
+    // Track which stage is loading (if any). Null means no stage is loading.
+    var loadingStage by remember { mutableStateOf<Int?>(null) }
+
     // Determine the total number of stages based on the provided difficulty.
     // If the difficulty key is not found in the map, default to 9 stages.
     val totalSteps = difficultyStepCountMap[difficulty] ?: 9
 
     // Define a symmetric base pattern for horizontal offsets.
-    // This pattern creates a visually appealing staggered layout.
     val baseOffsetPattern = listOf(
         0.dp,
         40.dp,
@@ -64,11 +71,21 @@ fun StagesListContent(
                     .offset(x = offset)
                     .padding(vertical = 24.dp)
             ) {
-                // Display the stage button with its corresponding difficulty and stage number.
+                // Each button is enabled only if its stage number does not match the currently loading stage.
                 DifficultyStepButton(
                     difficulty = difficulty,
                     stepNumber = stageNumber,
-                    onClick = { onStageClick(stageNumber) }
+                    enabled = loadingStage != stageNumber,
+                    onClick = {
+                        // Only update loadingStage if no button is already loading.
+                        if (loadingStage == null) {
+                            loadingStage = stageNumber
+                            // Navigate using launchSingleTop to avoid multiple instances of the destination.
+                            navController.navigate("GAMEPLAY/$stageNumber/${difficulty.name.lowercase()}") {
+                                launchSingleTop = true
+                            }
+                        }
+                    }
                 )
             }
         }
@@ -89,11 +106,9 @@ fun StagesListContent(
  */
 fun generateStepOffsets(totalSteps: Int, basePattern: List<Dp>): List<Dp> {
     return List(totalSteps) { index ->
-        // For indices within the base pattern, use the predefined offset.
         if (index < basePattern.size) {
             basePattern[index]
         } else {
-            // For additional stages, cycle through the base pattern (skipping the first element).
             val cycleIndex = (index - 1) % (basePattern.size - 1) + 1
             basePattern[cycleIndex]
         }

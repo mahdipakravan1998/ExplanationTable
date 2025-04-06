@@ -385,16 +385,14 @@ fun TableRowItem(
 @Composable
 fun RewardsTable(
     isDarkTheme: Boolean,
-    minMoves: Int,
+    optimalMoves: Int,
+    userAccuracy: Int,
     playerMoves: Int,
     elapsedTime: Long,
     modifier: Modifier = Modifier
 ) {
-    // Define table colors based on the current theme
     val tableBorderColor = if (isDarkTheme) Color(0xFF38464F) else Color(0xFFE5E5E5)
     val titleTextColor = if (isDarkTheme) Color(0xFFF2F7FB) else Color(0xFF4B4B4B)
-
-    // Define icons for rows (unchanged)
     val rowIcon1 = painterResource(id = R.drawable.ic_step_complete)
     val rowIcon2 = painterResource(id = R.drawable.ic_accuracy)
     val rowIcon3 = painterResource(id = R.drawable.ic_speed)
@@ -409,17 +407,19 @@ fun RewardsTable(
     } else {
         painterResource(id = R.drawable.ic_diamond_fund_light)
     }
-
-    // Reusable shape and border width for table rows
     val tableShape = RoundedCornerShape(24.dp)
     val borderWidth = 2.dp
 
-    // --- Score Calculations ---
-    // Accuracy score: computed based on the ratio of minMoves to playerMoves.
-    val accuracyScore = (minMoves.toFloat() / playerMoves * 10).coerceAtMost(10f)
-    // Precision score: always 10/10.
+    // Determine accuracyScore:
+    // Method 1: if optimalMoves is available (non-zero), use optimalMoves/playerMoves.
+    // Otherwise, use the fallback userAccuracy value.
+    val accuracyScore = if (optimalMoves > 0) {
+        (optimalMoves.toFloat() / playerMoves * 10).coerceAtMost(10f)
+    } else {
+        userAccuracy.toFloat()
+    }
+
     val precisionScore = 10f
-    // Speed score: based on elapsed time in seconds for Easy level.
     val elapsedSec = elapsedTime / 1000f
     val targetTime = 120f
     val maxTime = 300f
@@ -428,18 +428,15 @@ fun RewardsTable(
         elapsedSec >= maxTime -> 0f
         else -> 10f * ((maxTime - elapsedSec) / (maxTime - targetTime))
     }
-    // Stage score: average of the three scores.
     val stageScore = (accuracyScore + precisionScore + speedScore) / 3f
 
     Column {
-        // First table section: details of the stage scores.
         Box(
             modifier = Modifier
                 .border(width = borderWidth, color = tableBorderColor, shape = tableShape)
                 .clip(tableShape)
         ) {
             Column {
-                // Accuracy Score Row (امتیاز صحت)
                 TableRowItem(
                     isDarkTheme = isDarkTheme,
                     title = "امتیاز صحت",
@@ -451,21 +448,17 @@ fun RewardsTable(
                     awardIcon = awardIconBarrel
                 )
                 HorizontalDivider(color = tableBorderColor, thickness = borderWidth)
-
-                // Precision Score Row (امتیاز دقت) – always perfect.
                 TableRowItem(
                     isDarkTheme = isDarkTheme,
                     title = "امتیاز دقت",
-                    progress = accuracyScore / 10, // progress on scale 0..1
-                    score = accuracyScore.roundToInt(), // score on scale 0..10
+                    progress = accuracyScore / 10,
+                    score = accuracyScore.roundToInt(),
                     borderColor = tableBorderColor,
                     titleColor = titleTextColor,
                     rowIcon = rowIcon2,
                     awardIcon = awardIconBarrel
                 )
                 HorizontalDivider(color = tableBorderColor, thickness = borderWidth)
-
-                // Speed Score Row (امتیاز سرعت)
                 TableRowItem(
                     isDarkTheme = isDarkTheme,
                     title = "امتیاز سرعت",
@@ -478,10 +471,7 @@ fun RewardsTable(
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(12.dp))
-
-        // Second table section: stage score (cumulative)
         Box(
             modifier = Modifier
                 .border(width = borderWidth, color = tableBorderColor, shape = tableShape)
@@ -499,6 +489,4 @@ fun RewardsTable(
             )
         }
     }
-
-    // TODO: Add support for Medium and Hard levels when ready.
 }

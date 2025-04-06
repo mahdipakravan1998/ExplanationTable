@@ -100,21 +100,26 @@ fun AppNavHost(
         composable(
             route = Routes.GAME_REWARDS_WITH_ARGS,
             arguments = listOf(
-                navArgument("minMoves") { type = NavType.IntType },
                 navArgument("playerMoves") { type = NavType.IntType },
                 navArgument("elapsedTime") { type = NavType.LongType },
                 navArgument("difficulty") { type = NavType.StringType },
-                navArgument("stageNumber") { type = NavType.IntType } // Add the stageNumber argument
+                navArgument("stageNumber") { type = NavType.IntType },
+                navArgument("optimalMoves") { type = NavType.IntType }, // Added optimalMoves argument
+                navArgument("userAccuracy") { type = NavType.IntType }  // Added userAccuracy argument
             )
         ) { backStackEntry ->
-            val minMoves = backStackEntry.arguments?.getInt("minMoves") ?: 0
             val playerMoves = backStackEntry.arguments?.getInt("playerMoves") ?: 0
             val elapsedTime = backStackEntry.arguments?.getLong("elapsedTime") ?: 0L
             val difficulty = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
             val stageNumber = backStackEntry.arguments?.getInt("stageNumber") ?: 1
+            val optimalMoves = backStackEntry.arguments?.getInt("optimalMoves") ?: 0  // Retrieve optimalMoves
+            val userAccuracy = backStackEntry.arguments?.getInt("userAccuracy") ?: 0  // Retrieve userAccuracy
+
+            // Pass optimalMoves and userAccuracy to GameResultScreen
             GameResultScreen(
                 isDarkTheme = isDarkTheme,
-                minMoves = minMoves,
+                optimalMoves = optimalMoves,  // Pass optimalMoves
+                userAccuracy = userAccuracy,  // Pass userAccuracy
                 playerMoves = playerMoves,
                 elapsedTime = elapsedTime,
                 navController = navController,
@@ -122,6 +127,7 @@ fun AppNavHost(
                 stageNumber = stageNumber
             )
         }
+
     }
 }
 

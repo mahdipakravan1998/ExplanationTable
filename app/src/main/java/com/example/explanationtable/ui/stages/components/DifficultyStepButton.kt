@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -55,12 +56,14 @@ data class StageButtonColors(
  * @param difficulty The difficulty level, which dictates the button's color scheme.
  * @param stepNumber The step number displayed on the button (converted to Persian digits).
  * @param onClick Callback invoked upon a successful click gesture.
+ * @param enabled If false, the button will not react to clicks and is rendered with reduced opacity.
  */
 @Composable
 fun DifficultyStepButton(
     difficulty: Difficulty,
     stepNumber: Int,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    enabled: Boolean = true
 ) {
     // Select the color scheme based on the provided difficulty level.
     val colors = when (difficulty) {
@@ -105,27 +108,36 @@ fun DifficultyStepButton(
     // Convert the animated offset from pixels to dp for positioning the text.
     val animatedPressOffsetDp = with(density) { animatedPressOffsetPx.toDp() }
 
-    // Pointer input modifier to detect touch gestures.
-    val gestureModifier = Modifier.pointerInput(Unit) {
-        awaitEachGesture {
-            // Wait for the first finger down event.
-            awaitFirstDown(requireUnconsumed = false)
-            isPressed = true
+    // Apply pointer input only if enabled.
+    val gestureModifier = if (enabled) {
+        Modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                // Wait for the first finger down event.
+                awaitFirstDown(requireUnconsumed = false)
+                isPressed = true
 
-            // Wait for the finger to lift or the gesture to be canceled.
-            val upOrCancel = waitForUpOrCancellation()
-            isPressed = false
+                // Wait for the finger to lift or the gesture to be canceled.
+                val upOrCancel = waitForUpOrCancellation()
+                isPressed = false
 
-            // If the gesture was completed normally, invoke the onClick callback.
-            if (upOrCancel != null) {
-                onClick()
+                // If the gesture was completed normally, invoke the onClick callback.
+                if (upOrCancel != null) {
+                    onClick()
+                }
             }
         }
+    } else {
+        Modifier
     }
+
+    // If disabled, reduce opacity to indicate the disabled state.
+    val alpha = if (enabled) 1f else 0.5f
 
     // Box layout that holds the button's visual elements.
     Box(
-        modifier = gestureModifier.size(82.dp),
+        modifier = gestureModifier
+            .size(82.dp)
+            .alpha(alpha),
         contentAlignment = Alignment.Center
     ) {
         // Canvas to draw the three layered circles with diagonal split colors.

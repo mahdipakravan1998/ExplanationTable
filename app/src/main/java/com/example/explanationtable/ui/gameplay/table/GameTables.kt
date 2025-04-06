@@ -28,6 +28,11 @@ data class CellPosition(val row: Int, val col: Int)
  * @param stageNumber Current stage number; applicable only for the easy layout.
  * @param modifier Optional modifier for styling and layout adjustments.
  * @param onGameComplete Optional callback invoked when the game is completed.
+ *        It now provides four parameters:
+ *         - optimalMoves: The optimal (minimum) moves computed by A*.
+ *         - userAccuracy: The user's accuracy score computed from move tracking.
+ *         - playerMoves: Total number of moves made by the player.
+ *         - elapsedTime: The elapsed time of the game.
  */
 @Composable
 fun GameTable(
@@ -35,7 +40,7 @@ fun GameTable(
     difficulty: Difficulty,
     stageNumber: Int,
     modifier: Modifier = Modifier,
-    onGameComplete: (minMovesForThisScramble: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _ -> }
+    onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> }
 ) {
     when (difficulty) {
         // For easy difficulty, render the fixed 3x5 table layout.
