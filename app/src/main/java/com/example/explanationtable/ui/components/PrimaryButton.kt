@@ -35,6 +35,9 @@ import com.example.explanationtable.ui.theme.IconCircleDark
 import com.example.explanationtable.ui.theme.PrizeButtonBackgroundDark
 import com.example.explanationtable.ui.theme.PrizeButtonBackgroundLight
 import com.example.explanationtable.ui.theme.TreeFrog
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * A button with an animated press effect used for claiming a prize.
@@ -77,18 +80,20 @@ fun PrimaryButton(
 
     // Gesture detector to handle press interactions.
     val gestureModifier = Modifier.pointerInput(Unit) {
-        awaitEachGesture {
-            // Wait for the first press event.
-            awaitFirstDown(requireUnconsumed = false)
-            isPressed = true
+        coroutineScope {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                isPressed = true
 
-            // Wait until the gesture is lifted or cancelled.
-            val upEvent = waitForUpOrCancellation()
-            isPressed = false
+                val upEvent = waitForUpOrCancellation()
+                isPressed = false
 
-            // Invoke the onClick callback if the press was completed normally.
-            if (upEvent != null) {
-                onClick()
+                if (upEvent != null) {
+                    launch {
+                        delay(50) // Delay to allow animation to complete
+                        onClick()
+                    }
+                }
             }
         }
     }

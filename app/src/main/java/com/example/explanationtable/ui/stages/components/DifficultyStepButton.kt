@@ -33,6 +33,9 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.theme.AppTypography
 import com.example.explanationtable.ui.theme.White
 import com.example.explanationtable.utils.toPersianDigits
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // Data class representing the gradient colors used for the button's three layered circles.
 data class StageButtonColors(
@@ -111,18 +114,20 @@ fun DifficultyStepButton(
     // Apply pointer input only if enabled.
     val gestureModifier = if (enabled) {
         Modifier.pointerInput(Unit) {
-            awaitEachGesture {
-                // Wait for the first finger down event.
-                awaitFirstDown(requireUnconsumed = false)
-                isPressed = true
+            coroutineScope {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    isPressed = true
 
-                // Wait for the finger to lift or the gesture to be canceled.
-                val upOrCancel = waitForUpOrCancellation()
-                isPressed = false
+                    val upOrCancel = waitForUpOrCancellation()
+                    isPressed = false
 
-                // If the gesture was completed normally, invoke the onClick callback.
-                if (upOrCancel != null) {
-                    onClick()
+                    if (upOrCancel != null) {
+                        launch {
+                            delay(50) // Allow 30ms animation to complete
+                            onClick()
+                        }
+                    }
                 }
             }
         }
@@ -130,14 +135,10 @@ fun DifficultyStepButton(
         Modifier
     }
 
-    // If disabled, reduce opacity to indicate the disabled state.
-    val alpha = if (enabled) 1f else 0.5f
-
     // Box layout that holds the button's visual elements.
     Box(
         modifier = gestureModifier
-            .size(82.dp)
-            .alpha(alpha),
+            .size(82.dp),
         contentAlignment = Alignment.Center
     ) {
         // Canvas to draw the three layered circles with diagonal split colors.

@@ -30,6 +30,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * A secondary button with a dynamic layered design.
@@ -78,13 +81,18 @@ fun SecondaryButton(
 
     // Gesture detector to handle press interactions.
     val gestureModifier = Modifier.pointerInput(Unit) {
-        awaitEachGesture {
-            awaitFirstDown(requireUnconsumed = false)
-            isPressed = true
-            val upEvent = waitForUpOrCancellation()
-            isPressed = false
-            if (upEvent != null) {
-                onClick()
+        coroutineScope {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                isPressed = true
+                val upEvent = waitForUpOrCancellation()
+                isPressed = false
+                if (upEvent != null) {
+                    launch {
+                        delay(50) // Delay to allow animation to complete
+                        onClick()
+                    }
+                }
             }
         }
     }

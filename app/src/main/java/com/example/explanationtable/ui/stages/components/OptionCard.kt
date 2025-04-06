@@ -22,6 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * A customizable option card component with a press animation and shadow effect.
@@ -56,18 +59,18 @@ fun OptionCard(
 
     // Modifier that handles pointer input and gesture detection for press animations.
     val gestureModifier = Modifier.pointerInput(Unit) {
-        awaitEachGesture {
-            // Wait for the initial press down.
-            awaitFirstDown(requireUnconsumed = false)
-            isPressed = true
-
-            // Wait until the gesture is lifted or cancelled.
-            val upEvent = waitForUpOrCancellation()
-            isPressed = false
-
-            // If the gesture completes normally (not cancelled), invoke the onClick callback.
-            if (upEvent != null) {
-                onClick()
+        coroutineScope {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                isPressed = true
+                val upEvent = waitForUpOrCancellation()
+                isPressed = false
+                if (upEvent != null) {
+                    launch {
+                        delay(50) // Delay to allow animation to complete
+                        onClick()
+                    }
+                }
             }
         }
     }
