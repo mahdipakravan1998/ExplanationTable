@@ -1,6 +1,7 @@
 package com.example.explanationtable.ui.stages.pages
 
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +52,13 @@ fun StagesListPage(
     // Retrieve the current context and safely cast it to Activity for exit functionality.
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Handle the back button press to navigate back to MainPage
+    BackHandler {
+        navController.navigate(Routes.MAIN) {
+            popUpTo(Routes.MAIN) { inclusive = true } // Remove previous pages from the stack
+        }
+    }
 
     // Apply the background for the screen.
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {

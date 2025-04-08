@@ -10,7 +10,6 @@ import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.rewards.components.RewardsTable
 import com.example.explanationtable.ui.components.PrimaryButton
 import com.example.explanationtable.ui.components.SecondaryButton
-import androidx.compose.material3.Text
 import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Routes
@@ -23,38 +22,46 @@ import com.example.explanationtable.ui.Routes
  * @param userAccuracy The fallback user accuracy value.
  * @param playerMoves The number of moves the player made.
  * @param elapsedTime The elapsed time of the game (in milliseconds).
+ * @param navController The navigation controller to manage screen transitions.
+ * @param difficulty The difficulty level of the current game.
+ * @param stageNumber The current stage number.
  */
 @Composable
 fun GameResultScreen(
     isDarkTheme: Boolean,
-    optimalMoves: Int,  // Optimal moves computed by A*
-    userAccuracy: Int,  // Fallback accuracy if optimal moves weren't calculated
+    optimalMoves: Int,
+    userAccuracy: Int,
     playerMoves: Int,
     elapsedTime: Long,
     navController: NavController,
     difficulty: Difficulty,
     stageNumber: Int
 ) {
+    // Handle the back navigation when the user presses the back button.
     BackHandler {
         navController.navigate("stages_list/${difficulty.name}") {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
+    // Main background for the result screen
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
         Box(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 32.dp)
                 .fillMaxSize()
         ) {
+            // Display the rewards table with the results
             RewardsTable(
                 isDarkTheme = isDarkTheme,
-                optimalMoves = optimalMoves,  // Pass optimalMoves
-                userAccuracy = userAccuracy,  // Pass userAccuracy
+                optimalMoves = optimalMoves,
+                userAccuracy = userAccuracy,
                 playerMoves = playerMoves,
                 elapsedTime = elapsedTime,
                 modifier = Modifier.fillMaxSize()
             )
+
+            // Bottom section with navigation buttons
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.BottomCenter
@@ -63,6 +70,7 @@ fun GameResultScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Next stage button
                     PrimaryButton(
                         isDarkTheme = isDarkTheme,
                         onClick = {
@@ -71,21 +79,29 @@ fun GameResultScreen(
                                 popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
                             }
                         },
-                        text = "مرحله بعدی",
+                        text = "مرحله بعدی",  // Text for next stage button
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Spacer between buttons
                     Spacer(modifier = Modifier.height(18.dp))
+
+                    // Replay button
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
                         onClick = {
-                            navController.navigate("gameplay/${stageNumber}/${difficulty.name}") {
+                            navController.navigate("gameplay/$stageNumber/${difficulty.name}") {
                                 popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
                             }
                         },
-                        text = "دوباره بازی کن",
+                        text = "دوباره بازی کن",  // Text for replay button
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Spacer between buttons
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Return to stages list button
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
                         onClick = {
@@ -93,7 +109,7 @@ fun GameResultScreen(
                                 popUpTo(Routes.MAIN) { inclusive = true }
                             }
                         },
-                        text = "بازگشت",
+                        text = "بازگشت",  // Text for return button
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

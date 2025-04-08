@@ -2,6 +2,7 @@ package com.example.explanationtable.ui.main.pages
 
 import android.app.Activity
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,8 +26,10 @@ import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.components.MainContent
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
+import com.example.explanationtable.ui.settings.components.ConfirmationDialog
 import com.example.explanationtable.ui.stages.dialogs.DifficultyDialog
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
+import com.example.explanationtable.R
 
 /**
  * MainPage composable sets up the primary UI structure including the top bar,
@@ -50,11 +53,17 @@ fun MainPage(
     // Local state variables to control dialog visibility and store selected option
     var showDifficultyDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf<String?>(null) }
 
     // Safely obtain the Activity context to perform activity-specific actions (e.g., exiting)
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // BackHandler for handling the back button press to show the exit confirmation
+    BackHandler {
+        showExitConfirmation = true
+    }
 
     // Wrap the entire UI in a custom background component styled for the home page.
     Background(isHomePage = true, isDarkTheme = isDarkTheme) {
@@ -109,6 +118,20 @@ fun MainPage(
                     onExit = {
                         // Exit the app safely by finishing the activity and removing it from the task list.
                         activity?.finishAndRemoveTask()
+                    }
+                )
+
+                // Exit Confirmation Dialog
+                ConfirmationDialog(
+                    showDialog = showExitConfirmation,
+                    titleResId = R.string.confirm_exit_title,
+                    messageResId = R.string.confirm_exit_message,
+                    onConfirm = {
+                        showExitConfirmation = false
+                        activity?.finishAndRemoveTask()
+                    },
+                    onDismiss = {
+                        showExitConfirmation = false
                     }
                 )
             }
