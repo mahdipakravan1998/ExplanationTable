@@ -15,6 +15,7 @@ import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 
 /**
  * Displays the game result screen with a rewards table and navigation buttons.
@@ -37,7 +38,8 @@ fun GameResultScreen(
     elapsedTime: Long,
     navController: NavController,
     difficulty: Difficulty,
-    stageNumber: Int
+    stageNumber: Int,
+    viewModel: MainViewModel // Pass the viewModel here
 ) {
     // Handle the back navigation when the user presses the back button.
     BackHandler {
@@ -60,7 +62,8 @@ fun GameResultScreen(
                 userAccuracy = userAccuracy,
                 playerMoves = playerMoves,
                 elapsedTime = elapsedTime,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                viewModel = viewModel // Pass the viewModel
             )
 
             // Bottom section with navigation buttons

@@ -20,7 +20,7 @@ import androidx.navigation.NavHostController
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavHost(
-    navController: androidx.navigation.NavHostController = rememberAnimatedNavController(),
+    navController: NavHostController = rememberAnimatedNavController(),
     isDarkTheme: Boolean
 ) {
     val viewModel: MainViewModel = viewModel()
@@ -124,7 +124,8 @@ fun AppNavHost(
                 elapsedTime = elapsedTime,
                 navController = navController,
                 difficulty = difficulty,
-                stageNumber = stageNumber
+                stageNumber = stageNumber,
+                viewModel = viewModel
             )
         }
 

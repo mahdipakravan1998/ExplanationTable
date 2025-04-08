@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.core.content.res.ResourcesCompat
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.theme.ShabnamFontFamily
 import kotlin.math.roundToInt
 
@@ -389,7 +391,8 @@ fun RewardsTable(
     userAccuracy: Int,
     playerMoves: Int,
     elapsedTime: Long,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel // Add viewModel as a parameter
 ) {
     val tableBorderColor = if (isDarkTheme) Color(0xFF38464F) else Color(0xFFE5E5E5)
     val titleTextColor = if (isDarkTheme) Color(0xFFF2F7FB) else Color(0xFF4B4B4B)
@@ -429,6 +432,12 @@ fun RewardsTable(
         else -> 10f * ((maxTime - elapsedSec) / (maxTime - targetTime))
     }
     val stageScore = (accuracyScore + precisionScore + speedScore) / 3f
+
+    // Update diamonds based on the score
+    val stageDiamonds = stageScore.roundToInt()
+    LaunchedEffect(stageDiamonds) {
+        viewModel.addDiamonds(stageDiamonds) // Add diamonds when stage is completed
+    }
 
     Column {
         Box(
