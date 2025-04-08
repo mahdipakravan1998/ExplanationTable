@@ -33,6 +33,11 @@
     <!-- String for AnimatedPrizeButton -->
     <string name="prize_button_text">دریافت جایزه</string>
 
+    <!-- Strings from GameResultScreen -->
+    <string name="next_stage_button">مرحله بعدی</string>
+    <string name="replay_button">دوباره بازی کن</string>
+    <string name="return_button">بازگشت</string>
+
     <string-array name="congratulatory_texts">
         <item>آفرین به تو</item>
         <item>بهت افتخار می‌کنم</item>

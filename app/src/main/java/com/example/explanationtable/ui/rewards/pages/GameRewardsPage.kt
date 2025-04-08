@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.rewards.components.RewardsTable
@@ -13,6 +14,7 @@ import com.example.explanationtable.ui.components.SecondaryButton
 import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Routes
+import com.example.explanationtable.R
 
 /**
  * Displays the game result screen with a rewards table and navigation buttons.
@@ -79,7 +81,7 @@ fun GameResultScreen(
                                 popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
                             }
                         },
-                        text = "مرحله بعدی",  // Text for next stage button
+                        text = stringResource(id = R.string.next_stage_button),  // Text for next stage button
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -94,7 +96,7 @@ fun GameResultScreen(
                                 popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
                             }
                         },
-                        text = "دوباره بازی کن",  // Text for replay button
+                        text = stringResource(id = R.string.replay_button),  // Text for replay button
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -109,7 +111,7 @@ fun GameResultScreen(
                                 popUpTo(Routes.MAIN) { inclusive = true }
                             }
                         },
-                        text = "بازگشت",  // Text for return button
+                        text = stringResource(id = R.string.return_button),  // Text for return button
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
