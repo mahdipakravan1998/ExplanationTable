@@ -1,43 +1,58 @@
 <resources>
+    <!-- App name and settings -->
     <string name="app_name">Explanation Table</string>
     <string name="settings">Settings</string>
+
+    <!-- Stage-related strings (in Persian) -->
     <string name="stages_list">لیست مراحل</string>
     <string name="start_game">شروع بازی</string>
 
-    <!-- Strings for options in the popup -->
+    <!-- Options for the difficulty level in the popup -->
     <string name="easy_step_label">آسان</string>
     <string name="medium_step_label">متوسط</string>
     <string name="difficult_step_label">سخت</string>
+
+    <!-- Button text for closing the popup -->
     <string name="close">بستن</string>
 
-    <!-- New strings for settings -->
+    <!-- Settings-related labels -->
     <string name="soundLabel">صدا</string>
     <string name="themeLabel">حالت شب</string>
     <string name="exitLabel">خروج</string>
 
-    <!-- New strings for ConfirmationDialog -->
+    <!-- Confirmation dialog strings -->
     <string name="confirm_exit_title">خروج از برنامه</string>
     <string name="confirm_exit_message">آیا مطمئن هستید که می‌خواهید از برنامه خارج شوید؟</string>
     <string name="yes">خروج</string>
     <string name="no">انصراف</string>
 
-
+    <!-- Hint and stage-related strings -->
     <string name="hint">راهنمایی</string>
     <string name="stage">مرحله</string>
 
-    <!-- New strings from StageReviewTable -->
+    <!-- Stage review table headers -->
     <string name="error_no_data">No data available for stage %1$d</string>
     <string name="header_left">واژه قرآنی</string>
     <string name="header_right">متن فارسی</string>
 
-    <!-- String for AnimatedPrizeButton -->
+    <!-- Animated Prize Button text -->
     <string name="prize_button_text">دریافت جایزه</string>
 
-    <!-- Strings from GameResultScreen -->
+    <!-- Game result screen button texts -->
     <string name="next_stage_button">مرحله بعدی</string>
     <string name="replay_button">دوباره بازی کن</string>
     <string name="return_button">بازگشت</string>
 
+    <!-- Hint dialog and settings dialog titles -->
+    <string name="hint_dialog_title">راهنما</string>
+    <string name="Settings_dialog_title">تنظیمات</string>
+
+    <!-- Different types of hints (single letter, word, and stage completion) -->
+    <string name="hint_single_letter">جایگذاری یک حرف</string>
+    <string name="hint_single_word">جایگذاری یک کلمه</string>
+    <string name="hint_complete_stage">حل کامل مرحله</string>
+
+    <!-- Congratulatory messages for user achievements -->
     <string-array name="congratulatory_texts">
         <item>آفرین به تو</item>
         <item>بهت افتخار می‌کنم</item>
@@ -60,4 +75,5 @@
         <item>یادگیری تو عالیه</item>
         <item>تو قوی‌تر از همیشه‌ای</item>
     </string-array>
+
 </resources>

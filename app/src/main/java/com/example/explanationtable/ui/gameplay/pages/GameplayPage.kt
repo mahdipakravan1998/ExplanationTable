@@ -2,30 +2,10 @@ package com.example.explanationtable.ui.gameplay.pages
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,17 +21,19 @@ import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.gameplay.components.PrizeBox
 import com.example.explanationtable.ui.gameplay.review.StageReviewTable
 import com.example.explanationtable.ui.gameplay.table.GameTable
+import com.example.explanationtable.ui.hint.HintDialog
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.utils.toPersianDigits
 import kotlinx.coroutines.delay
 
 /**
- * Composable function representing the gameplay screen for a specific stage.
+ * Composable function that represents the gameplay screen for a specific stage.
  *
- * @param isDarkTheme Indicates if dark theme is enabled.
- * @param stageNumber The stage number to display.
- * @param difficulty  The difficulty level for the current stage.
+ * @param navController Navigation controller for navigating to other screens.
+ * @param isDarkTheme Indicates if the dark theme is enabled.
+ * @param stageNumber The number of the current stage.
+ * @param difficulty The difficulty level of the current stage.
  */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -61,30 +43,39 @@ fun GameplayPage(
     stageNumber: Int,
     difficulty: Difficulty
 ) {
+    // Handle back press to navigate to the stage list
     BackHandler {
         navController.navigate("stages_list/${difficulty.name}") {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
+    // ViewModel to manage state
     val viewModel: MainViewModel = viewModel()
     val diamonds by viewModel.diamonds.collectAsState()
     val isMuted by viewModel.isMuted.collectAsState()
+
+    // Local states for controlling dialog visibility
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showHintDialog by remember { mutableStateOf(false) }
+
+    // Context and activity for app-related functions
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Page title and animation duration
     val pageTitle = "${stringResource(id = R.string.stage)} ${stageNumber.toPersianDigits()}"
     val animationDuration = 300
 
+    // State for tracking game progress and results
     var isGameOver by remember { mutableStateOf(false) }
     var isPrizeBoxVisible by remember { mutableStateOf(false) }
-
-    // Separate state variables for the two types of accuracy-related values.
     var optimalMoves by remember { mutableStateOf(0) }
     var userAccuracy by remember { mutableStateOf(0) }
     var playerMoves by remember { mutableStateOf(0) }
     var elapsedTime by remember { mutableStateOf(0L) }
 
+    // Reset game-related state on stage or difficulty change
     LaunchedEffect(stageNumber, difficulty) {
         isGameOver = false
         isPrizeBoxVisible = false
@@ -94,6 +85,7 @@ fun GameplayPage(
         elapsedTime = 0L
     }
 
+    // Show prize box animation after game is over
     LaunchedEffect(isGameOver) {
         if (isGameOver) {
             delay(animationDuration.toLong())
@@ -101,12 +93,14 @@ fun GameplayPage(
         }
     }
 
+    // Background setup for the gameplay page
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Top bar with title, settings, and help button
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
@@ -114,12 +108,15 @@ fun GameplayPage(
                     gems = diamonds,
                     difficulty = difficulty,
                     onSettingsClick = { showSettingsDialog = true },
-                    onHelpClick = { /* TODO: Implement help action */ }
+                    onHelpClick = { showHintDialog = true }
                 )
                 Spacer(modifier = Modifier.height(72.dp))
+
+                // Game content with animated transitions based on game state
                 AnimatedContent(
                     targetState = isGameOver,
                     transitionSpec = {
+                        // Slide in and out based on the game state
                         if (targetState) {
                             slideInHorizontally(
                                 initialOffsetX = { fullWidth -> fullWidth },
@@ -137,15 +134,16 @@ fun GameplayPage(
                                 animationSpec = tween(animationDuration)
                             )
                         }.using(SizeTransform(clip = false))
-                    },
-                    label = ""
+                    }
                 ) { targetGameOver ->
                     if (!targetGameOver) {
+                        // Display the game table when the game is not over
                         GameTable(
                             isDarkTheme = isDarkTheme,
                             difficulty = difficulty,
                             stageNumber = stageNumber,
                             onGameComplete = { optimal, accuracy, playerMoveCount, timeElapsed ->
+                                // Set game over state and capture results
                                 isGameOver = true
                                 optimalMoves = optimal
                                 userAccuracy = accuracy
@@ -154,6 +152,7 @@ fun GameplayPage(
                             }
                         )
                     } else {
+                        // Display stage review when the game is over
                         StageReviewTable(
                             stageNumber = stageNumber,
                             isDarkTheme = isDarkTheme
@@ -161,6 +160,8 @@ fun GameplayPage(
                     }
                 }
             }
+
+            // Show prize box animation when the game ends
             AnimatedVisibility(
                 visible = isPrizeBoxVisible,
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -173,13 +174,15 @@ fun GameplayPage(
                 PrizeBox(
                     isDarkTheme = isDarkTheme,
                     onPrizeButtonClick = {
-                        // In your GameplayPage (or wherever the navigation occurs):
+                        // Navigate to the rewards screen after the prize button is clicked
                         navController.navigate(
                             "game_rewards/$optimalMoves/$userAccuracy/$playerMoves/$elapsedTime/${difficulty.name}/$stageNumber"
                         )
                     }
                 )
             }
+
+            // Settings dialog for user preferences
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss = { showSettingsDialog = false },
@@ -191,6 +194,20 @@ fun GameplayPage(
                     activity?.finishAndRemoveTask()
                 }
             )
+
+            // Show hint dialog when help button is clicked
+            if (showHintDialog) {
+                HintDialog(
+                    showDialog = showHintDialog,
+                    onDismiss = { showHintDialog = false },
+                    isDarkTheme = isDarkTheme,
+                    difficulty = difficulty,
+                    onOptionSelected = { selectedOption ->
+                        // Handle selected hint option (e.g., deduct diamonds or provide hint)
+                        showHintDialog = false
+                    }
+                )
+            }
         }
     }
 }
