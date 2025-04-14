@@ -84,7 +84,9 @@ fun HintOptionItem(
                 val upEvent = waitForUpOrCancellation()
                 isPressed = false
                 // Uncomment the following line to trigger the onClick callback if needed.
-                // if (upEvent != null) { onClick() }
+                 if (upEvent != null) {
+                     onClick()
+                 }
             }
         }
     }

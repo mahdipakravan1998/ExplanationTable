@@ -6,6 +6,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.data.easy.easyLevelTables
+import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.gameplay.table.CellPosition
 import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
@@ -45,7 +46,8 @@ fun EasyThreeByFiveTable(
     isDarkTheme: Boolean,
     stageNumber: Int,
     modifier: Modifier = Modifier,
-    onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> }
+    onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> },
+    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> }
 ) {
     // --- Layout Constants ---
     val cellSize = 80.dp
@@ -76,6 +78,11 @@ fun EasyThreeByFiveTable(
         mutableStateMapOf<CellPosition, List<String>>().apply {
             putAll(createShuffledTable(shuffledMovableData, movablePositions, emptyMap()))
         }
+    }
+
+    // Pass the created state to the parent
+    LaunchedEffect(Unit) {
+        onTableDataInitialized(originalTableData, currentTableData)
     }
 
     // --- State Tracking ---

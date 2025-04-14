@@ -3,6 +3,7 @@ package com.example.explanationtable.ui.gameplay.table
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.gameplay.table.components.layout.EasyThreeByFiveTable
 import com.example.explanationtable.ui.gameplay.table.components.layout.HardTablePlaceholder
 import com.example.explanationtable.ui.gameplay.table.components.layout.MediumTablePlaceholder
@@ -40,7 +41,8 @@ fun GameTable(
     difficulty: Difficulty,
     stageNumber: Int,
     modifier: Modifier = Modifier,
-    onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> }
+    onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> },
+    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> }
 ) {
     when (difficulty) {
         // For easy difficulty, render the fixed 3x5 table layout.
@@ -48,7 +50,8 @@ fun GameTable(
             isDarkTheme = isDarkTheme,
             stageNumber = stageNumber,
             modifier = modifier,
-            onGameComplete = onGameComplete
+            onGameComplete = onGameComplete,
+            onTableDataInitialized = onTableDataInitialized
         )
         // For medium difficulty, render a placeholder layout.
         Difficulty.MEDIUM -> MediumTablePlaceholder(
