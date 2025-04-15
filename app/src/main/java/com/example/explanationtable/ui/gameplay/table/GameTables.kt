@@ -42,7 +42,8 @@ fun GameTable(
     stageNumber: Int,
     modifier: Modifier = Modifier,
     onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> },
-    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> }
+    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
+    registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
     when (difficulty) {
         // For easy difficulty, render the fixed 3x5 table layout.
@@ -51,7 +52,8 @@ fun GameTable(
             stageNumber = stageNumber,
             modifier = modifier,
             onGameComplete = onGameComplete,
-            onTableDataInitialized = onTableDataInitialized
+            onTableDataInitialized = onTableDataInitialized,
+            registerCellsCorrectlyPlacedCallback = registerCellsCorrectlyPlacedCallback
         )
         // For medium difficulty, render a placeholder layout.
         Difficulty.MEDIUM -> MediumTablePlaceholder(

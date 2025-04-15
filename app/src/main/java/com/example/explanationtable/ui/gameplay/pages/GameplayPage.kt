@@ -81,6 +81,9 @@ fun GameplayPage(
     var originalTableState by remember { mutableStateOf<EasyLevelTable?>(null) }
     var currentTableState by remember { mutableStateOf<MutableMap<CellPosition, List<String>>?>(null) }
 
+    // New state to hold reference to the callback for notifying cells are correct
+    var notifyCorrectCellsCallback by remember { mutableStateOf<(List<CellPosition>) -> Unit>({}) }
+
     // Reset game-related state on stage or difficulty change
     LaunchedEffect(stageNumber, difficulty) {
         isGameOver = false
@@ -159,6 +162,10 @@ fun GameplayPage(
                             onTableDataInitialized = { origData, currentData ->
                                 originalTableState = origData
                                 currentTableState = currentData
+                            },
+                            // New parameter to receive callback for correctly placed cells notification
+                            registerCellsCorrectlyPlacedCallback = { callback ->
+                                notifyCorrectCellsCallback = callback
                             }
                         )
                     } else {
@@ -217,9 +224,14 @@ fun GameplayPage(
                             // Only call if the states have been initialized.
                             originalTableState?.let { origData ->
                                 currentTableState?.let { currData ->
+                                    // Pass the callback to the revealRandomCategoryHelp function
                                     revealRandomCategoryHelp(
                                         currentTableData = currData,
-                                        originalTableData = origData
+                                        originalTableData = origData,
+                                        onCellsCorrectlyPlaced = { correctPositions ->
+                                            // Notify the table about cells that are now correctly placed
+                                            notifyCorrectCellsCallback(correctPositions)
+                                        }
                                     )
                                 }
                             }

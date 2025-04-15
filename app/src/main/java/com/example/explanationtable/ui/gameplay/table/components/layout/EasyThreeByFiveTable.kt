@@ -40,6 +40,8 @@ fun calculateFallbackAccuracy(correctMoves: Int, incorrectMoves: Int): Int {
  *         - userAccuracy: The user's accuracy score (fallback based on move tracking).
  *         - playerMoves: The total number of moves the player made.
  *         - elapsedTime: The elapsed time of the game.
+ * @param onTableDataInitialized Callback with initialized table data
+ * @param registerCellsCorrectlyPlacedCallback Callback to register the function to handle cells being correctly placed externally
  */
 @Composable
 fun EasyThreeByFiveTable(
@@ -47,7 +49,8 @@ fun EasyThreeByFiveTable(
     stageNumber: Int,
     modifier: Modifier = Modifier,
     onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> },
-    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> }
+    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
+    registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
     // --- Layout Constants ---
     val cellSize = 80.dp
@@ -80,11 +83,6 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // Pass the created state to the parent
-    LaunchedEffect(Unit) {
-        onTableDataInitialized(originalTableData, currentTableData)
-    }
-
     // --- State Tracking ---
     val correctlyPlacedCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
     val transitioningCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
@@ -102,6 +100,38 @@ fun EasyThreeByFiveTable(
 
     // Track optimal moves computed by A*
     var minMovesForThisScramble by remember { mutableStateOf<Int?>(null) }
+
+    // Function to handle external notification of correctly placed cells
+    val handleExternallyCorrectCells: (List<CellPosition>) -> Unit = { correctPositions ->
+        if (correctPositions.isNotEmpty()) {
+            // Process each correctly placed cell
+            correctPositions.forEach { pos ->
+                // Only process if the cell is still in the current table (not already marked as correct)
+                if (currentTableData.containsKey(pos)) {
+                    // Get the data for this position
+                    val cellData = currentTableData[pos]
+                    if (cellData != null) {
+                        // Mark as transitioning first (for animation)
+                        transitioningCells[pos] = cellData
+                        // Remove from current table data since it's now correctly placed
+                        currentTableData.remove(pos)
+                    }
+                }
+            }
+            // Increment correct move count
+            correctMoveCount++
+        }
+    }
+
+    // Register the callback
+    LaunchedEffect(Unit) {
+        registerCellsCorrectlyPlacedCallback(handleExternallyCorrectCells)
+    }
+
+    // Pass the created state to the parent
+    LaunchedEffect(Unit) {
+        onTableDataInitialized(originalTableData, currentTableData)
+    }
 
     LaunchedEffect(shuffledMovableData, movableData) {
         val result = withContext(Dispatchers.Default) {
