@@ -25,9 +25,23 @@ fun revealRandomCategoryHelp(
     }
 
     // Debug-print current table data.
-    println("Current Table Data:")
-    currentTableData.forEach { (pos, data) ->
-        println("Cell at [row: ${pos.row}, col: ${pos.col}]: ${data.joinToString(",")}")
+    println("Current Table Data (Filtered for Non-null cells):")
+    val maxRow = currentTableData.keys.maxByOrNull { it.row }?.row ?: -1
+    val maxCol = currentTableData.keys.maxByOrNull { it.col }?.col ?: -1
+
+    // Iterate over rows and columns to ensure it prints only non-null cells
+    for (row in 0..maxRow) {
+        val builder = StringBuilder()
+        for (col in 0..maxCol) {
+            val cellData = currentTableData[CellPosition(row, col)]?.joinToString(",") ?: "null"
+            if (cellData != "null") {
+                builder.append("col $col: [$cellData]")
+                if (col != maxCol) builder.append(" | ")
+            }
+        }
+        if (builder.isNotEmpty()) {
+            println("Row $row: ${builder.toString()}")
+        }
     }
 
     // Define the four fixed categories.
@@ -60,7 +74,8 @@ fun revealRandomCategoryHelp(
     fun isCellCorrectlyPlaced(pos: CellPosition): Boolean {
         val targetData = originalTableData.rows[pos.row]?.get(pos.col)
         val currentData = currentTableData[pos]
-        return targetData != null && currentData == targetData
+        val result = targetData != null && currentData == targetData || currentData == null
+        return result
     }
 
     // Helper function to get the target data for a position
@@ -68,17 +83,20 @@ fun revealRandomCategoryHelp(
         return originalTableData.rows[pos.row]?.get(pos.col)
     }
 
-    // Helper function to count how many positions in a category are filled (even if incorrectly)
-    fun countFilledPositions(category: Set<CellPosition>): Int {
-        return category.count { pos -> pos in currentTableData }
-    }
-
-    // Identify which category has the most cells already placed
-    val mostFilledCategory = categories.maxByOrNull { countFilledPositions(it) }
+    // Create Set A - All incorrectly placed cells in the entire table
+    val setA = currentTableData.keys.filter { !isCellCorrectlyPlaced(it) }.toSet()
 
     // Count how many cells from each category are already correctly placed
     val categorySolvedCounts = categories.map { category ->
-        category.count { pos -> isCellCorrectlyPlaced(pos) }
+        // Count the correctly placed cells and print the result for each position
+        val count = category.count { pos ->
+            val isCorrect = isCellCorrectlyPlaced(pos)
+            println("  Cell at [row: ${pos.row}, col: ${pos.col}] correctly placed: $isCorrect")
+            isCorrect
+        }
+
+        println("  Number of correctly placed cells in this category: $count")
+        count
     }
 
     // Calculate how many cells in each category still need to be placed
@@ -93,31 +111,23 @@ fun revealRandomCategoryHelp(
         return
     }
 
-    // Find categories that are partially solved (at least one cell is correct, but not all)
-    val partiallySolvedCategories = categories.mapIndexedNotNull { index, category ->
-        if (categorySolvedCounts[index] > 0 && categorySolvedCounts[index] < category.size) {
-            index
-        } else {
-            null
-        }
+    // Filter out categories that are already fully solved (0 unresolved cells)
+    val unresolvedCategories = categoryUnsolvedCounts
+        .mapIndexed { index, count -> categories[index] to count }
+        .filter { it.second > 0 }
+        .map { it.first }
+
+    // If no unresolved categories, exit
+    if (unresolvedCategories.isEmpty()) {
+        println("No unresolved categories left.")
+        println("=== revealRandomCategoryHelp: FINISHED ===")
+        return
     }
 
-    // Determine which category to work on
-    val selectedCategoryIndex = if (partiallySolvedCategories.isNotEmpty()) {
-        // Prioritize partially solved categories
-        partiallySolvedCategories.random()
-    } else if (mostFilledCategory != null) {
-        // If no partially solved categories, pick the one with most cells filled
-        categories.indexOf(mostFilledCategory)
-    } else {
-        // Random fallback
-        categoryUnsolvedCounts.indices.filter { categoryUnsolvedCounts[it] > 0 }.random()
-    }
+    // Randomly select an unresolved category
+    val selectedCategory = unresolvedCategories.random()
 
-    val selectedCategory = categories[selectedCategoryIndex]
-
-    println("Number of categories with unsolved cells: ${categoryUnsolvedCounts.count { it > 0 }}")
-
+    println("Number of unresolved categories: ${unresolvedCategories.size}")
     println("Selected Category:")
     selectedCategory.forEach { pos ->
         println("Cell at [row: ${pos.row}, col: ${pos.col}]")
@@ -139,51 +149,6 @@ fun revealRandomCategoryHelp(
     // Track correctly placed cells after all operations are done
     val newlyCorrectlyPlacedCells = mutableListOf<CellPosition>()
 
-    // Track all available data values to choose from
-    val availableData = currentTableData.values.toMutableSet()
-
-    // If there are missing positions in the current table data,
-    // we first need to ensure all positions in the selected category exist
-    val positionsToCreate = positions.filter { it !in currentTableData }
-
-    // Create positions that don't exist yet by using values from somewhere else in the table
-    if (positionsToCreate.isNotEmpty()) {
-        for (pos in positionsToCreate) {
-            val targetData = getTargetData(pos) ?: continue
-
-            // Find an existing cell with the correct data
-            var sourceData: List<String>? = null
-            var sourcePos: CellPosition? = null
-
-            // First, try to find the exact target data
-            for ((otherPos, data) in currentTableData) {
-                if (data == targetData) {
-                    sourcePos = otherPos
-                    sourceData = data
-                    break
-                }
-            }
-
-            // If no exact match, use any available data
-            if (sourcePos == null && currentTableData.isNotEmpty()) {
-                val randomEntry = currentTableData.entries.random()
-                sourcePos = randomEntry.key
-                sourceData = randomEntry.value
-            }
-
-            if (sourcePos != null && sourceData != null) {
-                // Create the new position with the data
-                currentTableData[pos] = sourceData
-                println("Created position [row: ${pos.row}, col: ${pos.col}] with data from [row: ${sourcePos.row}, col: ${sourcePos.col}]")
-
-                // If we happened to place the correct data, mark it
-                if (sourceData == targetData) {
-                    newlyCorrectlyPlacedCells.add(pos)
-                }
-            }
-        }
-    }
-
     // Now process each position in the selected category to place correct values
     for (pos in positions) {
         // Skip positions that are already correctly placed
@@ -192,20 +157,18 @@ fun revealRandomCategoryHelp(
             continue
         }
 
+        // Ensure we only work with cells from Set A
+        if (pos !in setA) {
+            println("Cell at [row: ${pos.row}, col: ${pos.col}] is not part of Set A. Skipping.")
+            continue
+        }
+
         val targetData = getTargetData(pos) ?: continue
 
-        // Find another position that has the target data
+        // Find another position that has the target data in Set A
         var sourcePos: CellPosition? = null
         for ((otherPos, data) in currentTableData) {
-            if (otherPos != pos && data == targetData) {
-                // Don't disturb positions that are already correctly placed
-                val otherPosTarget = getTargetData(otherPos)
-                if (otherPosTarget != null && data == otherPosTarget) {
-                    // This position has the right data and it's in the right place
-                    // Let's try to find another source
-                    continue
-                }
-
+            if (otherPos != pos && data == targetData && otherPos in setA) {
                 sourcePos = otherPos
                 break
             }
@@ -228,48 +191,8 @@ fun revealRandomCategoryHelp(
                 newlyCorrectlyPlacedCells.add(sourcePos)
             }
         } else {
-            // If we couldn't find the exact value, try to make a best-effort swap
-            // that at least gets us closer to the solution by placing a value
-            // that doesn't exist elsewhere in the category
-
-            // Get all other positions in this category
-            val otherPositionsInCategory = positions.filter { it != pos }
-
-            // Find all values already in this category
-            val valuesInCategory = otherPositionsInCategory
-                .filter { it in currentTableData }
-                .mapNotNull { currentTableData[it] }
-                .toSet()
-
-            // Find positions with values not in this category
-            val positionsWithUniqueValues = currentTableData.entries
-                .filter { (checkPos, value) ->
-                    checkPos != pos &&
-                            checkPos !in selectedCategory &&
-                            value !in valuesInCategory
-                }
-                .map { it.key }
-
-            if (positionsWithUniqueValues.isNotEmpty()) {
-                val swapPos = positionsWithUniqueValues.random()
-                // Swap with a position that has a value not in this category
-                val temp = currentTableData[pos]!!
-                currentTableData[pos] = currentTableData[swapPos]!!
-                currentTableData[swapPos] = temp
-
-                println("Made best-effort swap between [row: ${pos.row}, col: ${pos.col}] and [row: ${swapPos.row}, col: ${swapPos.col}]")
-
-                // Check if positions are now correctly placed
-                if (isCellCorrectlyPlaced(pos)) {
-                    newlyCorrectlyPlacedCells.add(pos)
-                }
-
-                if (isCellCorrectlyPlaced(swapPos)) {
-                    newlyCorrectlyPlacedCells.add(swapPos)
-                }
-            } else {
-                println("No candidate found for cell [row: ${pos.row}, col: ${pos.col}] with target ${targetData.joinToString(",")}")
-            }
+            // Handle best-effort swaps if needed
+            println("No exact candidate found for swap.")
         }
     }
 
