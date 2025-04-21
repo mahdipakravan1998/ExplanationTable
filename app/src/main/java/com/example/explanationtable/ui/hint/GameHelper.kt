@@ -10,8 +10,7 @@ fun revealRandomCategoryHelp(
     // New parameter: callback to notify about correctly placed cells
     onCellsCorrectlyPlaced: (List<CellPosition>) -> Unit = {}
 ) {
-
-    // Define the four fixed categories.
+    // 1) Define the four fixed categories.
     val firstCategory = setOf(
         CellPosition(1, 0),
         CellPosition(2, 0),
@@ -37,179 +36,89 @@ fun revealRandomCategoryHelp(
     )
     val categories = listOf(firstCategory, secondCategory, thirdCategory, fourthCategory)
 
-    // Helper function to check if a cell is correctly placed
+    // 2) Helpers
     fun isCellCorrectlyPlaced(pos: CellPosition): Boolean {
         val targetData = originalTableData.rows[pos.row]?.get(pos.col)
         val currentData = currentTableData[pos]
-        return targetData != null && currentData == targetData || currentData == null
+        return (targetData != null && currentData == targetData) || currentData == null
     }
+    fun getTargetData(pos: CellPosition): List<String>? =
+        originalTableData.rows[pos.row]?.get(pos.col)
 
-    // Helper function to get the target data for a position
-    fun getTargetData(pos: CellPosition): List<String>? {
-        return originalTableData.rows[pos.row]?.get(pos.col)
+    // 3) Early exit if everything is already solved
+    val unsolvedCounts = categories.map { category ->
+        category.count { !isCellCorrectlyPlaced(it) }
     }
+    if (unsolvedCounts.all { it == 0 }) return
 
-    // Create Set A - All incorrectly placed cells in the entire table
-    val setA = currentTableData.keys.filter { !isCellCorrectlyPlaced(it) }.toSet()
-
-    // Count how many cells from each category are already correctly placed
-    val categorySolvedCounts = categories.map { category ->
-        category.count { pos ->
-            isCellCorrectlyPlaced(pos)
-        }
-    }
-
-    // Calculate how many cells in each category still need to be placed
-    val categoryUnsolvedCounts = categories.mapIndexed { index, category ->
-        category.size - categorySolvedCounts[index]
-    }
-
-    // If all categories are fully solved, exit
-    if (categoryUnsolvedCounts.all { it == 0 }) {
-        return
-    }
-
-    // Filter out categories that are already fully solved (0 unresolved cells)
-    val unresolvedCategories = categoryUnsolvedCounts
-        .mapIndexed { index, count -> categories[index] to count }
+    // 4) Pick a random category that still has unsolved cells
+    val unresolvedCategories = categories.zip(unsolvedCounts)
         .filter { it.second > 0 }
         .map { it.first }
-
-    // If no unresolved categories, exit
-    if (unresolvedCategories.isEmpty()) {
-        return
-    }
-
-    // Randomly select an unresolved category
+    if (unresolvedCategories.isEmpty()) return
     val selectedCategory = unresolvedCategories.random()
 
-    // For a predictable order, sort the positions.
-    val positions = selectedCategory.toList().sortedWith(compareBy({ it.row }, { it.col }))
+    // 5) Prepare for iterative swapping
+    val positions = selectedCategory
+        .toList()
+        .sortedWith(compareBy({ it.row }, { it.col }))
 
-    // ---------------------------------------------------
-    // Debug helper: prints the whole table in grid form
-    fun printTable(label: String) {
-        println("=== $label ===")
-        // Directional overrides
-        val LRE = "\u202A"  // Left‑to‑Right Embedding
-        val PDF = "\u202C"  // Pop Directional Formatting
+    // Remember which were already correct
+    val initiallyCorrect = positions.filter { isCellCorrectlyPlaced(it) }.toSet()
 
-        // 1) Safely get your rows
-        val rowsMap = originalTableData.rows
-        if (rowsMap.isEmpty()) {
-            println("[table is empty]")
-            return
-        }
+    // We'll collect every position that ever becomes correct,
+    // then filter out those that didn't stay correct by the end.
+    val newlyCorrect = mutableListOf<CellPosition>()
 
-        // 2) Sort the row indices
-        val rowIndices = rowsMap.keys.toList().sorted()
+    // 6) Repeat passes until this category is fully solved or no swaps possible
+    var madeProgress: Boolean
+    do {
+        madeProgress = false
 
-        // 3) Derive column count from the first row
-        val firstRowList = rowsMap[rowIndices[0]]
-            ?: run { println("[first row is null]"); return }
-        val colCount = firstRowList.size
+        for (pos in positions) {
+            if (isCellCorrectlyPlaced(pos)) continue
 
-        // 4) Print header
-        print("     ")
-        for (c in 0 until colCount) {
-            // wrap “C0”, “C1”, etc. in LRE/PDF too (just in case)
-            val header = LRE + "C$c" + PDF
-            print("|   $header    ")
-        }
-        println("|")
+            val target = getTargetData(pos) ?: continue
 
-        // 5) Print each row, forcing each cell LTR
-        for (r in rowIndices) {
-            print("R$r  ")
-            for (c in 0 until colCount) {
-                val data = currentTableData[CellPosition(r, c)]
-                val raw = data?.joinToString(",") ?: "∅"
-                // wrap the cell text
-                val displayed = LRE + raw.padEnd(6) + PDF
-                print("| $displayed ")
-            }
-            println("|")
-        }
-        println()
-    }
+            // Find any source cell (even outside this category) that currently holds the right data
+            // and isn't already correctly placed itself.
+            val source = currentTableData.entries
+                .firstOrNull { (otherPos, data) ->
+                    otherPos != pos &&
+                            data == target &&
+                            !isCellCorrectlyPlaced(otherPos)
+                }
+                ?.key
 
-    // ---------------------------------------------------
+            if (source != null) {
+                // Swap them
+                val tmp = currentTableData[pos]!!
+                currentTableData[pos] = currentTableData[source]!!
+                currentTableData[source] = tmp
 
-
-    // Track correctly placed cells before we start
-    val initiallyCorrectPositions = positions.filter { isCellCorrectlyPlaced(it) }.toSet()
-    println("Initially correctly placed: $initiallyCorrectPositions")
-    printTable("Initial table")
-
-    val newlyCorrectlyPlacedCells = mutableListOf<CellPosition>()
-
-    for (pos in positions) {
-        println(">> Processing pos=$pos")
-        println("   isCellCorrectlyPlaced($pos) = ${isCellCorrectlyPlaced(pos)}")
-        if (isCellCorrectlyPlaced(pos)) {
-            println("   → already correct, skipping\n")
-            continue
-        }
-        if (pos !in setA) {
-            println("   → not in setA (incorrect cells), skipping\n")
-            continue
-        }
-
-        val targetData = getTargetData(pos)
-        val currentData = currentTableData[pos]
-        println("   targetData at $pos = $targetData")
-        println("   currentData at $pos = $currentData")
-        if (targetData == null) {
-            println("   → no target data, skipping\n")
-            continue
-        }
-
-        // find a source
-        var sourcePos: CellPosition? = null
-        for ((otherPos, data) in currentTableData) {
-            if (otherPos != pos && data == targetData && otherPos in setA) {
-                sourcePos = otherPos
-                break
+                // Record newly correct placements
+                if (isCellCorrectlyPlaced(pos)) {
+                    newlyCorrect += pos
+                    madeProgress = true
+                }
+                if (isCellCorrectlyPlaced(source)) {
+                    newlyCorrect += source
+                    madeProgress = true
+                }
             }
         }
-        println("   sourcePos found = $sourcePos")
 
-        if (sourcePos != null) {
-            printTable("Before swap (pos=$pos, source=$sourcePos)")
-            // perform swap
-            val tmp = currentTableData[pos]!!
-            currentTableData[pos] = currentTableData[sourcePos]!!
-            currentTableData[sourcePos] = tmp
-            println("   → swapped contents of $pos and $sourcePos")
-            printTable("After swap  (pos=$pos, source=$sourcePos)")
+        // Stop if category is now fully solved
+    } while (madeProgress && positions.any { !isCellCorrectlyPlaced(it) })
 
-            // check placements
-            val nowCorrectPos = isCellCorrectlyPlaced(pos)
-            val nowCorrectSrc = isCellCorrectlyPlaced(sourcePos)
-            println("   isCellCorrectlyPlaced($pos) = $nowCorrectPos")
-            println("   isCellCorrectlyPlaced($sourcePos) = $nowCorrectSrc")
-            if (nowCorrectPos) newlyCorrectlyPlacedCells.add(pos)
-            if (nowCorrectSrc) newlyCorrectlyPlacedCells.add(sourcePos)
-        } else {
-            println("   → no matching source found, skipping swap\n")
-        }
-
-        println()
-    }
-
-    val trulyNewCorrectPositions = newlyCorrectlyPlacedCells
-        .filter { it !in initiallyCorrectPositions }
-        .filter { pos -> isCellCorrectlyPlaced(pos) }    // ← only keep those still correct
+    // 7) Filter to only those that ended up correct and weren’t originally correct
+    val trulyNew = newlyCorrect
         .distinct()
-    println("newlyCorrectlyPlacedCells      = $newlyCorrectlyPlacedCells")
-    println("initiallyCorrectPositions      = $initiallyCorrectPositions")
-    println("trulyNewCorrectPositions       = $trulyNewCorrectPositions")
+        .filter { it !in initiallyCorrect }
+        .filter { isCellCorrectlyPlaced(it) }
 
-    if (trulyNewCorrectPositions.isNotEmpty()) {
-        println("Notifying callback with $trulyNewCorrectPositions")
-        onCellsCorrectlyPlaced(trulyNewCorrectPositions)
-    } else {
-        println("No new correct positions to report")
+    // 8) Notify callback
+    if (trulyNew.isNotEmpty()) {
+        onCellsCorrectlyPlaced(trulyNew)
     }
-    printTable("")
 }
