@@ -104,6 +104,13 @@ fun EasyThreeByFiveTable(
     // Function to handle external notification of correctly placed cells
     val handleExternallyCorrectCells: (List<CellPosition>) -> Unit = { correctPositions ->
         if (correctPositions.isNotEmpty()) {
+            // Clear any selections that refer to cells now resolved by help
+            if (firstSelectedCell in correctPositions) {
+                firstSelectedCell = null
+                secondSelectedCell = null
+                isSelectionComplete = false
+            }
+
             // Process each correctly placed cell
             correctPositions.forEach { pos ->
                 // Only process if the cell is still in the current table (not already marked as correct)
@@ -142,6 +149,13 @@ fun EasyThreeByFiveTable(
 
     // --- Cell Click Handling ---
     fun handleCellClick(position: CellPosition) {
+        // If the previously selected cell was removed (resolved by hint), reset selection
+        if (firstSelectedCell != null && !currentTableData.containsKey(firstSelectedCell!!)) {
+            firstSelectedCell = null
+            secondSelectedCell = null
+            isSelectionComplete = false
+        }
+
         if (firstSelectedCell == null) {
             firstSelectedCell = position
         } else if (secondSelectedCell == null && position != firstSelectedCell) {
