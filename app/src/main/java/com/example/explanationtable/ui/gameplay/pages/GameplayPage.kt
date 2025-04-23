@@ -24,11 +24,14 @@ import com.example.explanationtable.ui.gameplay.review.StageReviewTable
 import com.example.explanationtable.ui.gameplay.table.CellPosition
 import com.example.explanationtable.ui.gameplay.table.GameTable
 import com.example.explanationtable.ui.hint.HintDialog
+import com.example.explanationtable.ui.hint.revealAllCellsHelp
 import com.example.explanationtable.ui.hint.revealRandomCategoryHelp
+import com.example.explanationtable.ui.hint.revealRandomCellHelp
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.utils.toPersianDigits
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 
 /**
  * Composable function that represents the gameplay screen for a specific stage.
@@ -38,7 +41,7 @@ import kotlinx.coroutines.delay
  * @param stageNumber The number of the current stage.
  * @param difficulty The difficulty level of the current stage.
  */
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun GameplayPage(
     navController: NavHostController,
@@ -233,6 +236,38 @@ fun GameplayPage(
                                             notifyCorrectCellsCallback(correctPositions)
                                         }
                                     )
+                                }
+                            }
+                        } else if (selectedOption.displayText == context.getString(R.string.hint_single_letter)) {
+                            // Only call if the states have been initialized.
+                            originalTableState?.let { origData ->
+                                currentTableState?.let { currData ->
+                                    // Pass the callback to the revealRandomCellHelp function
+                                    revealRandomCellHelp(
+                                        currentTableData = currData,
+                                        originalTableData = origData,
+                                        onCellCorrectlyPlaced = { correctPositions ->
+                                            // Notify the table about the single cell that is now correctly placed
+                                            notifyCorrectCellsCallback(correctPositions)
+                                        }
+                                    )
+                                }
+                            }
+                        } else if (selectedOption.displayText == context.getString(R.string.hint_complete_stage)) {
+                            // Only call if the states have been initialized.
+                            originalTableState?.let { origData ->
+                                currentTableState?.let { currData ->
+                                    // Pass the callback to the revealAllCellsHelp function
+                                    GlobalScope.launch(Dispatchers.Main) {
+                                        revealAllCellsHelp(
+                                            currentTableData = currData,
+                                            originalTableData = origData,
+                                            onCellsCorrectlyPlaced = { correctPositions ->
+                                                // Notify the table about cells that are now correctly placed
+                                                notifyCorrectCellsCallback(correctPositions)
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
