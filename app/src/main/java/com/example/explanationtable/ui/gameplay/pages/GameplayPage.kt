@@ -118,7 +118,11 @@ fun GameplayPage(
                     gems = diamonds,
                     difficulty = difficulty,
                     onSettingsClick = { showSettingsDialog = true },
-                    onHelpClick = { showHintDialog = true }
+                    onHelpClick = if (!isGameOver) {
+                        { showHintDialog = true }
+                    } else {
+                        null // Help button is disabled and invisible when game is over
+                    }
                 )
                 Spacer(modifier = Modifier.height(72.dp))
 
