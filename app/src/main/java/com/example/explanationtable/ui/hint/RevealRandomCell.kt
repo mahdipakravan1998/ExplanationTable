@@ -4,7 +4,7 @@ import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.gameplay.table.CellPosition
 
 // Add a callback parameter to report correctly placed cell
-fun revealRandomCellHelp(
+fun revealRandomCell(
     currentTableData: MutableMap<CellPosition, List<String>>,
     originalTableData: EasyLevelTable,
     // New parameter: callback to notify about correctly placed cells
