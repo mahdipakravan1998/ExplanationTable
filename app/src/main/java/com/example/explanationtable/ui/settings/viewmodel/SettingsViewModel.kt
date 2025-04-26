@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.main.viewmodel
+package com.example.explanationtable.ui.settings.viewmodel
 
 import android.app.Application
 import android.content.res.Configuration
@@ -11,19 +11,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-    // 1) Build your repo
-    private val systemDarkDefault: Boolean =
-        (application.resources.configuration.uiMode
-                and Configuration.UI_MODE_NIGHT_MASK) ==
-                Configuration.UI_MODE_NIGHT_YES
+/**
+ * ViewModel for the Settings dialog.
+ * Delegates all data work to SettingsRepository.
+ */
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+    // Determine system default dark mode
+    private val systemDarkDefault = (
+            application.resources.configuration.uiMode
+                    and Configuration.UI_MODE_NIGHT_MASK
+            ) == Configuration.UI_MODE_NIGHT_YES
 
+    // Build our repository
     private val settingsRepo = SettingsRepository(
         dataStore = DataStoreManager(application),
         systemDarkDefault = systemDarkDefault
     )
 
-    // 2) Expose StateFlows from the repo
+    /** Expose theme as StateFlow */
     val isDarkTheme: StateFlow<Boolean> = settingsRepo
         .isDarkTheme
         .stateIn(
@@ -32,28 +37,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = systemDarkDefault
         )
 
+    /** Expose mute as StateFlow */
     val isMuted: StateFlow<Boolean> = settingsRepo
         .isMuted
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = false
         )
 
-    val diamonds: StateFlow<Int> = settingsRepo
-        .diamonds
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = 200
-        )
-
-    // 3) Delegate all mutations to the repo
-    fun addDiamonds(amount: Int) {
-        viewModelScope.launch { settingsRepo.addDiamonds(amount) }
+    /** Toggle theme */
+    fun toggleTheme() {
+        viewModelScope.launch {
+            settingsRepo.setTheme(!isDarkTheme.value)
+        }
     }
 
-    fun spendDiamonds(amount: Int) {
-        viewModelScope.launch { settingsRepo.spendDiamonds(amount) }
+    /** Toggle mute */
+    fun toggleMute() {
+        viewModelScope.launch {
+            settingsRepo.toggleMute()
+        }
     }
 }

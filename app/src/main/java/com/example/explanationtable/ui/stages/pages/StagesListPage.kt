@@ -19,83 +19,67 @@ import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.ui.stages.content.StagesListContent
+import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
 
 /**
  * Composable that sets up and renders the stage list screen.
- *
- * This function displays a top app bar, a list of stages, and a settings dialog.
- * It uses a background composable and handles navigation to the gameplay screen.
- *
- * @param navController The NavController used for navigation.
- * @param difficulty The current difficulty level; defaults to [Difficulty.EASY].
- * @param gems The number of gems to display; defaults to 1000.
- * @param onSettingsClick Callback for when the settings icon is clicked (currently not used).
- * @param isDarkTheme Flag indicating whether the dark theme is enabled.
  */
 @Composable
 fun StagesListPage(
     navController: NavController,
     difficulty: Difficulty = Difficulty.EASY,
-    onSettingsClick: () -> Unit = {},
     isDarkTheme: Boolean
 ) {
-    // Retrieve the MainViewModel instance for app-wide state management.
-    val viewModel: MainViewModel = viewModel()
+    // App-wide state (for gems, mute) stays in MainViewModel
+    val mainViewModel: MainViewModel = viewModel()
+    val diamonds by mainViewModel.diamonds.collectAsState()
 
-    val diamonds by viewModel.diamonds.collectAsState()
+    // New StageViewModel for our stage count
+    val stageViewModel: StageViewModel = viewModel()
 
-    // Collect the current muted state from the ViewModel.
-    val isMuted by viewModel.isMuted.collectAsState()
-
-    // Local state to control the visibility of the settings dialog.
+    // Local UI state
     var showSettingsDialog by remember { mutableStateOf(false) }
-    // Retrieve the current context and safely cast it to Activity for exit functionality.
+
+    // For exit
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Handle the back button press to navigate back to MainPage
+    // Handle Android back
     BackHandler {
         navController.navigate(Routes.MAIN) {
-            popUpTo(Routes.MAIN) { inclusive = true } // Remove previous pages from the stack
+            popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
-    // Apply the background for the screen.
-    Background(isHomePage = false, isDarkTheme = isDarkTheme) {
-        // Use a Column layout to stack the UI elements vertically.
-        Column(modifier = Modifier.fillMaxSize()) {
+    // Kick off loading the count whenever difficulty changes
+    LaunchedEffect(difficulty) {
+        stageViewModel.fetchStagesCount(difficulty)
+    }
 
-            // Top app bar displaying title, gem count, and difficulty.
-            // On clicking the settings icon, the settings dialog is triggered.
+    Background(isHomePage = false, isDarkTheme = isDarkTheme) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top bar with gems and difficulty
             AppTopBar(
-                isHomePage = false,
-                isDarkTheme = isDarkTheme,
-                title = stringResource(id = R.string.stages_list),
-                gems = diamonds,
-                difficulty = difficulty,
+                isHomePage      = false,
+                isDarkTheme     = isDarkTheme,
+                title           = stringResource(id = R.string.stages_list),
+                gems            = diamonds,
+                difficulty      = difficulty,
                 onSettingsClick = { showSettingsDialog = true },
-                iconTint = MaterialTheme.colorScheme.onSurface
+                iconTint        = MaterialTheme.colorScheme.onSurface
             )
 
-            // Main content displaying the list of stages.
-            // Navigates to the gameplay screen when a stage is clicked.
+            // The actual list of stages delegates to its own Composable
             StagesListContent(
                 navController = navController,
-                difficulty = difficulty
+                difficulty    = difficulty
             )
 
-            // Settings dialog allowing the user to toggle theme, mute, or exit the app.
+            // Settings dialog (theme, mute, exit)
             SettingsDialog(
                 showDialog = showSettingsDialog,
-                onDismiss = { showSettingsDialog = false },
-                isDarkTheme = isDarkTheme,
-                onToggleTheme = { viewModel.toggleTheme() },
-                isMuted = isMuted,
-                onToggleMute = { viewModel.toggleMute() },
-                onExit = {
-                    // Safely finish the activity and remove the app's task from the recent apps.
-                    activity?.finishAndRemoveTask()
-                }
+                onDismiss  = { showSettingsDialog = false },
+                onExit     = { activity?.finishAndRemoveTask() }
             )
         }
     }

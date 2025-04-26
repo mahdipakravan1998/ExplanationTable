@@ -207,14 +207,8 @@ fun GameplayPage(
             // Settings dialog for user preferences
             SettingsDialog(
                 showDialog = showSettingsDialog,
-                onDismiss = { showSettingsDialog = false },
-                isDarkTheme = isDarkTheme,
-                onToggleTheme = { viewModel.toggleTheme() },
-                isMuted = isMuted,
-                onToggleMute = { viewModel.toggleMute() },
-                onExit = {
-                    activity?.finishAndRemoveTask()
-                }
+                onDismiss  = { showSettingsDialog = false },
+                onExit     = { activity?.finishAndRemoveTask() }
             )
 
             // Show hint dialog when help button is clicked

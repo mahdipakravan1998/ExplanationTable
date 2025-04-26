@@ -47,9 +47,6 @@ fun MainPage(
     viewModel: MainViewModel = viewModel(),
     isDarkTheme: Boolean
 ) {
-    // Observe the mute state from the ViewModel
-    val isMuted by viewModel.isMuted.collectAsState()
-
     // Local state variables to control dialog visibility and store selected option
     var showDifficultyDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
@@ -110,15 +107,8 @@ fun MainPage(
                 // Display the SettingsDialog when the corresponding flag is true.
                 SettingsDialog(
                     showDialog = showSettingsDialog,
-                    onDismiss = { showSettingsDialog = false },
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = { viewModel.toggleTheme() },
-                    isMuted = isMuted,
-                    onToggleMute = { viewModel.toggleMute() },
-                    onExit = {
-                        // Exit the app safely by finishing the activity and removing it from the task list.
-                        activity?.finishAndRemoveTask()
-                    }
+                    onDismiss  = { showSettingsDialog = false },
+                    onExit     = { activity?.finishAndRemoveTask() }
                 )
 
                 // Exit Confirmation Dialog
