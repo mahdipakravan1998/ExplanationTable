@@ -23,9 +23,7 @@ import com.example.explanationtable.ui.gameplay.components.PrizeBox
 import com.example.explanationtable.ui.gameplay.review.StageReviewTable
 import com.example.explanationtable.ui.gameplay.table.CellPosition
 import com.example.explanationtable.ui.gameplay.table.GameTable
-import com.example.explanationtable.ui.hint.HintDialog
-import com.example.explanationtable.ui.hint.revealRandomCategory
-import com.example.explanationtable.ui.hint.revealRandomCell
+import com.example.explanationtable.ui.hint.HintDialogHandler
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.utils.toPersianDigits
@@ -211,50 +209,23 @@ fun GameplayPage(
             )
 
             // Show hint dialog when help button is clicked
-            if (showHintDialog) {
-                HintDialog(
-                    showDialog = showHintDialog,
-                    onDismiss = { showHintDialog = false },
-                    isDarkTheme = isDarkTheme,
-                    difficulty = difficulty,
-                    onOptionSelected = { selectedOption ->
-                        if (selectedOption.displayText == context.getString(R.string.hint_single_word)) {
-                            // Only call if the states have been initialized.
-                            originalTableState?.let { origData ->
-                                currentTableState?.let { currData ->
-                                    // Pass the callback to the revealRandomCategoryHelp function
-                                    revealRandomCategory(
-                                        currentTableData = currData,
-                                        originalTableData = origData,
-                                        onCellsCorrectlyPlaced = { correctPositions ->
-                                            // Notify the table about cells that are now correctly placed
-                                            notifyCorrectCellsCallback(correctPositions)
-                                        }
-                                    )
-                                }
-                            }
-                        } else if (selectedOption.displayText == context.getString(R.string.hint_single_letter)) {
-                            // Only call if the states have been initialized.
-                            originalTableState?.let { origData ->
-                                currentTableState?.let { currData ->
-                                    // Pass the callback to the revealRandomCellHelp function
-                                    revealRandomCell(
-                                        currentTableData = currData,
-                                        originalTableData = origData,
-                                        onCellCorrectlyPlaced = { correctPositions ->
-                                            // Notify the table about the single cell that is now correctly placed
-                                            notifyCorrectCellsCallback(correctPositions)
-                                        }
-                                    )
-                                }
-                            }
-                        } else if (selectedOption.displayText == context.getString(R.string.hint_complete_stage)) {
-                            isGameOver = true
-                        }
-                        showHintDialog = false
+            HintDialogHandler(
+                showDialog = showHintDialog,
+                isDarkTheme = isDarkTheme,
+                difficulty = difficulty,
+                originalTableState = originalTableState,
+                currentTableState = currentTableState,
+                onDismiss = { showHintDialog = false },
+                onOptionSelected = { correctPositions ->
+                    if (correctPositions.isEmpty()) {
+                        // Complete stage hint
+                        isGameOver = true
+                    } else {
+                        // Notify the table about cells that are now correctly placed
+                        notifyCorrectCellsCallback(correctPositions)
                     }
-                )
-            }
+                }
+            )
         }
     }
 }
