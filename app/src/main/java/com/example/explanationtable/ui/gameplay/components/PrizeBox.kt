@@ -21,13 +21,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.R
 import com.example.explanationtable.ui.components.PrimaryButton
-import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.CheckColorDark
 import com.example.explanationtable.ui.theme.DarkGreenBackground
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 import com.example.explanationtable.ui.theme.IconCircleDark
-import com.example.explanationtable.ui.theme.PrizeButtonBackgroundDark
-import com.example.explanationtable.ui.theme.PrizeButtonBackgroundLight
 import com.example.explanationtable.ui.theme.SeaSponge
 import com.example.explanationtable.ui.theme.TreeFrog
 
@@ -85,11 +82,6 @@ fun PrizeBox(
     val iconCircleColor = if (isDarkTheme) IconCircleDark else TreeFrog
     val checkColor = if (isDarkTheme) CheckColorDark else DialogBackgroundLight
     val messageTextColor = iconCircleColor
-
-    val buttonBackgroundColor =
-        if (isDarkTheme) PrizeButtonBackgroundDark else PrizeButtonBackgroundLight
-    val buttonShadowColor = iconCircleColor
-    val buttonTextColor = if (isDarkTheme) BackgroundDark else DialogBackgroundLight
 
     Column(
         modifier = Modifier

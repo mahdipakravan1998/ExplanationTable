@@ -57,7 +57,6 @@ fun GameplayPage(
     // ViewModel to manage state
     val viewModel: MainViewModel = viewModel()
     val diamonds by viewModel.diamonds.collectAsState()
-    val isMuted by viewModel.isMuted.collectAsState()
 
     // Local states for controlling dialog visibility
     var showSettingsDialog by remember { mutableStateOf(false) }
