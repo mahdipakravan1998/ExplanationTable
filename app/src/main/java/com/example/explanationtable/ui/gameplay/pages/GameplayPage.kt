@@ -23,7 +23,7 @@ import com.example.explanationtable.ui.gameplay.components.PrizeBox
 import com.example.explanationtable.ui.gameplay.review.StageReviewTable
 import com.example.explanationtable.ui.gameplay.table.CellPosition
 import com.example.explanationtable.ui.gameplay.table.GameTable
-import com.example.explanationtable.ui.hint.HintDialogHandler
+import com.example.explanationtable.ui.hint.dialog.HintDialogHandler
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.utils.toPersianDigits
@@ -216,7 +216,7 @@ fun GameplayPage(
                 originalTableState = originalTableState,
                 currentTableState = currentTableState,
                 onDismiss = { showHintDialog = false },
-                onOptionSelected = { correctPositions ->
+                onCellsRevealed = { correctPositions ->
                     if (correctPositions.isEmpty()) {
                         // Complete stage hint
                         isGameOver = true

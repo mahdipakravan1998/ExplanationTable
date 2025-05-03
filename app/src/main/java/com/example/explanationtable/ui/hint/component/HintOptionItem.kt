@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.hint
+package com.example.explanationtable.ui.hint.component
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
