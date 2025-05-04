@@ -24,6 +24,4 @@ class SettingsRepository(
 
     suspend fun toggleMute()   = dataStore.toggleMute()
     suspend fun setTheme(on: Boolean) = dataStore.setTheme(on)
-    suspend fun addDiamonds(amount: Int) = dataStore.addDiamonds(amount)
-    suspend fun spendDiamonds(amount: Int) = dataStore.spendDiamonds(amount)
 }

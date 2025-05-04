@@ -25,11 +25,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -38,8 +38,17 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.core.content.res.ResourcesCompat
 import com.example.explanationtable.R
-import com.example.explanationtable.ui.main.viewmodel.MainViewModel
+import com.example.explanationtable.ui.rewards.viewmodel.RewardsViewModel
+import com.example.explanationtable.ui.theme.BorderDark
+import com.example.explanationtable.ui.theme.BorderLight
+import com.example.explanationtable.ui.theme.Eel
+import com.example.explanationtable.ui.theme.Hare
+import com.example.explanationtable.ui.theme.NeutralColorDark
 import com.example.explanationtable.ui.theme.ShabnamFontFamily
+import com.example.explanationtable.ui.theme.SpecialFillGlowColor
+import com.example.explanationtable.ui.theme.TitleTextColorDark
+import com.example.explanationtable.ui.theme.specialFillColor
+import com.example.explanationtable.ui.theme.strokeColor
 import kotlin.math.roundToInt
 
 // Data class holding layout parameters for the progress bar.
@@ -162,9 +171,7 @@ fun ProgressBarComponent(
     val textWidthPx = textLayoutResult.size.width.toFloat()
 
     // Define color palette based on theme and design specifications
-    val neutralColor = if (isDarkTheme) Color(0xFF9BA3A6) else Color(0xFFAFAFAF)
-    val strokeColor = Color(0xFFFFC801)
-    val specialFillColor = Color(0xFFD79534)
+    val neutralColor = if (isDarkTheme) NeutralColorDark else Hare
     val strokeWidth = 12f
 
     // Select the appropriate font resource based on the text style
@@ -221,7 +228,10 @@ fun ProgressBarComponent(
                 modifier = Modifier
                     .fillMaxWidth(progress)
                     .fillMaxHeight()
-                    .background(Color(0xFFFFC801), shape = progressBarShape)
+                    .background(
+                        color = strokeColor,
+                        shape = progressBarShape
+                    )
             ) {
                 // Render the glow effect if applicable
                 if (layout.glowWidth > 0.dp && layout.glowHeight > 0.dp) {
@@ -230,7 +240,10 @@ fun ProgressBarComponent(
                             .offset(x = glowPadding, y = glowVerticalOffset)
                             .width(layout.glowWidth)
                             .height(layout.glowHeight)
-                            .background(Color(0xFFFFD334), shape = RoundedCornerShape(12.dp))
+                            .background(
+                                color = SpecialFillGlowColor,
+                                shape = RoundedCornerShape(12.dp)
+                            )
                     )
                 }
             }
@@ -392,10 +405,10 @@ fun RewardsTable(
     playerMoves: Int,
     elapsedTime: Long,
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel // Add viewModel as a parameter
+    viewModel: RewardsViewModel
 ) {
-    val tableBorderColor = if (isDarkTheme) Color(0xFF38464F) else Color(0xFFE5E5E5)
-    val titleTextColor = if (isDarkTheme) Color(0xFFF2F7FB) else Color(0xFF4B4B4B)
+    val tableBorderColor = if (isDarkTheme) BorderDark else BorderLight
+    val titleTextColor = if (isDarkTheme) TitleTextColorDark else Eel
     val rowIcon1 = painterResource(id = R.drawable.ic_step_complete)
     val rowIcon2 = painterResource(id = R.drawable.ic_accuracy)
     val rowIcon3 = painterResource(id = R.drawable.ic_speed)
@@ -448,7 +461,7 @@ fun RewardsTable(
             Column {
                 TableRowItem(
                     isDarkTheme = isDarkTheme,
-                    title = "امتیاز صحت",
+                    title = stringResource(id = R.string.score_precision),
                     progress = precisionScore / 10,
                     score = precisionScore.roundToInt(),
                     borderColor = tableBorderColor,
@@ -459,7 +472,7 @@ fun RewardsTable(
                 HorizontalDivider(color = tableBorderColor, thickness = borderWidth)
                 TableRowItem(
                     isDarkTheme = isDarkTheme,
-                    title = "امتیاز دقت",
+                    title = stringResource(id = R.string.score_accuracy),
                     progress = accuracyScore / 10,
                     score = accuracyScore.roundToInt(),
                     borderColor = tableBorderColor,
@@ -470,7 +483,7 @@ fun RewardsTable(
                 HorizontalDivider(color = tableBorderColor, thickness = borderWidth)
                 TableRowItem(
                     isDarkTheme = isDarkTheme,
-                    title = "امتیاز سرعت",
+                    title = stringResource(id = R.string.score_speed),
                     progress = speedScore / 10,
                     score = speedScore.roundToInt(),
                     borderColor = tableBorderColor,
@@ -488,7 +501,7 @@ fun RewardsTable(
         ) {
             TableRowItem(
                 isDarkTheme = isDarkTheme,
-                title = "امتیاز مرحله",
+                title = stringResource(id = R.string.score_stage),
                 progress = stageScore / 10,
                 score = stageScore.roundToInt(),
                 borderColor = tableBorderColor,

@@ -77,17 +77,6 @@ class DataStoreManager(private val context: Context) {
     }
 
     /**
-     * Updates the diamond count in the DataStore.
-     *
-     * @param newCount The new diamond count to be saved.
-     */
-    suspend fun updateDiamonds(newCount: Int) {
-        context.dataStore.edit { preferences ->
-            preferences[DIAMONDS_KEY] = newCount
-        }
-    }
-
-    /**
      * Adds a specified amount of diamonds to the current count.
      *
      * @param amount The number of diamonds to add.

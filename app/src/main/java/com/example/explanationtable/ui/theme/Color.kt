@@ -137,7 +137,7 @@ val BorderDark = Color(0xFF38464F)             // Border color for dark mode ele
 
 // Light mode specific UI elements
 val DialogBackgroundLight = Color(0xFFFFFFFD)   // Dialog background in light mode (nearly white)
-val BorderLight = Color(0xFFE5E5E5)            // Border color for light mode elements
+val BorderLight = Swan            // Border color for light mode elements
 
 // Text color optimized for dark mode
 val TextDarkMode = Color(0xFFF1F7FB)            // Used for text in dark mode
@@ -185,3 +185,9 @@ val BorderColorDark = Color(0xFF3F85A7)
 
 val TextColorLight = Eel
 val TextColorDark = TextDarkMode
+
+val NeutralColorDark = Color(0xFF9BA3A6)
+val strokeColor = Color(0xFFFFC801)
+val specialFillColor = Color(0xFFD79534)
+val SpecialFillGlowColor = Color(0xFFFFD334)
+val TitleTextColorDark = Color(0xFFF2F7FB)

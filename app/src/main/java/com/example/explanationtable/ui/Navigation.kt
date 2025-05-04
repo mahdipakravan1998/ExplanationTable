@@ -16,6 +16,7 @@ import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.rewards.pages.GameResultScreen
 import androidx.navigation.NavHostController
+import com.example.explanationtable.ui.rewards.viewmodel.RewardsViewModel
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -23,7 +24,8 @@ fun AppNavHost(
     navController: NavHostController = rememberAnimatedNavController(),
     isDarkTheme: Boolean
 ) {
-    val viewModel: MainViewModel = viewModel()
+    val mainViewModel: MainViewModel = viewModel()
+    val rewardsViewModel: RewardsViewModel = viewModel()
 
     // AnimatedNavHost adds the slide animations during navigation transitions.
     AnimatedNavHost(
@@ -58,7 +60,7 @@ fun AppNavHost(
         composable(Routes.MAIN) {
             MainPage(
                 navController = navController,
-                viewModel = viewModel,
+                viewModel = mainViewModel,
                 isDarkTheme = isDarkTheme
             )
         }
@@ -125,7 +127,7 @@ fun AppNavHost(
                 navController = navController,
                 difficulty = difficulty,
                 stageNumber = stageNumber,
-                viewModel = viewModel
+                viewModel = rewardsViewModel
             )
         }
 

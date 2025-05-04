@@ -9,7 +9,6 @@ import com.example.explanationtable.repository.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     // 1) Build your repo
@@ -32,14 +31,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = systemDarkDefault
         )
 
-    val isMuted: StateFlow<Boolean> = settingsRepo
-        .isMuted
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = false
-        )
-
     val diamonds: StateFlow<Int> = settingsRepo
         .diamonds
         .stateIn(
@@ -47,13 +38,4 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.Eagerly,
             initialValue = 200
         )
-
-    // 3) Delegate all mutations to the repo
-    fun addDiamonds(amount: Int) {
-        viewModelScope.launch { settingsRepo.addDiamonds(amount) }
-    }
-
-    fun spendDiamonds(amount: Int) {
-        viewModelScope.launch { settingsRepo.spendDiamonds(amount) }
-    }
 }

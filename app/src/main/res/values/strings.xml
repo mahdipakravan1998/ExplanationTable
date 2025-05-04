@@ -76,4 +76,9 @@
         <item>تو قوی‌تر از همیشه‌ای</item>
     </string-array>
 
+    <string name="score_precision">امتیاز صحت</string>
+    <string name="score_accuracy">امتیاز دقت</string>
+    <string name="score_speed">امتیاز سرعت</string>
+    <string name="score_stage">امتیاز مرحله</string>
+
 </resources>
