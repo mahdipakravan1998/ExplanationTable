@@ -7,6 +7,19 @@ import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.gameplay.table.CellPosition
 import com.example.explanationtable.ui.hint.viewmodel.HintViewModel
 
+/**
+ * Composable function to handle the Hint Dialog interaction.
+ *
+ * It manages the dialog's visibility, configuration, and communication with the ViewModel.
+ *
+ * @param showDialog Boolean flag to control dialog visibility.
+ * @param isDarkTheme Boolean flag indicating whether the dark theme is active.
+ * @param difficulty The selected difficulty level.
+ * @param originalTableState The original state of the table, used for hint calculations.
+ * @param currentTableState The mutable state of the current table.
+ * @param onDismiss Lambda function called when the dialog is dismissed.
+ * @param onCellsRevealed Lambda function that is triggered when a set of cells are revealed.
+ */
 @Composable
 fun HintDialogHandler(
     showDialog: Boolean,
@@ -17,27 +30,32 @@ fun HintDialogHandler(
     onDismiss: () -> Unit,
     onCellsRevealed: (List<CellPosition>) -> Unit
 ) {
+    // Get the HintViewModel to manage the state and actions related to hint options
     val viewModel: HintViewModel = viewModel()
 
-    // When dialog opens, configure and load hint options
+    // Load and set the hint options whenever the dialog visibility changes
     LaunchedEffect(showDialog) {
         if (showDialog) {
-            viewModel.setDifficulty(difficulty)
-            viewModel.setOriginalTableState(originalTableState)
-            viewModel.setCurrentTableState(currentTableState)
-            viewModel.loadHintOptions()
+            viewModel.apply {
+                setDifficulty(difficulty)
+                setOriginalTableState(originalTableState)
+                setCurrentTableState(currentTableState)
+                loadHintOptions()
+            }
         }
     }
 
-    // Forward any reveal events back to the caller
+    // Forward selected cells to the caller when any selection occurs in the ViewModel
     LaunchedEffect(viewModel.selectedCells) {
-        viewModel.selectedCells.collect { cells ->
-            onCellsRevealed(cells)
+        viewModel.selectedCells.collect { selectedCells ->
+            onCellsRevealed(selectedCells)
         }
     }
 
+    // Observe the hint options provided by the ViewModel
     val hintOptions by viewModel.hintOptions.collectAsState()
 
+    // Render the Hint Dialog with the required parameters and actions
     HintDialog(
         showDialog = showDialog,
         onDismiss = onDismiss,
@@ -45,9 +63,9 @@ fun HintDialogHandler(
         difficulty = difficulty,
         hintOptions = hintOptions,
         onOptionSelected = { selectedOption ->
-            // 1) Tell VM to perform the hint action
+            // Perform the hint action by passing the selected option to the ViewModel
             viewModel.onOptionSelected(selectedOption)
-            // 2) Immediately close the dialog, same as old behavior
+            // Close the dialog after the option is selected
             onDismiss()
         }
     )
