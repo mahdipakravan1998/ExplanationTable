@@ -187,7 +187,7 @@ val TextColorLight = Eel
 val TextColorDark = TextDarkMode
 
 val NeutralColorDark = Color(0xFF9BA3A6)
-val strokeColor = Color(0xFFFFC801)
-val specialFillColor = Color(0xFFD79534)
+val StrokeColor = Color(0xFFFFC801)
+val SpecialFillColor = Color(0xFFD79534)
 val SpecialFillGlowColor = Color(0xFFFFD334)
 val TitleTextColorDark = Color(0xFFF2F7FB)

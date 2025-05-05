@@ -4,11 +4,10 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.google.accompanist.navigation.animation.composable
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.explanationtable.ui.main.pages.MainPage
 import com.example.explanationtable.ui.stages.pages.StagesListPage
 import com.example.explanationtable.ui.gameplay.pages.GameplayPage
@@ -16,45 +15,21 @@ import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.rewards.pages.GameResultScreen
 import androidx.navigation.NavHostController
+import androidx.navigation.navArgument
 import com.example.explanationtable.ui.rewards.viewmodel.RewardsViewModel
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavHost(
-    navController: NavHostController = rememberAnimatedNavController(),
+    navController: NavHostController = rememberNavController(),
     isDarkTheme: Boolean
 ) {
     val mainViewModel: MainViewModel = viewModel()
     val rewardsViewModel: RewardsViewModel = viewModel()
 
-    // AnimatedNavHost adds the slide animations during navigation transitions.
-    AnimatedNavHost(
+    // NavHost with animations
+    NavHost(
         navController = navController,
-        startDestination = Routes.MAIN,
-        enterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { fullWidth -> fullWidth },
-                animationSpec = tween(durationMillis = 300)
-            )
-        },
-        exitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = tween(durationMillis = 300)
-            )
-        },
-        popEnterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = tween(durationMillis = 300)
-            )
-        },
-        popExitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { fullWidth -> fullWidth },
-                animationSpec = tween(durationMillis = 300)
-            )
-        }
+        startDestination = Routes.MAIN
     ) {
         // Main route: renders the MainPage composable.
         composable(Routes.MAIN) {
@@ -70,7 +45,31 @@ fun AppNavHost(
             route = Routes.STAGES_LIST_WITH_ARG,
             arguments = listOf(
                 navArgument("difficulty") { type = NavType.StringType }
-            )
+            ),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            }
         ) { backStackEntry ->
             val difficulty = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
             StagesListPage(
@@ -86,7 +85,31 @@ fun AppNavHost(
             arguments = listOf(
                 navArgument("stageNumber") { type = NavType.IntType },
                 navArgument("difficulty") { type = NavType.StringType }
-            )
+            ),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            }
         ) { backStackEntry ->
             val stageNumber = backStackEntry.arguments?.getInt("stageNumber") ?: 1
             val difficulty = parseDifficulty(backStackEntry.arguments?.getString("difficulty"))
@@ -108,7 +131,31 @@ fun AppNavHost(
                 navArgument("stageNumber") { type = NavType.IntType },
                 navArgument("optimalMoves") { type = NavType.IntType }, // Added optimalMoves argument
                 navArgument("userAccuracy") { type = NavType.IntType }  // Added userAccuracy argument
-            )
+            ),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            }
         ) { backStackEntry ->
             val playerMoves = backStackEntry.arguments?.getInt("playerMoves") ?: 0
             val elapsedTime = backStackEntry.arguments?.getLong("elapsedTime") ?: 0L
@@ -130,7 +177,6 @@ fun AppNavHost(
                 viewModel = rewardsViewModel
             )
         }
-
     }
 }
 

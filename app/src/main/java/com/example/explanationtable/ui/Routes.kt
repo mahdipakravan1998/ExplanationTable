@@ -28,8 +28,6 @@ object Routes {
     // Gameplay Page Routes
     // -------------------------------------------------------------------------
 
-    // Static route for the gameplay page.
-    const val GAMEPLAY = "gameplay"
     // Parameterized route for the gameplay page that accepts both 'stageNumber' and 'difficulty' arguments.
     const val GAMEPLAY_WITH_ARGS = "gameplay/{stageNumber}/{difficulty}"
 

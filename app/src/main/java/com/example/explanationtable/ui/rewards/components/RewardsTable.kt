@@ -47,8 +47,8 @@ import com.example.explanationtable.ui.theme.NeutralColorDark
 import com.example.explanationtable.ui.theme.ShabnamFontFamily
 import com.example.explanationtable.ui.theme.SpecialFillGlowColor
 import com.example.explanationtable.ui.theme.TitleTextColorDark
-import com.example.explanationtable.ui.theme.specialFillColor
-import com.example.explanationtable.ui.theme.strokeColor
+import com.example.explanationtable.ui.theme.SpecialFillColor
+import com.example.explanationtable.ui.theme.StrokeColor
 import kotlin.math.roundToInt
 
 // Data class holding layout parameters for the progress bar.
@@ -229,7 +229,7 @@ fun ProgressBarComponent(
                     .fillMaxWidth(progress)
                     .fillMaxHeight()
                     .background(
-                        color = strokeColor,
+                        color = StrokeColor,
                         shape = progressBarShape
                     )
             ) {
@@ -281,12 +281,12 @@ fun ProgressBarComponent(
                 drawContext.canvas.save()
                 drawContext.canvas.clipRect(filledLeftPx, 0f, size.width, size.height)
                 // Draw stroke
-                paint.color = strokeColor.toArgb()
+                paint.color = StrokeColor.toArgb()
                 paint.style = Paint.Style.STROKE
                 paint.strokeWidth = strokeWidth
                 drawContext.canvas.nativeCanvas.drawText(scoreString, x, y, paint)
                 // Draw fill on top of the stroke
-                paint.color = specialFillColor.toArgb()
+                paint.color = SpecialFillColor.toArgb()
                 paint.style = Paint.Style.FILL
                 drawContext.canvas.nativeCanvas.drawText(scoreString, x, y, paint)
                 drawContext.canvas.restore()
