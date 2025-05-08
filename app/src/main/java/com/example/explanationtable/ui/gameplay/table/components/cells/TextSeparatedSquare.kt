@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.explanationtable.ui.gameplay.table.components.cells.utils.AutoResizingText
+import com.example.explanationtable.ui.gameplay.table.components.utils.AutoResizingText
 import com.example.explanationtable.ui.theme.Bee
 import com.example.explanationtable.ui.theme.DarkBrown
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily

@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.gameplay.table.components.cells.directions
+package com.example.explanationtable.ui.gameplay.table.components.directions
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size

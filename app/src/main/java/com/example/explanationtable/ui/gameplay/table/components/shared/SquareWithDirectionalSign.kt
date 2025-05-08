@@ -30,10 +30,10 @@ import androidx.compose.ui.unit.dp
 import com.example.explanationtable.ui.gameplay.table.CellPosition
 import com.example.explanationtable.ui.gameplay.table.components.cells.BrightGreenSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.StackedSquare3D
-import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign0_1
-import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign1_0
-import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign1_2
-import com.example.explanationtable.ui.gameplay.table.components.cells.directions.DirectionalSign3_2
+import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign0_1
+import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign1_0
+import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign1_2
+import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign3_2
 import kotlinx.coroutines.delay
 
 /**

@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.gameplay.table.components.cells.utils
+package com.example.explanationtable.ui.gameplay.table.components.utils
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.Text

@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.easy.EasyLevelTable
-import com.example.explanationtable.ui.gameplay.table.components.layout.EasyThreeByFiveTable
-import com.example.explanationtable.ui.gameplay.table.components.layout.HardTablePlaceholder
-import com.example.explanationtable.ui.gameplay.table.components.layout.MediumTablePlaceholder
+import com.example.explanationtable.ui.gameplay.table.layout.EasyThreeByFiveTable
+import com.example.explanationtable.ui.gameplay.table.layout.HardTablePlaceholder
+import com.example.explanationtable.ui.gameplay.table.layout.MediumTablePlaceholder
 
 /**
  * Data class representing the position of a cell in the table.

@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.gameplay.table.components.layout
+package com.example.explanationtable.ui.gameplay.table.layout
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
