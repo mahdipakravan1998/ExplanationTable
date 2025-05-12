@@ -4,7 +4,7 @@ import android.content.Context
 import com.example.explanationtable.data.getHintOptions as fetchHintOptions
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.easy.EasyLevelTable
-import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.ui.hint.logic.revealRandomCategory as logicRevealRandomCategory
 import com.example.explanationtable.ui.hint.logic.revealRandomCell as logicRevealRandomCell
 

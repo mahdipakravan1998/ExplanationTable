@@ -8,7 +8,7 @@ import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.repository.HintRepository
-import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.model.CellPosition
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 

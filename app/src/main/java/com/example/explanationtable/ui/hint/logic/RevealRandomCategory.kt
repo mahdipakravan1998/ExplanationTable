@@ -1,7 +1,7 @@
 package com.example.explanationtable.ui.hint.logic
 
 import com.example.explanationtable.model.easy.EasyLevelTable
-import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.model.CellPosition
 
 /**
  * Reveals a random category of cells by swapping items until the category is solved.

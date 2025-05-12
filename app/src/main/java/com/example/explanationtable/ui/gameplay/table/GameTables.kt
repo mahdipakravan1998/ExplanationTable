@@ -2,19 +2,12 @@ package com.example.explanationtable.ui.gameplay.table
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.gameplay.table.layout.EasyThreeByFiveTable
 import com.example.explanationtable.ui.gameplay.table.layout.HardTablePlaceholder
 import com.example.explanationtable.ui.gameplay.table.layout.MediumTablePlaceholder
-
-/**
- * Data class representing the position of a cell in the table.
- *
- * @property row Zero-based row index of the cell.
- * @property col Zero-based column index of the cell.
- */
-data class CellPosition(val row: Int, val col: Int)
 
 /**
  * Composable function that renders the game table layout based on the selected difficulty.

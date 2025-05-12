@@ -1,7 +1,7 @@
 package com.example.explanationtable.ui.gameplay.table.utils
 
 import com.example.explanationtable.model.easy.EasyLevelTable
-import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.model.CellPosition
 import kotlin.random.Random
 
 /**

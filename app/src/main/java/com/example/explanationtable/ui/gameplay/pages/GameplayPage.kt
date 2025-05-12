@@ -21,7 +21,7 @@ import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.gameplay.components.PrizeBox
 import com.example.explanationtable.ui.gameplay.review.StageReviewTable
-import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.ui.gameplay.table.GameTable
 import com.example.explanationtable.ui.hint.dialog.HintDialogHandler
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel

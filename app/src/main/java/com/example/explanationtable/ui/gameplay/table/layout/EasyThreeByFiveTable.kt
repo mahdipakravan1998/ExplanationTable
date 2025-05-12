@@ -6,27 +6,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.data.easy.easyLevelTables
+import com.example.explanationtable.domain.usecase.calculateFallbackAccuracy
+import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
-import com.example.explanationtable.ui.gameplay.table.CellPosition
 import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
 import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWithDirectionalSign
+import com.example.explanationtable.ui.gameplay.table.utils.ResetSelection
 import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
 import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
+import com.example.explanationtable.ui.gameplay.table.utils.handleCellClick
 import com.example.explanationtable.ui.gameplay.table.utils.solveWithAStar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-// Fallback accuracy function: calculates a score (0-10) based on the ratio of incorrect to correct moves.
-fun calculateFallbackAccuracy(correctMoves: Int, incorrectMoves: Int): Int {
-    if (correctMoves == 0) return 0 // Avoid division by zero.
-    val ratio = incorrectMoves.toFloat() / correctMoves.toFloat()
-    val score = (10f / (1 + ratio)).toInt()
-    return score.coerceIn(0, 10)
-}
 
 /**
  * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
@@ -86,19 +81,22 @@ fun EasyThreeByFiveTable(
     // --- State Tracking ---
     val correctlyPlacedCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
     val transitioningCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
-    var firstSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
-    var secondSelectedCell by remember { mutableStateOf<CellPosition?>(null) }
-    var isSelectionComplete by remember { mutableStateOf(false) }
+    val firstSelectedCellState = remember { mutableStateOf<CellPosition?>(null) }
+    var firstSelectedCell by firstSelectedCellState
+    val secondSelectedCellState = remember { mutableStateOf<CellPosition?>(null) }
+    var secondSelectedCell by secondSelectedCellState
+    val isSelectionCompleteState = remember { mutableStateOf(false) }
+    var isSelectionComplete by isSelectionCompleteState
     var isGameOver by remember { mutableStateOf(false) }
 
-    // Track player moves
-    var playerMoves by remember { mutableStateOf(0) }
+    val playerMovesState = remember { mutableStateOf(0) }
+    var playerMoves by playerMovesState
 
-    // Track move performance for fallback accuracy calculation.
-    var correctMoveCount by remember { mutableStateOf(0) }
-    var incorrectMoveCount by remember { mutableStateOf(0) }
+    val correctMoveCountState = remember { mutableStateOf(0) }
+    var correctMoveCount by correctMoveCountState
+    val incorrectMoveCountState = remember { mutableStateOf(0) }
+    var incorrectMoveCount by incorrectMoveCountState
 
-    // Track optimal moves computed by A*
     var minMovesForThisScramble by remember { mutableStateOf<Int?>(null) }
 
     // Function to handle external notification of correctly placed cells
@@ -145,65 +143,6 @@ fun EasyThreeByFiveTable(
             solveWithAStar(shuffledMovableData, movableData)
         }
         minMovesForThisScramble = result
-    }
-
-    // --- Cell Click Handling ---
-    fun handleCellClick(position: CellPosition) {
-        // If the previously selected cell was removed (resolved by hint), reset selection
-        if (firstSelectedCell != null && !currentTableData.containsKey(firstSelectedCell!!)) {
-            firstSelectedCell = null
-            secondSelectedCell = null
-            isSelectionComplete = false
-        }
-
-        if (firstSelectedCell == null) {
-            firstSelectedCell = position
-        } else if (secondSelectedCell == null && position != firstSelectedCell) {
-            secondSelectedCell = position
-            isSelectionComplete = true
-
-            // Swap the data between the two selected cells.
-            val first = firstSelectedCell
-            val second = secondSelectedCell
-            if (first != null && second != null) {
-                val temp = currentTableData[first]
-                currentTableData[first] = currentTableData[second] ?: listOf("?")
-                currentTableData[second] = temp ?: listOf("?")
-            }
-
-            // Increment player move count.
-            playerMoves++
-
-            // Check for any movable cell that now has correct data and count them.
-            var newlyCorrectCount = 0
-            movablePositions.forEach { pos ->
-                val originalData = originalTableData.rows[pos.row]?.get(pos.col)
-                if (currentTableData[pos] == originalData) {
-                    transitioningCells[pos] = currentTableData[pos]!!
-                    currentTableData.remove(pos)
-                    newlyCorrectCount++
-                }
-            }
-
-            // Update move tracking based on newly correct cells.
-            if (newlyCorrectCount > 0) {
-                correctMoveCount++
-            } else {
-                incorrectMoveCount++
-            }
-        }
-    }
-
-    @Composable
-    fun resetSelection() {
-        if (isSelectionComplete) {
-            LaunchedEffect(Unit) {
-                delay(200)
-                firstSelectedCell = null
-                secondSelectedCell = null
-                isSelectionComplete = false
-            }
-        }
     }
 
     LaunchedEffect(transitioningCells.keys.toList()) {
@@ -298,7 +237,21 @@ fun EasyThreeByFiveTable(
                                 position = currentPosition,
                                 shuffledTableData = currentTableData,
                                 isSelected = isSelected,
-                                handleSquareClick = { handleCellClick(currentPosition) },
+                                handleSquareClick = {
+                                    handleCellClick(
+                                        currentPosition,
+                                        currentTableData,
+                                        firstSelectedCellState,
+                                        secondSelectedCellState,
+                                        isSelectionCompleteState,
+                                        playerMovesState,
+                                        originalTableData,
+                                        movablePositions,
+                                        transitioningCells,
+                                        correctMoveCountState,
+                                        incorrectMoveCountState
+                                    )
+                                },
                                 squareSize = cellSize,
                                 signSize = signSize,
                                 clickable = true
@@ -310,7 +263,12 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    if (isSelectionComplete) {
-        resetSelection()
-    }
+    ResetSelection(
+        isSelectionComplete = isSelectionComplete,
+        onReset = {
+            firstSelectedCell = null
+            secondSelectedCell = null
+            isSelectionComplete = false
+        }
+    )
 }

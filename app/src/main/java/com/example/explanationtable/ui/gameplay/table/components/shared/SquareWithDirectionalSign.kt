@@ -27,7 +27,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.explanationtable.ui.gameplay.table.CellPosition
+import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.ui.gameplay.table.components.cells.BrightGreenSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.StackedSquare3D
 import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign0_1
