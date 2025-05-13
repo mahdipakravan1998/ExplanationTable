@@ -12,7 +12,6 @@ import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
 import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWithDirectionalSign
-import com.example.explanationtable.ui.gameplay.table.utils.ResetSelection
 import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
 import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
@@ -22,6 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.util.Log
+import com.example.explanationtable.ui.gameplay.table.utils.TableDebugger
 
 /**
  * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
@@ -99,6 +100,9 @@ fun EasyThreeByFiveTable(
 
     var minMovesForThisScramble by remember { mutableStateOf<Int?>(null) }
 
+    val coroutineScope = rememberCoroutineScope() // Get a coroutine scope
+    val isProcessingSwap = remember { mutableStateOf(false) }
+
     // Function to handle external notification of correctly placed cells
     val handleExternallyCorrectCells: (List<CellPosition>) -> Unit = { correctPositions ->
         if (correctPositions.isNotEmpty()) {
@@ -170,6 +174,23 @@ fun EasyThreeByFiveTable(
         }
     }
 
+    // initialise debugger helper (optional)
+    LaunchedEffect(Unit) {
+        Log.d("TableDebug", "▶ EasyThreeByFiveTable mounted, states initialized")
+        TableDebugger.init(
+            currentTableData,
+            firstSelectedCellState,
+            secondSelectedCellState,
+            isSelectionCompleteState,
+            playerMovesState,
+            correctMoveCountState,
+            incorrectMoveCountState,
+            originalTableData,
+            movablePositions,
+            transitioningCells
+        )
+    }
+
     // --- UI Rendering ---
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -238,19 +259,33 @@ fun EasyThreeByFiveTable(
                                 shuffledTableData = currentTableData,
                                 isSelected = isSelected,
                                 handleSquareClick = {
-                                    handleCellClick(
-                                        currentPosition,
-                                        currentTableData,
-                                        firstSelectedCellState,
-                                        secondSelectedCellState,
-                                        isSelectionCompleteState,
-                                        playerMovesState,
-                                        originalTableData,
-                                        movablePositions,
-                                        transitioningCells,
-                                        correctMoveCountState,
-                                        incorrectMoveCountState
-                                    )
+                                    if (!isProcessingSwap.value) { // Check if not already processing
+                                        Log.d("TableDebug", "▶ Square clicked @ $currentPosition")
+                                        handleCellClick(
+                                            position = currentPosition,
+                                            currentTableData = currentTableData,
+                                            firstSelectedCellState = firstSelectedCellState,
+                                            secondSelectedCellState = secondSelectedCellState,
+                                            isSelectionCompleteState = isSelectionCompleteState,
+                                            playerMovesState = playerMovesState,
+                                            originalTableData = originalTableData,
+                                            movablePositions = movablePositions,
+                                            transitioningCells = transitioningCells,
+                                            correctMoveCountState = correctMoveCountState,
+                                            incorrectMoveCountState = incorrectMoveCountState,
+                                            coroutineScope = coroutineScope,
+                                            onResetSelection = {
+                                                firstSelectedCellState.value = null
+                                                secondSelectedCellState.value = null
+                                                isSelectionCompleteState.value = false
+                                                isProcessingSwap.value = false // Unlock after reset is complete
+                                                Log.d("TableDebug", "Selection reset. isProcessingSwap set to false.")
+                                            },
+                                            isProcessingSwap = isProcessingSwap // Pass the new state
+                                        )
+                                    } else {
+                                        Log.d("TableDebug", "Ignoring click, swap in progress for cell @ $currentPosition")
+                                    }
                                 },
                                 squareSize = cellSize,
                                 signSize = signSize,
@@ -262,13 +297,4 @@ fun EasyThreeByFiveTable(
             }
         }
     }
-
-    ResetSelection(
-        isSelectionComplete = isSelectionComplete,
-        onReset = {
-            firstSelectedCell = null
-            secondSelectedCell = null
-            isSelectionComplete = false
-        }
-    )
 }
