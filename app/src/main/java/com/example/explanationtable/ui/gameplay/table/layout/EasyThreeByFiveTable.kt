@@ -6,22 +6,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.data.easy.easyLevelTables
-import com.example.explanationtable.domain.usecase.calculateFallbackAccuracy
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
 import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWithDirectionalSign
+import com.example.explanationtable.ui.gameplay.table.effects.CellsCorrectlyPlacedEffect
+import com.example.explanationtable.ui.gameplay.table.effects.MinMoveSolverEffect
+import com.example.explanationtable.ui.gameplay.table.effects.GameOverEffect
+import com.example.explanationtable.ui.gameplay.table.effects.TableDataInitializedEffect
+import com.example.explanationtable.ui.gameplay.table.effects.TransitioningCellsEffect
 import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
 import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
 import com.example.explanationtable.ui.gameplay.table.utils.handleCellClick
-import com.example.explanationtable.ui.gameplay.table.utils.handleExternallyCorrectCells
-import com.example.explanationtable.ui.gameplay.table.utils.solveWithAStar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
@@ -101,57 +99,44 @@ fun EasyThreeByFiveTable(
     val coroutineScope = rememberCoroutineScope() // Get a coroutine scope
     val isProcessingSwap = remember { mutableStateOf(false) }
 
-    // Register the callback
-    LaunchedEffect(Unit) {
-        registerCellsCorrectlyPlacedCallback { correctPositions ->
-            handleExternallyCorrectCells(
-                correctPositions,
-                firstSelectedCellState,
-                secondSelectedCellState,
-                isSelectionCompleteState,
-                currentTableData,
-                transitioningCells,
-                correctMoveCountState,
-            )
-        }
-    }
+    CellsCorrectlyPlacedEffect(
+        registerCellsCorrectlyPlacedCallback,
+        firstSelectedCellState,
+        secondSelectedCellState,
+        isSelectionCompleteState,
+        currentTableData,
+        transitioningCells,
+        correctMoveCountState
+    )
 
-    // Pass the created state to the parent
-    LaunchedEffect(Unit) {
-        onTableDataInitialized(originalTableData, currentTableData)
-    }
+    TableDataInitializedEffect(
+        originalTableData,
+        currentTableData,
+        onTableDataInitialized
+    )
 
-    LaunchedEffect(shuffledMovableData, movableData) {
-        val result = withContext(Dispatchers.Default) {
-            solveWithAStar(shuffledMovableData, movableData)
-        }
-        minMovesForThisScramble = result
-    }
+    MinMoveSolverEffect(
+        shuffledMovableData,
+        movableData
+    ) { result -> minMovesForThisScramble = result }
 
-    LaunchedEffect(transitioningCells.keys.toList()) {
-        transitioningCells.keys.toList().forEach { pos ->
-            val data = transitioningCells[pos] ?: return@forEach
-            launch {
-                delay(50)
-                correctlyPlacedCells[pos] = data
-                transitioningCells.remove(pos)
-            }
-        }
-    }
+    TransitioningCellsEffect(
+        transitioningCells,
+        correctlyPlacedCells
+    )
 
-    LaunchedEffect(correctlyPlacedCells.size) {
-        if (!isGameOver && correctlyPlacedCells.size == movablePositions.size) {
-            isGameOver = true
-            val gameEndTime = System.currentTimeMillis()
-            val elapsedTime = gameEndTime - gameStartTime
-
-            // Retrieve the optimal moves computed by A* (if available).
-            val optimalMoves = minMovesForThisScramble ?: 0
-            // Calculate user accuracy using the fallback function.
-            val fallbackAccuracy = calculateFallbackAccuracy(correctMoveCount, incorrectMoveCount)
-            onGameComplete(optimalMoves, fallbackAccuracy, playerMoves, elapsedTime)
-        }
-    }
+    GameOverEffect(
+        correctlyPlacedCells.size,
+        movablePositions.size,
+        isGameOver,
+        { isGameOver = it },
+        gameStartTime,
+        { minMovesForThisScramble },
+        correctMoveCount,
+        incorrectMoveCount,
+        playerMoves,
+        onGameComplete
+    )
 
     // --- UI Rendering ---
     Column(
