@@ -16,6 +16,7 @@ import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
 import com.example.explanationtable.ui.gameplay.table.utils.derangeList
 import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
 import com.example.explanationtable.ui.gameplay.table.utils.handleCellClick
+import com.example.explanationtable.ui.gameplay.table.utils.handleExternallyCorrectCells
 import com.example.explanationtable.ui.gameplay.table.utils.solveWithAStar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -85,7 +86,6 @@ fun EasyThreeByFiveTable(
     val secondSelectedCellState = remember { mutableStateOf<CellPosition?>(null) }
     var secondSelectedCell by secondSelectedCellState
     val isSelectionCompleteState = remember { mutableStateOf(false) }
-    var isSelectionComplete by isSelectionCompleteState
     var isGameOver by remember { mutableStateOf(false) }
 
     val playerMovesState = remember { mutableStateOf(0) }
@@ -101,38 +101,19 @@ fun EasyThreeByFiveTable(
     val coroutineScope = rememberCoroutineScope() // Get a coroutine scope
     val isProcessingSwap = remember { mutableStateOf(false) }
 
-    // Function to handle external notification of correctly placed cells
-    val handleExternallyCorrectCells: (List<CellPosition>) -> Unit = { correctPositions ->
-        if (correctPositions.isNotEmpty()) {
-            // Clear any selections that refer to cells now resolved by help
-            if (firstSelectedCell in correctPositions) {
-                firstSelectedCell = null
-                secondSelectedCell = null
-                isSelectionComplete = false
-            }
-
-            // Process each correctly placed cell
-            correctPositions.forEach { pos ->
-                // Only process if the cell is still in the current table (not already marked as correct)
-                if (currentTableData.containsKey(pos)) {
-                    // Get the data for this position
-                    val cellData = currentTableData[pos]
-                    if (cellData != null) {
-                        // Mark as transitioning first (for animation)
-                        transitioningCells[pos] = cellData
-                        // Remove from current table data since it's now correctly placed
-                        currentTableData.remove(pos)
-                    }
-                }
-            }
-            // Increment correct move count
-            correctMoveCount++
-        }
-    }
-
     // Register the callback
     LaunchedEffect(Unit) {
-        registerCellsCorrectlyPlacedCallback(handleExternallyCorrectCells)
+        registerCellsCorrectlyPlacedCallback { correctPositions ->
+            handleExternallyCorrectCells(
+                correctPositions,
+                firstSelectedCellState,
+                secondSelectedCellState,
+                isSelectionCompleteState,
+                currentTableData,
+                transitioningCells,
+                correctMoveCountState,
+            )
+        }
     }
 
     // Pass the created state to the parent
@@ -180,7 +161,9 @@ fun EasyThreeByFiveTable(
     ) {
         for (rowIndex in 0 until 5) {
             Row(
-                modifier = Modifier.wrapContentWidth().wrapContentHeight(),
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .wrapContentHeight(),
                 horizontalArrangement = Arrangement.spacedBy(spacing)
             ) {
                 for (colIndex in 0 until 3) {
@@ -191,7 +174,10 @@ fun EasyThreeByFiveTable(
                                 CellPosition(0, 0), CellPosition(4, 2) -> {
                                     val text = originalTableData.rows[rowIndex]?.get(colIndex)
                                         ?.joinToString(", ") ?: "?"
-                                    ColoredSquare(text = text, modifier = Modifier.size(cellSize))
+                                    ColoredSquare(
+                                        text = text,
+                                        modifier = Modifier.size(cellSize)
+                                    )
                                 }
                                 CellPosition(0, 2) -> {
                                     val cellData = originalTableData.rows[rowIndex]?.get(colIndex)
@@ -233,7 +219,8 @@ fun EasyThreeByFiveTable(
                             )
                         }
                         else -> {
-                            val isSelected = currentPosition == firstSelectedCell || currentPosition == secondSelectedCell
+                            val isSelected =
+                                currentPosition == firstSelectedCell || currentPosition == secondSelectedCell
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
                                 position = currentPosition,
