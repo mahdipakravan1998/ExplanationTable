@@ -21,8 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.util.Log
-import com.example.explanationtable.ui.gameplay.table.utils.TableDebugger
 
 /**
  * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
@@ -174,23 +172,6 @@ fun EasyThreeByFiveTable(
         }
     }
 
-    // initialise debugger helper (optional)
-    LaunchedEffect(Unit) {
-        Log.d("TableDebug", "▶ EasyThreeByFiveTable mounted, states initialized")
-        TableDebugger.init(
-            currentTableData,
-            firstSelectedCellState,
-            secondSelectedCellState,
-            isSelectionCompleteState,
-            playerMovesState,
-            correctMoveCountState,
-            incorrectMoveCountState,
-            originalTableData,
-            movablePositions,
-            transitioningCells
-        )
-    }
-
     // --- UI Rendering ---
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -259,8 +240,7 @@ fun EasyThreeByFiveTable(
                                 shuffledTableData = currentTableData,
                                 isSelected = isSelected,
                                 handleSquareClick = {
-                                    if (!isProcessingSwap.value) { // Check if not already processing
-                                        Log.d("TableDebug", "▶ Square clicked @ $currentPosition")
+                                    if (!isProcessingSwap.value) {
                                         handleCellClick(
                                             position = currentPosition,
                                             currentTableData = currentTableData,
@@ -278,13 +258,10 @@ fun EasyThreeByFiveTable(
                                                 firstSelectedCellState.value = null
                                                 secondSelectedCellState.value = null
                                                 isSelectionCompleteState.value = false
-                                                isProcessingSwap.value = false // Unlock after reset is complete
-                                                Log.d("TableDebug", "Selection reset. isProcessingSwap set to false.")
+                                                isProcessingSwap.value = false
                                             },
-                                            isProcessingSwap = isProcessingSwap // Pass the new state
+                                            isProcessingSwap = isProcessingSwap
                                         )
-                                    } else {
-                                        Log.d("TableDebug", "Ignoring click, swap in progress for cell @ $currentPosition")
                                     }
                                 },
                                 squareSize = cellSize,
