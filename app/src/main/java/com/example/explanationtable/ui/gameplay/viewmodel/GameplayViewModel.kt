@@ -1,6 +1,8 @@
 package com.example.explanationtable.ui.gameplay.viewmodel
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -8,86 +10,97 @@ import androidx.lifecycle.viewModelScope
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.repository.GameplayRepository
-import com.example.explanationtable.ui.gameplay.table.utils.handleExternallyCorrectCells
 import com.example.explanationtable.ui.gameplay.table.utils.handleCellClick
+import com.example.explanationtable.ui.gameplay.table.utils.handleExternallyCorrectCells
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel managing a single puzzle stage:
+ * - Initializes and shuffles the table
+ * - Tracks user selections, swaps, and correctness
+ * - Computes optimal moves in background
+ * - Notifies completion when done
+ */
 class GameplayViewModel(
     private val repository: GameplayRepository,
     stageNumber: Int,
-    private val onGameComplete: (Int, Int, Int, Long) -> Unit,
+    private val onGameComplete: (optimalMoves: Int, accuracy: Int, moves: Int, elapsedMs: Long) -> Unit,
     onTableDataInitialized: (EasyLevelTable, MutableMap<CellPosition, List<String>>) -> Unit,
-    registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit
+    registerCorrectPlacementCallback: ((List<CellPosition>) -> Unit) -> Unit
 ) : ViewModel() {
-    // --- Layout constants exposed to UI ---
+
+    // --- UI layout constants ---
     val cellSize = 80.dp
     val spacing = 12.dp
     val signSize = 16.dp
 
-    // --- Immutable setup ---
+    // --- Immutable game setup ---
     private val gameStartTime = System.currentTimeMillis()
     val fixedPositions = setOf(
         CellPosition(0, 0),
         CellPosition(0, 2),
         CellPosition(4, 2)
     )
-    val originalTableData: EasyLevelTable
+    val originalTableData: EasyLevelTable = repository.getOriginalTable(stageNumber)
     private val movablePositions: List<CellPosition>
 
-    // --- UI state maps & counters ---
+    // --- UI-observable state ---
     val currentTableData = mutableStateMapOf<CellPosition, List<String>>()
     val correctlyPlacedCells = mutableStateMapOf<CellPosition, List<String>>()
     val transitioningCells = mutableStateMapOf<CellPosition, List<String>>()
-    val firstSelectedCellState = mutableStateOf<CellPosition?>(null)
-    val secondSelectedCellState = mutableStateOf<CellPosition?>(null)
-    val isSelectionCompleteState = mutableStateOf(false)
-    val isGameOverState = mutableStateOf(false)
-    val playerMovesState = mutableStateOf(0)
-    val correctMoveCountState = mutableStateOf(0)
-    val incorrectMoveCountState = mutableStateOf(0)
-    private var minMovesForThisScramble: Int? = null
-    val isProcessingSwapState = mutableStateOf(false)
+
+    val firstSelectedCell = mutableStateOf<CellPosition?>(null)
+    val secondSelectedCell = mutableStateOf<CellPosition?>(null)
+    val isSelectionComplete = mutableStateOf(false)
+    val isProcessingSwap = mutableStateOf(false)
+    val isGameOver = mutableStateOf(false)
+
+    val playerMoves = mutableStateOf(0)
+    val correctMoves = mutableStateOf(0)
+    val incorrectMoves = mutableStateOf(0)
+
+    // Computed off-screen: the fewest moves to solve this scramble
+    private var optimalMovesForScramble: Int? = null
 
     init {
-        // 1) Initialize original + shuffled table
-        originalTableData = repository.getOriginalTable(stageNumber)
+        // 1) Build and shuffle the play grid
         val rawMovable = repository.getMovableData(originalTableData, fixedPositions)
         movablePositions = rawMovable.map { it.first }
-        val movableData = rawMovable.map { it.second }
-        val shuffled = repository.derangeList(movableData)
+        val movableValues = rawMovable.map { it.second }
+
+        // Create a deranged shuffle so no piece stays in place
+        val shuffledValues = repository.derangeList(movableValues)
         currentTableData.putAll(
-            repository.createShuffledTable(shuffled, movablePositions, emptyMap())
+            repository.createShuffledTable(shuffledValues, movablePositions, emptyMap())
         )
 
-        // 2) Register “externally placed” callback
-        registerCellsCorrectlyPlacedCallback { correctList ->
+        // 2) Inform UI that initial table is ready
+        onTableDataInitialized(originalTableData, currentTableData)
+
+        // 3) Listen for externally-reported correct placements
+        registerCorrectPlacementCallback { newlyCorrect ->
             handleExternallyCorrectCells(
-                correctList,
-                firstSelectedCellState,
-                secondSelectedCellState,
-                isSelectionCompleteState,
+                newlyCorrect,
+                firstSelectedCell,
+                secondSelectedCell,
+                isSelectionComplete,
                 currentTableData,
                 transitioningCells,
-                correctMoveCountState
+                correctMoves
             )
         }
 
-        // 3) Fire table-initialized
-        onTableDataInitialized(originalTableData, currentTableData)
-
-        // 4) Compute min-moves off main thread
+        // 4) Compute optimal solution length in background
         viewModelScope.launch {
-            minMovesForThisScramble =
-                repository.solveMinMoves(shuffled, movableData)
+            optimalMovesForScramble = repository.solveMinMoves(shuffledValues, movableValues)
         }
 
-        // 5) Transitioning → correctlyPlaced after 50ms
-        // continuously process any new transitioning cells
+        // 5) Move cells from transitioning → correctlyPlaced after a brief delay
         viewModelScope.launch {
             snapshotFlow { transitioningCells.keys.toList() }
-                .collect { keys ->
-                    keys.forEach { pos ->
+                .collect { positions ->
+                    positions.forEach { pos ->
                         val data = transitioningCells[pos] ?: return@forEach
                         delay(50)
                         correctlyPlacedCells[pos] = data
@@ -96,53 +109,56 @@ class GameplayViewModel(
                 }
         }
 
-        // 6) Watch for game-over
+        // 6) Detect game completion when all movable cells are placed
         viewModelScope.launch {
             snapshotFlow { correctlyPlacedCells.size }
                 .collect { placedCount ->
-                    if (!isGameOverState.value && placedCount == movablePositions.size) {
-                        isGameOverState.value = true
+                    if (!isGameOver.value && placedCount == movablePositions.size) {
+                        isGameOver.value = true
                         val elapsed = System.currentTimeMillis() - gameStartTime
-                        val optimal = minMovesForThisScramble ?: 0
+                        val optimal = optimalMovesForScramble ?: 0
                         val accuracy = repository.calculateAccuracy(
-                            correctMoveCountState.value,
-                            incorrectMoveCountState.value
+                            correctMoves.value,
+                            incorrectMoves.value
                         )
 
-                        onGameComplete(optimal, accuracy, playerMovesState.value, elapsed)
+                        onGameComplete(optimal, accuracy, playerMoves.value, elapsed)
                     }
                 }
         }
     }
 
-    /** Called from UI when a square is tapped. */
+    /**
+     * Called by the UI when the user taps a cell.
+     * Delegates selection/swap logic to helper util.
+     */
     fun onCellClicked(position: CellPosition) {
-        if (!isProcessingSwapState.value) {
-            handleCellClick(
-                position,
-                currentTableData,
-                firstSelectedCellState,
-                secondSelectedCellState,
-                isSelectionCompleteState,
-                playerMovesState,
-                originalTableData,
-                movablePositions,
-                transitioningCells,
-                correctMoveCountState,
-                incorrectMoveCountState,
-                viewModelScope,
-                onResetSelection = {
-                    firstSelectedCellState.value = null
-                    secondSelectedCellState.value = null
-                    isSelectionCompleteState.value = false
-                    isProcessingSwapState.value = false
-                },
-                isProcessingSwap = isProcessingSwapState
-            )
-        }
+        if (isProcessingSwap.value) return
+
+        handleCellClick(
+            position,
+            currentTableData,
+            firstSelectedCell,
+            secondSelectedCell,
+            isSelectionComplete,
+            playerMoves,
+            originalTableData,
+            movablePositions,
+            transitioningCells,
+            correctMoves,
+            incorrectMoves,
+            viewModelScope,
+            onResetSelection = {
+                firstSelectedCell.value = null
+                secondSelectedCell.value = null
+                isSelectionComplete.value = false
+                isProcessingSwap.value = false
+            },
+            isProcessingSwap = isProcessingSwap
+        )
     }
 
-    /** Factory to inject Repository & callbacks. */
+    /** Factory for dependency-injecting the repository and callbacks. */
     class Factory(
         private val repository: GameplayRepository,
         private val stageNumber: Int,
@@ -151,13 +167,14 @@ class GameplayViewModel(
         private val registerCallback: ((List<CellPosition>) -> Unit) -> Unit
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            GameplayViewModel(
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return GameplayViewModel(
                 repository,
                 stageNumber,
                 onGameComplete,
                 onTableDataInitialized,
                 registerCallback
             ) as T
+        }
     }
 }

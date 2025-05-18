@@ -1,9 +1,10 @@
 package com.example.explanationtable.ui.gameplay.table.layout
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
@@ -13,20 +14,18 @@ import com.example.explanationtable.ui.gameplay.table.components.cells.TextSepar
 import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWithDirectionalSign
 import com.example.explanationtable.ui.gameplay.viewmodel.GameplayViewModel
 
+private const val ROW_COUNT = 5      // Number of rows in the easy level
+private const val COLUMN_COUNT = 3   // Number of columns in the easy level
+
 /**
- * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
+ * Renders a 3×5 "easy" gameplay table with shuffled, fixed, and transitionable cells.
  *
- * @param isDarkTheme Flag indicating if dark theme is active.
- * @param stageNumber Stage number to select the corresponding table data.
- * @param modifier Modifier for customizing the layout.
- * @param onGameComplete Callback invoked when the game is completed.
- *        It now provides four parameters:
- *         - optimalMoves: The minimum number of moves computed by A*.
- *         - userAccuracy: The user's accuracy score (fallback based on move tracking).
- *         - playerMoves: The total number of moves the player made.
- *         - elapsedTime: The elapsed time of the game.
- * @param onTableDataInitialized Callback with initialized table data
- * @param registerCellsCorrectlyPlacedCallback Callback to register the function to handle cells being correctly placed externally
+ * @param isDarkTheme           whether to use dark theme styling
+ * @param stageNumber           selects which stage’s data to load
+ * @param modifier              optional layout modifiers
+ * @param onGameComplete        callback with (optimalMoves, userAccuracy, playerMoves, elapsedTime)
+ * @param onTableDataInitialized callback with (originalTableData, currentTableData)
+ * @param registerCellsCorrectlyPlacedCallback callback receiver for correctly-placed cell events
  */
 @Composable
 fun EasyThreeByFiveTable(
@@ -37,6 +36,7 @@ fun EasyThreeByFiveTable(
     onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
     registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
+    // Obtain or create the GameplayViewModel for this composable
     val viewModel: GameplayViewModel = viewModel(
         factory = GameplayViewModel.Factory(
             repository = GameplayRepository(),
@@ -47,41 +47,60 @@ fun EasyThreeByFiveTable(
         )
     )
 
-    val cellSize = viewModel.cellSize
-    val spacing = viewModel.spacing
-    val signSize = viewModel.signSize
+    // Extract sizing/spacings from ViewModel
+    val cellSize: Dp = viewModel.cellSize
+    val spacing: Dp = viewModel.spacing
+    val signSize: Dp = viewModel.signSize
 
-    // --- UI Rendering ---
+    // Helper to render permanently fixed cells (e.g. corners, text-separated)
+    @Composable
+    fun FixedCell(pos: CellPosition) {
+        // Lookup the original data for this position
+        val data = viewModel.originalTableData.rows[pos.row]?.get(pos.col)
+        when (pos) {
+            // Single-text colored squares
+            CellPosition(0, 0), CellPosition(4, 2) -> {
+                val text = data?.joinToString(", ") ?: "?"
+                ColoredSquare(text = text, modifier = Modifier.size(cellSize))
+            }
+            // Two-text (top/bottom) separated square
+            CellPosition(0, 2) -> {
+                TextSeparatedSquare(
+                    topText = data?.getOrNull(0) ?: "?",
+                    bottomText = data?.getOrNull(1) ?: "?",
+                    modifier = Modifier.size(cellSize)
+                )
+            }
+            else -> {
+                // No-op: this branch should never be reached
+            }
+        }
+    }
+
+    // Main table layout
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing)
     ) {
-        for (row in 0 until 5) {
+        // Iterate rows
+        for (row in 0 until ROW_COUNT) {
             Row(
                 modifier = Modifier.wrapContentSize(),
                 horizontalArrangement = Arrangement.spacedBy(spacing)
             ) {
-                for (col in 0 until 3) {
+                // Iterate columns
+                for (col in 0 until COLUMN_COUNT) {
                     val pos = CellPosition(row, col)
+
+                    // Decide which cell type to render
                     when {
+                        // Permanently fixed positions (corners / special)
                         pos in viewModel.fixedPositions -> {
-                            when (pos) {
-                                CellPosition(0, 0), CellPosition(4, 2) -> {
-                                    val text = viewModel.originalTableData.rows[row]?.get(col)
-                                        ?.joinToString(", ") ?: "?"
-                                    ColoredSquare(text = text, modifier = Modifier.size(cellSize))
-                                }
-                                CellPosition(0, 2) -> {
-                                    val data = viewModel.originalTableData.rows[row]?.get(col)
-                                    TextSeparatedSquare(
-                                        topText = data?.getOrNull(0) ?: "?",
-                                        bottomText = data?.getOrNull(1) ?: "?",
-                                        modifier = Modifier.size(cellSize)
-                                    )
-                                }
-                            }
-                         }
+                            FixedCell(pos)
+                        }
+
+                        // Cells already correctly placed by the player
                         pos in viewModel.correctlyPlacedCells -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -95,6 +114,8 @@ fun EasyThreeByFiveTable(
                                 isCorrect = true
                             )
                         }
+
+                        // Cells currently animating/transitioning
                         pos in viewModel.transitioningCells -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
@@ -109,14 +130,17 @@ fun EasyThreeByFiveTable(
                                 isTransitioning = true
                             )
                         }
+
+                        // All other movable/selectable cells
                         else -> {
-                            val isSel = (pos == viewModel.firstSelectedCellState.value
-                                    || pos == viewModel.secondSelectedCellState.value)
+                            val isSelected = pos == viewModel.firstSelectedCell.value
+                                    || pos == viewModel.secondSelectedCell.value
+
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
                                 position = pos,
                                 shuffledTableData = viewModel.currentTableData,
-                                isSelected = isSel,
+                                isSelected = isSelected,
                                 handleSquareClick = { viewModel.onCellClicked(pos) },
                                 squareSize = cellSize,
                                 signSize = signSize,
