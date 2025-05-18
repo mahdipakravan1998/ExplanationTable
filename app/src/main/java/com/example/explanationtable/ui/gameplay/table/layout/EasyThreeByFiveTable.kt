@@ -4,22 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.example.explanationtable.data.easy.easyLevelTables
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.repository.GameplayRepository
 import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
 import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWithDirectionalSign
-import com.example.explanationtable.ui.gameplay.table.effects.CellsCorrectlyPlacedEffect
-import com.example.explanationtable.ui.gameplay.table.effects.MinMoveSolverEffect
-import com.example.explanationtable.ui.gameplay.table.effects.GameOverEffect
-import com.example.explanationtable.ui.gameplay.table.effects.TableDataInitializedEffect
-import com.example.explanationtable.ui.gameplay.table.effects.TransitioningCellsEffect
-import com.example.explanationtable.ui.gameplay.table.utils.createShuffledTable
-import com.example.explanationtable.ui.gameplay.table.utils.derangeList
-import com.example.explanationtable.ui.gameplay.table.utils.getMovableData
-import com.example.explanationtable.ui.gameplay.table.utils.handleCellClick
+import com.example.explanationtable.ui.gameplay.viewmodel.GameplayViewModel
 
 /**
  * Composable function that renders the easy-level 3x5 table with shuffled movable cells.
@@ -45,98 +37,19 @@ fun EasyThreeByFiveTable(
     onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
     registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
-    // --- Layout Constants ---
-    val cellSize = 80.dp
-    val spacing = 12.dp
-    val signSize = 16.dp
-
-    // Record the start time when the game begins.
-    val gameStartTime = remember { System.currentTimeMillis() }
-
-    // --- Fixed Cell Positions Setup ---
-    val fixedPositions = setOf(
-        CellPosition(0, 0),
-        CellPosition(0, 2),
-        CellPosition(4, 2)
+    val viewModel: GameplayViewModel = viewModel(
+        factory = GameplayViewModel.Factory(
+            repository = GameplayRepository(),
+            stageNumber = stageNumber,
+            onGameComplete = onGameComplete,
+            onTableDataInitialized = onTableDataInitialized,
+            registerCallback = registerCellsCorrectlyPlacedCallback
+        )
     )
 
-    // --- Table Data Initialization ---
-    val originalTableData = remember {
-        easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
-    }
-    val movableDataList = remember {
-        getMovableData(originalTableData, fixedPositions)
-    }
-    val movablePositions = remember { movableDataList.map { it.first } }
-    val movableData = remember { movableDataList.map { it.second } }
-    val shuffledMovableData = remember { derangeList(movableData) }
-    val currentTableData = remember {
-        mutableStateMapOf<CellPosition, List<String>>().apply {
-            putAll(createShuffledTable(shuffledMovableData, movablePositions, emptyMap()))
-        }
-    }
-
-    // --- State Tracking ---
-    val correctlyPlacedCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
-    val transitioningCells = remember { mutableStateMapOf<CellPosition, List<String>>() }
-    val firstSelectedCellState = remember { mutableStateOf<CellPosition?>(null) }
-    var firstSelectedCell by firstSelectedCellState
-    val secondSelectedCellState = remember { mutableStateOf<CellPosition?>(null) }
-    var secondSelectedCell by secondSelectedCellState
-    val isSelectionCompleteState = remember { mutableStateOf(false) }
-    var isGameOver by remember { mutableStateOf(false) }
-
-    val playerMovesState = remember { mutableStateOf(0) }
-    var playerMoves by playerMovesState
-
-    val correctMoveCountState = remember { mutableStateOf(0) }
-    var correctMoveCount by correctMoveCountState
-    val incorrectMoveCountState = remember { mutableStateOf(0) }
-    var incorrectMoveCount by incorrectMoveCountState
-
-    var minMovesForThisScramble by remember { mutableStateOf<Int?>(null) }
-
-    val coroutineScope = rememberCoroutineScope() // Get a coroutine scope
-    val isProcessingSwap = remember { mutableStateOf(false) }
-
-    CellsCorrectlyPlacedEffect(
-        registerCellsCorrectlyPlacedCallback,
-        firstSelectedCellState,
-        secondSelectedCellState,
-        isSelectionCompleteState,
-        currentTableData,
-        transitioningCells,
-        correctMoveCountState
-    )
-
-    TableDataInitializedEffect(
-        originalTableData,
-        currentTableData,
-        onTableDataInitialized
-    )
-
-    MinMoveSolverEffect(
-        shuffledMovableData,
-        movableData
-    ) { result -> minMovesForThisScramble = result }
-
-    TransitioningCellsEffect(
-        transitioningCells,
-        correctlyPlacedCells
-    )
-
-    GameOverEffect(
-        correctlyPlacedCells.size,
-        movablePositions.size,
-        isGameOver,
-        { isGameOver = it },
-        gameStartTime,
-        { minMovesForThisScramble },
-        correctMoveCount,
-        incorrectMoveCount,
-        playerMoves,
-        onGameComplete
-    )
+    val cellSize = viewModel.cellSize
+    val spacing = viewModel.spacing
+    val signSize = viewModel.signSize
 
     // --- UI Rendering ---
     Column(
@@ -144,43 +57,36 @@ fun EasyThreeByFiveTable(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing)
     ) {
-        for (rowIndex in 0 until 5) {
+        for (row in 0 until 5) {
             Row(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .wrapContentHeight(),
+                modifier = Modifier.wrapContentSize(),
                 horizontalArrangement = Arrangement.spacedBy(spacing)
             ) {
-                for (colIndex in 0 until 3) {
-                    val currentPosition = CellPosition(rowIndex, colIndex)
+                for (col in 0 until 3) {
+                    val pos = CellPosition(row, col)
                     when {
-                        currentPosition in fixedPositions -> {
-                            when (currentPosition) {
+                        pos in viewModel.fixedPositions -> {
+                            when (pos) {
                                 CellPosition(0, 0), CellPosition(4, 2) -> {
-                                    val text = originalTableData.rows[rowIndex]?.get(colIndex)
+                                    val text = viewModel.originalTableData.rows[row]?.get(col)
                                         ?.joinToString(", ") ?: "?"
-                                    ColoredSquare(
-                                        text = text,
-                                        modifier = Modifier.size(cellSize)
-                                    )
+                                    ColoredSquare(text = text, modifier = Modifier.size(cellSize))
                                 }
                                 CellPosition(0, 2) -> {
-                                    val cellData = originalTableData.rows[rowIndex]?.get(colIndex)
-                                    val topText = cellData?.getOrNull(0) ?: "?"
-                                    val bottomText = cellData?.getOrNull(1) ?: "?"
+                                    val data = viewModel.originalTableData.rows[row]?.get(col)
                                     TextSeparatedSquare(
-                                        topText = topText,
-                                        bottomText = bottomText,
+                                        topText = data?.getOrNull(0) ?: "?",
+                                        bottomText = data?.getOrNull(1) ?: "?",
                                         modifier = Modifier.size(cellSize)
                                     )
                                 }
                             }
-                        }
-                        currentPosition in correctlyPlacedCells -> {
+                         }
+                        pos in viewModel.correctlyPlacedCells -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
-                                position = currentPosition,
-                                shuffledTableData = correctlyPlacedCells,
+                                position = pos,
+                                shuffledTableData = viewModel.correctlyPlacedCells,
                                 isSelected = false,
                                 handleSquareClick = {},
                                 squareSize = cellSize,
@@ -189,11 +95,11 @@ fun EasyThreeByFiveTable(
                                 isCorrect = true
                             )
                         }
-                        currentPosition in transitioningCells -> {
+                        pos in viewModel.transitioningCells -> {
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
-                                position = currentPosition,
-                                shuffledTableData = transitioningCells,
+                                position = pos,
+                                shuffledTableData = viewModel.transitioningCells,
                                 isSelected = false,
                                 handleSquareClick = {},
                                 squareSize = cellSize,
@@ -204,38 +110,14 @@ fun EasyThreeByFiveTable(
                             )
                         }
                         else -> {
-                            val isSelected =
-                                currentPosition == firstSelectedCell || currentPosition == secondSelectedCell
+                            val isSel = (pos == viewModel.firstSelectedCellState.value
+                                    || pos == viewModel.secondSelectedCellState.value)
                             SquareWithDirectionalSign(
                                 isDarkTheme = isDarkTheme,
-                                position = currentPosition,
-                                shuffledTableData = currentTableData,
-                                isSelected = isSelected,
-                                handleSquareClick = {
-                                    if (!isProcessingSwap.value) {
-                                        handleCellClick(
-                                            position = currentPosition,
-                                            currentTableData = currentTableData,
-                                            firstSelectedCellState = firstSelectedCellState,
-                                            secondSelectedCellState = secondSelectedCellState,
-                                            isSelectionCompleteState = isSelectionCompleteState,
-                                            playerMovesState = playerMovesState,
-                                            originalTableData = originalTableData,
-                                            movablePositions = movablePositions,
-                                            transitioningCells = transitioningCells,
-                                            correctMoveCountState = correctMoveCountState,
-                                            incorrectMoveCountState = incorrectMoveCountState,
-                                            coroutineScope = coroutineScope,
-                                            onResetSelection = {
-                                                firstSelectedCellState.value = null
-                                                secondSelectedCellState.value = null
-                                                isSelectionCompleteState.value = false
-                                                isProcessingSwap.value = false
-                                            },
-                                            isProcessingSwap = isProcessingSwap
-                                        )
-                                    }
-                                },
+                                position = pos,
+                                shuffledTableData = viewModel.currentTableData,
+                                isSelected = isSel,
+                                handleSquareClick = { viewModel.onCellClicked(pos) },
                                 squareSize = cellSize,
                                 signSize = signSize,
                                 clickable = true
