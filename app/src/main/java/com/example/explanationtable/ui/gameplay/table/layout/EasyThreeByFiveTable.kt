@@ -144,7 +144,7 @@ fun EasyThreeByFiveTable(
                                 handleSquareClick = { viewModel.onCellClicked(pos) },
                                 squareSize = cellSize,
                                 signSize = signSize,
-                                clickable = true
+                                clickable = !viewModel.isProcessingSwap.value
                             )
                         }
                     }

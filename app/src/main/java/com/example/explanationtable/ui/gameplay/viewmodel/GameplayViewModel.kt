@@ -130,24 +130,55 @@ class GameplayViewModel(
 
     /**
      * Called by the UI when the user taps a cell.
-     * Delegates selection/swap logic to helper util.
+     * Prevents new taps only once a swap/animation really starts.
      */
     fun onCellClicked(position: CellPosition) {
+        // 1) If we’re already mid-swap or animating, ignore everything
         if (isProcessingSwap.value) return
 
+        // 2) If this is just the first selection, delegate without marking “busy”
+        if (firstSelectedCell.value == null) {
+            handleCellClick(
+                position             = position,
+                currentTableData     = currentTableData,
+                firstSelectedCellState   = firstSelectedCell,
+                secondSelectedCellState  = secondSelectedCell,
+                isSelectionCompleteState = isSelectionComplete,
+                playerMovesState         = playerMoves,
+                originalTableData        = originalTableData,
+                movablePositions         = movablePositions,
+                transitioningCells       = transitioningCells,
+                correctMoveCountState    = correctMoves,
+                incorrectMoveCountState  = incorrectMoves,
+                coroutineScope           = viewModelScope,
+                // onResetSelection here should NOT touch isProcessingSwap
+                onResetSelection = {
+                    firstSelectedCell.value = null
+                    secondSelectedCell.value = null
+                    isSelectionComplete.value = false
+                },
+                isProcessingSwap = isProcessingSwap
+            )
+            return
+        }
+
+        // 3) Otherwise it’s the second tap → we really start the swap, so mark “busy”
+        isProcessingSwap.value = true
+
         handleCellClick(
-            position,
-            currentTableData,
-            firstSelectedCell,
-            secondSelectedCell,
-            isSelectionComplete,
-            playerMoves,
-            originalTableData,
-            movablePositions,
-            transitioningCells,
-            correctMoves,
-            incorrectMoves,
-            viewModelScope,
+            position             = position,
+            currentTableData     = currentTableData,
+            firstSelectedCellState   = firstSelectedCell,
+            secondSelectedCellState  = secondSelectedCell,
+            isSelectionCompleteState = isSelectionComplete,
+            playerMovesState         = playerMoves,
+            originalTableData        = originalTableData,
+            movablePositions         = movablePositions,
+            transitioningCells       = transitioningCells,
+            correctMoveCountState    = correctMoves,
+            incorrectMoveCountState  = incorrectMoves,
+            coroutineScope           = viewModelScope,
+            // now when we reset, we clear the busy flag too
             onResetSelection = {
                 firstSelectedCell.value = null
                 secondSelectedCell.value = null
@@ -157,6 +188,7 @@ class GameplayViewModel(
             isProcessingSwap = isProcessingSwap
         )
     }
+
 
     /** Factory for dependency-injecting the repository and callbacks. */
     class Factory(
