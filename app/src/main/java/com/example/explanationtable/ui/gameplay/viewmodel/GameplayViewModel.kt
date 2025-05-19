@@ -90,7 +90,14 @@ class GameplayViewModel : ViewModel() {
     /** Called by the hint dialog when cells are revealed */
     fun handleCellsRevealed(correctPositions: List<CellPosition>) {
         if (correctPositions.isEmpty()) {
-            _result.update { it.copy(over = true) }
+            viewModelScope.launch {
+                // mark as over to trigger the StageReviewTable
+                _result.update { it.copy(over = true) }
+                // wait for the exit/enter animation to finish
+                delay(animationDurationMs)
+                // now show the prize box
+                _result.update { it.copy(showPrize = true) }
+            }
         } else {
             onCellsCorrect(correctPositions)
         }
