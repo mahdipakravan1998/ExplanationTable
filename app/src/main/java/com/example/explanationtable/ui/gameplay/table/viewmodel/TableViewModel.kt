@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.gameplay.viewmodel
+package com.example.explanationtable.ui.gameplay.table.viewmodel
 
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
-import com.example.explanationtable.repository.GameplayRepository
+import com.example.explanationtable.repository.TableRepository
 import com.example.explanationtable.ui.gameplay.table.utils.handleCellClick
 import com.example.explanationtable.ui.gameplay.table.utils.handleExternallyCorrectCells
 import kotlinx.coroutines.delay
@@ -22,8 +22,8 @@ import kotlinx.coroutines.launch
  * - Computes optimal moves in background
  * - Notifies completion when done
  */
-class GameplayViewModel(
-    private val repository: GameplayRepository,
+class TableViewModel(
+    private val repository: TableRepository,
     stageNumber: Int,
     private val onGameComplete: (optimalMoves: Int, accuracy: Int, moves: Int, elapsedMs: Long) -> Unit,
     onTableDataInitialized: (EasyLevelTable, MutableMap<CellPosition, List<String>>) -> Unit,
@@ -192,7 +192,7 @@ class GameplayViewModel(
 
     /** Factory for dependency-injecting the repository and callbacks. */
     class Factory(
-        private val repository: GameplayRepository,
+        private val repository: TableRepository,
         private val stageNumber: Int,
         private val onGameComplete: (Int, Int, Int, Long) -> Unit,
         private val onTableDataInitialized: (EasyLevelTable, MutableMap<CellPosition, List<String>>) -> Unit,
@@ -200,7 +200,7 @@ class GameplayViewModel(
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GameplayViewModel(
+            return TableViewModel(
                 repository,
                 stageNumber,
                 onGameComplete,

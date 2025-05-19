@@ -8,11 +8,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
-import com.example.explanationtable.repository.GameplayRepository
+import com.example.explanationtable.repository.TableRepository
 import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
 import com.example.explanationtable.ui.gameplay.table.components.shared.SquareWithDirectionalSign
-import com.example.explanationtable.ui.gameplay.viewmodel.GameplayViewModel
+import com.example.explanationtable.ui.gameplay.table.viewmodel.TableViewModel
 
 private const val ROW_COUNT = 5      // Number of rows in the easy level
 private const val COLUMN_COUNT = 3   // Number of columns in the easy level
@@ -36,10 +36,10 @@ fun EasyThreeByFiveTable(
     onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
     registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
-    // Obtain or create the GameplayViewModel for this composable
-    val viewModel: GameplayViewModel = viewModel(
-        factory = GameplayViewModel.Factory(
-            repository = GameplayRepository(),
+    // Obtain or create the TableViewModel for this composable
+    val viewModel: TableViewModel = viewModel(
+        factory = TableViewModel.Factory(
+            repository = TableRepository(),
             stageNumber = stageNumber,
             onGameComplete = onGameComplete,
             onTableDataInitialized = onTableDataInitialized,

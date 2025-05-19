@@ -9,7 +9,7 @@ import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class GameplayRepository {
+class TableRepository {
 
     /** Find the table for [stageNumber], or default to first. */
     fun getOriginalTable(stageNumber: Int): EasyLevelTable =
