@@ -15,8 +15,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
-import com.example.explanationtable.model.CellPosition
-import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
@@ -26,18 +24,9 @@ import com.example.explanationtable.ui.gameplay.table.GameTable
 import com.example.explanationtable.ui.hint.dialog.HintDialogHandler
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
+import com.example.explanationtable.ui.gameplay.viewmodel.GameplayViewModel
 import com.example.explanationtable.utils.toPersianDigits
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
-/**
- * Composable function that represents the gameplay screen for a specific stage.
- *
- * @param navController Navigation controller for navigating to other screens.
- * @param isDarkTheme Indicates if the dark theme is enabled.
- * @param stageNumber The number of the current stage.
- * @param difficulty The difficulty level of the current stage.
- */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun GameplayPage(
@@ -46,68 +35,46 @@ fun GameplayPage(
     stageNumber: Int,
     difficulty: Difficulty
 ) {
-    // -- Constants --
+    // Constants
     val animationDurationMs = 300
     val pageTitle = "${stringResource(R.string.stage)} ${stageNumber.toPersianDigits()}"
 
-    // -- Back navigation handler --
+    // Back navigation
     BackHandler {
         navController.navigate("stages_list/${difficulty.name}") {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
-    // -- ViewModel and collected flows --
-    val viewModel: MainViewModel = viewModel()
-    val diamonds by viewModel.diamonds.collectAsState()
+    // MainViewModel (diamonds)
+    val mainVm: MainViewModel = viewModel()
+    val diamonds by mainVm.diamonds.collectAsState()
 
-    // -- Dialog visibility state --
+    // GameplayViewModel (new)
+    val gameVm: GameplayViewModel = viewModel()
+    val result by gameVm.result.collectAsState()
+    val originalTable by gameVm.originalTable.collectAsState()
+    val currentTable by gameVm.currentTable.collectAsState()
+
+    // UI‐only dialog flags
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showHintDialog by remember { mutableStateOf(false) }
 
-    // -- References to Android context/activity --
+    // Android context/activity
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // -- Game progress state grouped in a data class for clarity --
-    data class GameResult(
-        var over: Boolean = false,
-        var showPrize: Boolean = false,
-        var optimalMoves: Int = 0,
-        var accuracy: Int = 0,
-        var playerMoves: Int = 0,
-        var elapsedMs: Long = 0L
-    )
-    var result by remember { mutableStateOf(GameResult()) }
-
-    // -- Table state and callback holder --
-    var originalTable: EasyLevelTable? by remember { mutableStateOf(null) }
-    var currentTable: MutableMap<CellPosition, List<String>>? by remember { mutableStateOf(null) }
-    var onCellsCorrect: (List<CellPosition>) -> Unit by remember { mutableStateOf({}) }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    // -- Reset state when stage or difficulty changes --
+    // Reset game whenever stage or difficulty changes
     LaunchedEffect(stageNumber, difficulty) {
-        result = GameResult()
+        gameVm.resetGame()
     }
 
-    // -- Show prize box shortly after game ends --
-    LaunchedEffect(result.over) {
-        if (result.over) {
-            delay(animationDurationMs.toLong())
-            result = result.copy(showPrize = true)
-        }
-    }
-
-    // -- Background wrapper for theming/layout --
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
         Box(Modifier.fillMaxSize()) {
             Column(
                 Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // TopAppBar with settings/help controls
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
@@ -120,7 +87,6 @@ fun GameplayPage(
 
                 Spacer(Modifier.height(72.dp))
 
-                // Main content switches between gameplay and review
                 AnimatedContent(
                     targetState = result.over,
                     transitionSpec = {
@@ -150,34 +116,21 @@ fun GameplayPage(
                     }
                 ) { gameOver ->
                     if (!gameOver) {
-                        // Gameplay table with result callbacks
                         GameTable(
                             isDarkTheme = isDarkTheme,
                             difficulty = difficulty,
                             stageNumber = stageNumber,
                             onGameComplete = { optimal, accuracy, moves, time ->
-                                // Delay slightly before ending to allow last animation tick
-                                coroutineScope.launch {
-                                    delay(600)
-                                    result = result.copy(
-                                        over = true,
-                                        optimalMoves = optimal,
-                                        accuracy = accuracy,
-                                        playerMoves = moves,
-                                        elapsedMs = time
-                                    )
-                                }
+                                gameVm.onGameComplete(optimal, accuracy, moves, time)
                             },
                             onTableDataInitialized = { orig, current ->
-                                originalTable = orig
-                                currentTable = current
+                                gameVm.setTableData(orig, current)
                             },
                             registerCellsCorrectlyPlacedCallback = { callback ->
-                                onCellsCorrect = callback
+                                gameVm.registerCellsCorrectlyPlacedCallback(callback)
                             }
                         )
                     } else {
-                        // Review table shown after game completion
                         StageReviewTable(
                             stageNumber = stageNumber,
                             isDarkTheme = isDarkTheme
@@ -186,7 +139,6 @@ fun GameplayPage(
                 }
             }
 
-            // PrizeBox slides in when eligible
             AnimatedVisibility(
                 visible = result.showPrize,
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -212,14 +164,12 @@ fun GameplayPage(
                 )
             }
 
-            // Settings dialog overlay
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss  = { showSettingsDialog = false },
                 onExit     = { activity?.finishAndRemoveTask() }
             )
 
-            // Hint dialog overlay
             HintDialogHandler(
                 showDialog = showHintDialog,
                 isDarkTheme = isDarkTheme,
@@ -228,11 +178,7 @@ fun GameplayPage(
                 currentTableState = currentTable,
                 onDismiss = { showHintDialog = false },
                 onCellsRevealed = { correctPositions ->
-                    if (correctPositions.isEmpty()) {
-                        result = result.copy(over = true)
-                    } else {
-                        onCellsCorrect(correctPositions)
-                    }
+                    gameVm.handleCellsRevealed(correctPositions)
                 }
             )
         }
