@@ -15,19 +15,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.gameplay.components.PrizeBox
 import com.example.explanationtable.ui.gameplay.review.StageReviewTable
-import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.ui.gameplay.table.GameTable
 import com.example.explanationtable.ui.hint.dialog.HintDialogHandler
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.utils.toPersianDigits
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Composable function that represents the gameplay screen for a specific stage.
@@ -45,69 +46,68 @@ fun GameplayPage(
     stageNumber: Int,
     difficulty: Difficulty
 ) {
-    // Handle back press to navigate to the stage list
+    // -- Constants --
+    val animationDurationMs = 300
+    val pageTitle = "${stringResource(R.string.stage)} ${stageNumber.toPersianDigits()}"
+
+    // -- Back navigation handler --
     BackHandler {
         navController.navigate("stages_list/${difficulty.name}") {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
-    // ViewModel to manage state
+    // -- ViewModel and collected flows --
     val viewModel: MainViewModel = viewModel()
     val diamonds by viewModel.diamonds.collectAsState()
 
-    // Local states for controlling dialog visibility
+    // -- Dialog visibility state --
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showHintDialog by remember { mutableStateOf(false) }
 
-    // Context and activity for app-related functions
+    // -- References to Android context/activity --
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Page title and animation duration
-    val pageTitle = "${stringResource(id = R.string.stage)} ${stageNumber.toPersianDigits()}"
-    val animationDuration = 300
+    // -- Game progress state grouped in a data class for clarity --
+    data class GameResult(
+        var over: Boolean = false,
+        var showPrize: Boolean = false,
+        var optimalMoves: Int = 0,
+        var accuracy: Int = 0,
+        var playerMoves: Int = 0,
+        var elapsedMs: Long = 0L
+    )
+    var result by remember { mutableStateOf(GameResult()) }
 
-    // State for tracking game progress and results
-    var isGameOver by remember { mutableStateOf(false) }
-    var isPrizeBoxVisible by remember { mutableStateOf(false) }
-    var optimalMoves by remember { mutableStateOf(0) }
-    var userAccuracy by remember { mutableStateOf(0) }
-    var playerMoves by remember { mutableStateOf(0) }
-    var elapsedTime by remember { mutableStateOf(0L) }
+    // -- Table state and callback holder --
+    var originalTable: EasyLevelTable? by remember { mutableStateOf(null) }
+    var currentTable: MutableMap<CellPosition, List<String>>? by remember { mutableStateOf(null) }
+    var onCellsCorrect: (List<CellPosition>) -> Unit by remember { mutableStateOf({}) }
 
-    var originalTableState by remember { mutableStateOf<EasyLevelTable?>(null) }
-    var currentTableState by remember { mutableStateOf<MutableMap<CellPosition, List<String>>?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
-    // New state to hold reference to the callback for notifying cells are correct
-    var notifyCorrectCellsCallback by remember { mutableStateOf<(List<CellPosition>) -> Unit>({}) }
-
-    // Reset game-related state on stage or difficulty change
+    // -- Reset state when stage or difficulty changes --
     LaunchedEffect(stageNumber, difficulty) {
-        isGameOver = false
-        isPrizeBoxVisible = false
-        optimalMoves = 0
-        userAccuracy = 0
-        playerMoves = 0
-        elapsedTime = 0L
+        result = GameResult()
     }
 
-    // Show prize box animation after game is over
-    LaunchedEffect(isGameOver) {
-        if (isGameOver) {
-            delay(animationDuration.toLong())
-            isPrizeBoxVisible = true
+    // -- Show prize box shortly after game ends --
+    LaunchedEffect(result.over) {
+        if (result.over) {
+            delay(animationDurationMs.toLong())
+            result = result.copy(showPrize = true)
         }
     }
 
-    // Background setup for the gameplay page
+    // -- Background wrapper for theming/layout --
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top bar with title, settings, and help button
+                // TopAppBar with settings/help controls
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
@@ -115,63 +115,69 @@ fun GameplayPage(
                     gems = diamonds,
                     difficulty = difficulty,
                     onSettingsClick = { showSettingsDialog = true },
-                    onHelpClick = if (!isGameOver) {
-                        { showHintDialog = true }
-                    } else {
-                        null // Help button is disabled and invisible when game is over
-                    }
+                    onHelpClick = if (!result.over) ({ showHintDialog = true }) else null
                 )
-                Spacer(modifier = Modifier.height(72.dp))
 
-                // Game content with animated transitions based on game state
+                Spacer(Modifier.height(72.dp))
+
+                // Main content switches between gameplay and review
                 AnimatedContent(
-                    targetState = isGameOver,
+                    targetState = result.over,
                     transitionSpec = {
-                        // Slide in and out based on the game state
-                        if (targetState) {
+                        val enter = if (targetState) {
                             slideInHorizontally(
-                                initialOffsetX = { fullWidth -> fullWidth },
-                                animationSpec = tween(animationDuration)
-                            ) togetherWith slideOutHorizontally(
-                                targetOffsetX = { fullWidth -> -fullWidth },
-                                animationSpec = tween(animationDuration)
+                                initialOffsetX = { it },
+                                animationSpec = tween(animationDurationMs)
                             )
                         } else {
                             slideInHorizontally(
-                                initialOffsetX = { fullWidth -> -fullWidth },
-                                animationSpec = tween(animationDuration)
-                            ) togetherWith slideOutHorizontally(
-                                targetOffsetX = { fullWidth -> fullWidth },
-                                animationSpec = tween(animationDuration)
+                                initialOffsetX = { -it },
+                                animationSpec = tween(animationDurationMs)
                             )
-                        }.using(SizeTransform(clip = false))
+                        }
+                        val exit = if (targetState) {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = tween(animationDurationMs)
+                            )
+                        } else {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(animationDurationMs)
+                            )
+                        }
+                        enter togetherWith exit using SizeTransform(clip = false)
                     }
-                ) { targetGameOver ->
-                    if (!targetGameOver) {
-                        // Display the game table when the game is not over
+                ) { gameOver ->
+                    if (!gameOver) {
+                        // Gameplay table with result callbacks
                         GameTable(
                             isDarkTheme = isDarkTheme,
                             difficulty = difficulty,
                             stageNumber = stageNumber,
-                            onGameComplete = { optimal, accuracy, playerMoveCount, timeElapsed ->
-                                // Set game over state and capture results
-                                isGameOver = true
-                                optimalMoves = optimal
-                                userAccuracy = accuracy
-                                playerMoves = playerMoveCount
-                                elapsedTime = timeElapsed
+                            onGameComplete = { optimal, accuracy, moves, time ->
+                                // Delay slightly before ending to allow last animation tick
+                                coroutineScope.launch {
+                                    delay(600)
+                                    result = result.copy(
+                                        over = true,
+                                        optimalMoves = optimal,
+                                        accuracy = accuracy,
+                                        playerMoves = moves,
+                                        elapsedMs = time
+                                    )
+                                }
                             },
-                            onTableDataInitialized = { origData, currentData ->
-                                originalTableState = origData
-                                currentTableState = currentData
+                            onTableDataInitialized = { orig, current ->
+                                originalTable = orig
+                                currentTable = current
                             },
-                            // New parameter to receive callback for correctly placed cells notification
                             registerCellsCorrectlyPlacedCallback = { callback ->
-                                notifyCorrectCellsCallback = callback
+                                onCellsCorrect = callback
                             }
                         )
                     } else {
-                        // Display stage review when the game is over
+                        // Review table shown after game completion
                         StageReviewTable(
                             stageNumber = stageNumber,
                             isDarkTheme = isDarkTheme
@@ -180,49 +186,52 @@ fun GameplayPage(
                 }
             }
 
-            // Show prize box animation when the game ends
+            // PrizeBox slides in when eligible
             AnimatedVisibility(
-                visible = isPrizeBoxVisible,
+                visible = result.showPrize,
                 modifier = Modifier.align(Alignment.BottomCenter),
                 enter = slideInVertically(
-                    initialOffsetY = { fullHeight -> fullHeight },
-                    animationSpec = tween(animationDuration)
+                    initialOffsetY = { it },
+                    animationSpec = tween(animationDurationMs)
                 ),
                 exit = fadeOut()
             ) {
                 PrizeBox(
                     isDarkTheme = isDarkTheme,
                     onPrizeButtonClick = {
-                        // Navigate to the rewards screen after the prize button is clicked
                         navController.navigate(
-                            "game_rewards/$optimalMoves/$userAccuracy/$playerMoves/$elapsedTime/${difficulty.name}/$stageNumber"
+                            "game_rewards/" +
+                                    "${result.optimalMoves}/" +
+                                    "${result.accuracy}/" +
+                                    "${result.playerMoves}/" +
+                                    "${result.elapsedMs}/" +
+                                    "${difficulty.name}/" +
+                                    "$stageNumber"
                         )
                     }
                 )
             }
 
-            // Settings dialog for user preferences
+            // Settings dialog overlay
             SettingsDialog(
                 showDialog = showSettingsDialog,
                 onDismiss  = { showSettingsDialog = false },
                 onExit     = { activity?.finishAndRemoveTask() }
             )
 
-            // Show hint dialog when help button is clicked
+            // Hint dialog overlay
             HintDialogHandler(
                 showDialog = showHintDialog,
                 isDarkTheme = isDarkTheme,
                 difficulty = difficulty,
-                originalTableState = originalTableState,
-                currentTableState = currentTableState,
+                originalTableState = originalTable,
+                currentTableState = currentTable,
                 onDismiss = { showHintDialog = false },
                 onCellsRevealed = { correctPositions ->
                     if (correctPositions.isEmpty()) {
-                        // Complete stage hint
-                        isGameOver = true
+                        result = result.copy(over = true)
                     } else {
-                        // Notify the table about cells that are now correctly placed
-                        notifyCorrectCellsCallback(correctPositions)
+                        onCellsCorrect(correctPositions)
                     }
                 }
             )

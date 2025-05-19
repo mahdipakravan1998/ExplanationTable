@@ -115,10 +115,20 @@ fun StackedSquare3D(
     )
 
     // Trigger a temporary selection effect when the square is selected.
+    // Trigger a brief “hold” effect whenever isSelected flips on,
+    // and *always* clear it afterwards (even if the coroutine is cancelled).
     LaunchedEffect(isSelected) {
         if (isSelected) {
+            // when selected, hold for 150ms…
             isHoldingSelection.value = true
-            delay(150)
+            try {
+                delay(150)
+            } finally {
+                // => always clear, even on cancellation
+                isHoldingSelection.value = false
+            }
+        } else {
+            // if deselected, immediately clear any hanging state
             isHoldingSelection.value = false
         }
     }
