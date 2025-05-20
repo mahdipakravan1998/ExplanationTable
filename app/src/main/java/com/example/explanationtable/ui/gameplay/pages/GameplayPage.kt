@@ -35,102 +35,98 @@ fun GameplayPage(
     stageNumber: Int,
     difficulty: Difficulty
 ) {
-    // Constants
-    val animationDurationMs = 300
+    // Animation timing constant
+    val animationDuration = 300
+
+    // Title string with localized "Stage" + Persian digits
     val pageTitle = "${stringResource(R.string.stage)} ${stageNumber.toPersianDigits()}"
 
-    // Back navigation
+    // Handle Android back button: navigate back to stages list
     BackHandler {
         navController.navigate("stages_list/${difficulty.name}") {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
-    // MainViewModel (diamonds)
-    val mainVm: MainViewModel = viewModel()
-    val diamonds by mainVm.diamonds.collectAsState()
+    // Obtain MainViewModel for diamond count
+    val mainViewModel: MainViewModel = viewModel()
+    val diamondCount by mainViewModel.diamonds.collectAsState()
 
-    // GameplayViewModel (new)
-    val gameVm: GameplayViewModel = viewModel()
-    val result by gameVm.result.collectAsState()
-    val originalTable by gameVm.originalTable.collectAsState()
-    val currentTable by gameVm.currentTable.collectAsState()
+    // Obtain GameplayViewModel for game state
+    val gameplayViewModel: GameplayViewModel = viewModel()
+    val result by gameplayViewModel.result.collectAsState()
+    val originalTable by gameplayViewModel.originalTable.collectAsState()
+    val currentTable by gameplayViewModel.currentTable.collectAsState()
 
-    // UI‐only dialog flags
-    var showSettingsDialog by remember { mutableStateOf(false) }
-    var showHintDialog by remember { mutableStateOf(false) }
+    // UI state flags for dialogs
+    var isSettingsDialogVisible by remember { mutableStateOf(false) }
+    var isHintDialogVisible by remember { mutableStateOf(false) }
 
-    // Android context/activity
+    // Android context and activity for dialog callbacks
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Reset game whenever stage or difficulty changes
+    // Whenever stage number or difficulty changes, reset the game state
     LaunchedEffect(stageNumber, difficulty) {
-        gameVm.resetGame()
+        gameplayViewModel.resetGame()
     }
 
+    // Root background wrapper
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
-        Box(Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            // Main column: Top bar + game or review table
             Column(
-                Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Top application bar with title, gems, settings & help buttons
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
                     title = pageTitle,
-                    gems = diamonds,
+                    gems = diamondCount,
                     difficulty = difficulty,
-                    onSettingsClick = { showSettingsDialog = true },
-                    onHelpClick = if (!result.over) ({ showHintDialog = true }) else null
+                    onSettingsClick = { isSettingsDialogVisible = true },
+                    onHelpClick = if (!result.over) ({ isHintDialogVisible = true }) else null
                 )
 
-                Spacer(Modifier.height(72.dp))
+                Spacer(modifier = Modifier.height(72.dp))
 
+                // Switch between gameplay and review with sliding animation
                 AnimatedContent(
                     targetState = result.over,
                     transitionSpec = {
-                        val enter = if (targetState) {
-                            slideInHorizontally(
-                                initialOffsetX = { it },
-                                animationSpec = tween(animationDurationMs)
-                            )
-                        } else {
-                            slideInHorizontally(
-                                initialOffsetX = { -it },
-                                animationSpec = tween(animationDurationMs)
-                            )
-                        }
-                        val exit = if (targetState) {
-                            slideOutHorizontally(
-                                targetOffsetX = { -it },
-                                animationSpec = tween(animationDurationMs)
-                            )
-                        } else {
-                            slideOutHorizontally(
-                                targetOffsetX = { it },
-                                animationSpec = tween(animationDurationMs)
-                            )
-                        }
+                        // Slide in/out from left or right based on game-over state
+                        val enter = slideInHorizontally(
+                            initialOffsetX = { if (targetState) it else -it },
+                            animationSpec = tween(animationDuration)
+                        )
+                        val exit  = slideOutHorizontally(
+                            targetOffsetX  = { if (targetState) -it else it },
+                            animationSpec  = tween(animationDuration)
+                        )
                         enter togetherWith exit using SizeTransform(clip = false)
                     }
-                ) { gameOver ->
-                    if (!gameOver) {
+                ) { isGameOver ->
+                    if (!isGameOver) {
+                        // Active game table
                         GameTable(
                             isDarkTheme = isDarkTheme,
                             difficulty = difficulty,
                             stageNumber = stageNumber,
                             onGameComplete = { optimal, accuracy, moves, time ->
-                                gameVm.onGameComplete(optimal, accuracy, moves, time)
+                                gameplayViewModel.onGameComplete(optimal, accuracy, moves, time)
                             },
                             onTableDataInitialized = { orig, current ->
-                                gameVm.setTableData(orig, current)
+                                gameplayViewModel.setTableData(orig, current)
                             },
                             registerCellsCorrectlyPlacedCallback = { callback ->
-                                gameVm.registerCellsCorrectlyPlacedCallback(callback)
+                                gameplayViewModel.registerCellsCorrectlyPlacedCallback(callback)
                             }
                         )
                     } else {
+                        // Review table shown after game over
                         StageReviewTable(
                             stageNumber = stageNumber,
                             isDarkTheme = isDarkTheme
@@ -139,46 +135,51 @@ fun GameplayPage(
                 }
             }
 
+            // Prize box at bottom when available, with vertical slide/fade animation
             AnimatedVisibility(
                 visible = result.showPrize,
                 modifier = Modifier.align(Alignment.BottomCenter),
                 enter = slideInVertically(
                     initialOffsetY = { it },
-                    animationSpec = tween(animationDurationMs)
+                    animationSpec = tween(animationDuration)
                 ),
                 exit = fadeOut()
             ) {
                 PrizeBox(
                     isDarkTheme = isDarkTheme,
                     onPrizeButtonClick = {
-                        navController.navigate(
-                            "game_rewards/" +
-                                    "${result.optimalMoves}/" +
-                                    "${result.accuracy}/" +
-                                    "${result.playerMoves}/" +
-                                    "${result.elapsedMs}/" +
-                                    "${difficulty.name}/" +
-                                    "$stageNumber"
-                        )
+                        // Build and navigate to rewards route with parameters
+                        val route = buildString {
+                            append("game_rewards/")
+                            append("${result.optimalMoves}/")
+                            append("${result.accuracy}/")
+                            append("${result.playerMoves}/")
+                            append("${result.elapsedMs}/")
+                            append("${difficulty.name}/")
+                            append(stageNumber)
+                        }
+                        navController.navigate(route)
                     }
                 )
             }
 
+            // Settings dialog overlay
             SettingsDialog(
-                showDialog = showSettingsDialog,
-                onDismiss  = { showSettingsDialog = false },
+                showDialog = isSettingsDialogVisible,
+                onDismiss  = { isSettingsDialogVisible = false },
                 onExit     = { activity?.finishAndRemoveTask() }
             )
 
+            // Hint dialog overlay
             HintDialogHandler(
-                showDialog = showHintDialog,
-                isDarkTheme = isDarkTheme,
-                difficulty = difficulty,
-                originalTableState = originalTable,
-                currentTableState = currentTable,
-                onDismiss = { showHintDialog = false },
-                onCellsRevealed = { correctPositions ->
-                    gameVm.handleCellsRevealed(correctPositions)
+                showDialog             = isHintDialogVisible,
+                isDarkTheme            = isDarkTheme,
+                difficulty             = difficulty,
+                originalTableState     = originalTable,
+                currentTableState      = currentTable,
+                onDismiss              = { isHintDialogVisible = false },
+                onCellsRevealed        = { correctPositions ->
+                    gameplayViewModel.handleCellsRevealed(correctPositions)
                 }
             )
         }

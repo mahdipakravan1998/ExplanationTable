@@ -11,8 +11,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for managing the gameplay state, including table data,
+ * game completion flow, and hint logic.
+ */
 class GameplayViewModel : ViewModel() {
 
+    private companion object {
+        /** Delay before marking the game as over (ms) to match final UI animation. */
+        const val FINAL_ANIMATION_DELAY_MS = 600L
+        /** Delay before showing the prize (ms) to match prize animation. */
+        const val PRIZE_ANIMATION_DELAY_MS = 300L
+    }
+
+    /**
+     * Encapsulates the outcome and stats of a game once it's complete.
+     */
     data class GameResult(
         val over: Boolean = false,
         val showPrize: Boolean = false,
@@ -22,84 +36,113 @@ class GameplayViewModel : ViewModel() {
         val elapsedMs: Long = 0L
     )
 
+    // ─── Game Result State ────────────────────────────────────────────────────────
+
     private val _result = MutableStateFlow(GameResult())
+    /** Exposed read-only flow of the current game result. */
     val result: StateFlow<GameResult> = _result.asStateFlow()
 
+    // ─── Table Data State ─────────────────────────────────────────────────────────
+
     private val _originalTable = MutableStateFlow<EasyLevelTable?>(null)
+    /** The immutable solution table for the current level. */
     val originalTable: StateFlow<EasyLevelTable?> = _originalTable.asStateFlow()
 
-    private val _currentTable =
-        MutableStateFlow<MutableMap<CellPosition, List<String>>?>(null)
-    val currentTable: StateFlow<MutableMap<CellPosition, List<String>>?> =
-        _currentTable.asStateFlow()
+    private val _currentTable = MutableStateFlow<MutableMap<CellPosition, List<String>>?>(null)
+    /** The mutable cell-value map reflecting the player's current progress. */
+    val currentTable: StateFlow<MutableMap<CellPosition, List<String>>?> = _currentTable.asStateFlow()
 
-    // Holds the callback to notify when cells are correctly placed
-    private var onCellsCorrect: (List<CellPosition>) -> Unit = {}
+    // ─── Callback for Cell Animations ────────────────────────────────────────────
 
-    // Matches the animation delay in the UI
-    private val animationDurationMs = 300L
+    /** Client-provided callback to animate correctly placed cells. */
+    private var onCellsCorrectlyPlaced: (List<CellPosition>) -> Unit = {}
 
-    /** Reset game result when stage or difficulty changes */
+    // ─── Public API ────────────────────────────────────────────────────────────────
+
+    /**
+     * Resets all game result state back to defaults.
+     */
     fun resetGame() {
         _result.value = GameResult()
     }
 
     /**
-     * Called by GameTable when the game is complete.
-     * Replicates:
-     *   1) 600 ms delay for final animation tick
-     *   2) set over=true and stats
-     *   3) animationDurationMs delay before showing prize
+     * Invoked when the game is completed.
+     *
+     * Workflow:
+     *  1. Wait for final UI animation.
+     *  2. Update result with stats and mark `over = true`.
+     *  3. Wait for prize animation.
+     *  4. Update `showPrize = true`.
+     *
+     * @param optimalMoves Minimum possible moves for this level.
+     * @param accuracy     Final accuracy percentage achieved.
+     * @param playerMoves  Number of moves taken by the player.
+     * @param elapsedMs    Time taken to complete the game in milliseconds.
      */
     fun onGameComplete(
-        optimal: Int,
+        optimalMoves: Int,
         accuracy: Int,
-        moves: Int,
-        time: Long
+        playerMoves: Int,
+        elapsedMs: Long
     ) {
         viewModelScope.launch {
-            delay(600)
+            delay(FINAL_ANIMATION_DELAY_MS)
             _result.update {
                 it.copy(
                     over = true,
-                    optimalMoves = optimal,
+                    optimalMoves = optimalMoves,
                     accuracy = accuracy,
-                    playerMoves = moves,
-                    elapsedMs = time
+                    playerMoves = playerMoves,
+                    elapsedMs = elapsedMs
                 )
             }
-            delay(animationDurationMs)
+            delay(PRIZE_ANIMATION_DELAY_MS)
             _result.update { it.copy(showPrize = true) }
         }
     }
 
-    /** Store the initial and current table for hint logic */
+    /**
+     * Initializes the original solution and current table data.
+     *
+     * @param original The level’s solution table.
+     * @param current  The mutable map of current cell entries.
+     */
     fun setTableData(
-        orig: EasyLevelTable,
+        original: EasyLevelTable,
         current: MutableMap<CellPosition, List<String>>
     ) {
-        _originalTable.value = orig
+        _originalTable.value = original
         _currentTable.value = current
     }
 
-    /** Register the callback that GameTable provides for correct‐cell animations */
+    /**
+     * Registers a UI callback that animates cells when they are placed correctly.
+     *
+     * @param callback Called with the list of correct cell positions.
+     */
     fun registerCellsCorrectlyPlacedCallback(callback: (List<CellPosition>) -> Unit) {
-        onCellsCorrect = callback
+        onCellsCorrectlyPlaced = callback
     }
 
-    /** Called by the hint dialog when cells are revealed */
+    /**
+     * Handles reveals from the hint dialog.
+     *
+     * - If `correctPositions` is empty: treat as game-over,
+     *   then show prize after animation.
+     * - Otherwise: animate the correctly revealed cells.
+     *
+     * @param correctPositions Positions revealed as correct by the hint.
+     */
     fun handleCellsRevealed(correctPositions: List<CellPosition>) {
         if (correctPositions.isEmpty()) {
             viewModelScope.launch {
-                // mark as over to trigger the StageReviewTable
                 _result.update { it.copy(over = true) }
-                // wait for the exit/enter animation to finish
-                delay(animationDurationMs)
-                // now show the prize box
+                delay(PRIZE_ANIMATION_DELAY_MS)
                 _result.update { it.copy(showPrize = true) }
             }
         } else {
-            onCellsCorrect(correctPositions)
+            onCellsCorrectlyPlaced(correctPositions)
         }
     }
 }
