@@ -11,8 +11,4 @@ class RewardsRepository(
     suspend fun addDiamonds(amount: Int) {
         dataStore.addDiamonds(amount)
     }
-
-    suspend fun spendDiamonds(amount: Int) {
-        dataStore.spendDiamonds(amount)
-    }
 }

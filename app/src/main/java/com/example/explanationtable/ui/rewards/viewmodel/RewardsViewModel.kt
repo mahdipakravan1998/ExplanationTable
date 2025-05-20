@@ -16,10 +16,4 @@ class RewardsViewModel(application: Application) : AndroidViewModel(application)
             rewardsRepository.addDiamonds(amount)
         }
     }
-
-    fun spendDiamonds(amount: Int) {
-        viewModelScope.launch {
-            rewardsRepository.spendDiamonds(amount)
-        }
-    }
 }

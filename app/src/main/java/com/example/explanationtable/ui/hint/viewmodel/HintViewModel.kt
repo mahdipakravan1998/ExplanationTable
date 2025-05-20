@@ -74,25 +74,25 @@ class HintViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun onOptionSelected(option: HintOption) {
         viewModelScope.launch {
+            val fee = option.feeMap[_difficulty.value] ?: 0
+            val balance = repository.getDiamondCount()
+
+            // Bail out if not enough diamonds
+            if (balance < fee) return@launch
+
+            // Deduct and then compute which cells to reveal
+            repository.spendDiamonds(fee)
+
+            // Reveal cells according to the option tapped
             val context = getApplication<Application>()
-            // Determine which hint option was selected and get the appropriate cells
             val cells = when (option.displayText) {
-                context.getString(R.string.hint_single_word) -> {
-                    // Reveal a random category of cells if 'Single Word' option is selected
-                    getCellsForRandomCategory()
-                }
-                context.getString(R.string.hint_single_letter) -> {
-                    // Reveal a random cell if 'Single Letter' option is selected
-                    getCellsForRandomCell()
-                }
-                context.getString(R.string.hint_complete_stage) -> {
-                    // No cells to reveal for 'Complete Stage' option
-                    emptyList()
-                }
-                else -> emptyList()
+                context.getString(R.string.hint_single_word)    -> getCellsForRandomCategory()
+                context.getString(R.string.hint_single_letter)  -> getCellsForRandomCell()
+                context.getString(R.string.hint_complete_stage) -> emptyList()
+                else                                            -> emptyList()
             }
 
-            // Emit the selected cells to the SharedFlow
+            // Notify the UI of which cells to reveal
             _selectedCells.emit(cells)
         }
     }

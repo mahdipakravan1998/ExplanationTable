@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 // Extension property to initialize DataStore with the name "settings".
 // This allows for a singleton-like access to DataStore on any Context instance.
@@ -21,10 +22,10 @@ val Context.dataStore by preferencesDataStore(name = "settings")
 class DataStoreManager(private val context: Context) {
 
     companion object {
-        // Keys used to store and retrieve preference values in the DataStore.
-        val IS_MUTED = booleanPreferencesKey("is_muted")
+        val IS_MUTED      = booleanPreferencesKey("is_muted")
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
-        val DIAMONDS_KEY = intPreferencesKey("diamonds")
+        val DIAMONDS_KEY  = intPreferencesKey("diamonds")
+        private const val DEFAULT_DIAMONDS = 200
     }
 
     /**
@@ -45,14 +46,9 @@ class DataStoreManager(private val context: Context) {
             preferences[IS_DARK_THEME]
         }
 
-    /**
-     * Flow that emits the current diamond count.
-     * Defaults to 200 diamonds if no value is set.
-     */
+    /** Flow that emits the current diamond count (default 200). */
     val diamonds: Flow<Int> = context.dataStore.data
-        .map { preferences ->
-            preferences[DIAMONDS_KEY] ?: 200
-        }
+        .map { prefs -> prefs[DIAMONDS_KEY] ?: DEFAULT_DIAMONDS }
 
     /**
      * Toggles the mute state in the DataStore.
@@ -76,27 +72,31 @@ class DataStoreManager(private val context: Context) {
         }
     }
 
+    /** Returns the current diamond count, suspending until retrieved */
+    suspend fun getDiamondCount(): Int =
+        context.dataStore.data
+            .map { prefs -> prefs[DIAMONDS_KEY] ?: DEFAULT_DIAMONDS }
+            .first()
+
     /**
      * Adds a specified amount of diamonds to the current count.
      *
      * @param amount The number of diamonds to add.
      */
     suspend fun addDiamonds(amount: Int) {
-        context.dataStore.edit { preferences ->
-            val current = preferences[DIAMONDS_KEY] ?: 200
-            preferences[DIAMONDS_KEY] = current + amount
+        context.dataStore.edit { prefs ->
+            val current = prefs[DIAMONDS_KEY] ?: DEFAULT_DIAMONDS
+            prefs[DIAMONDS_KEY] = current + amount
         }
     }
 
     /**
-     * Spends a specified amount of diamonds from the current count.
-     *
-     * @param amount The number of diamonds to subtract.
+     * Deducts the given amount of diamonds, never going below zero.
      */
     suspend fun spendDiamonds(amount: Int) {
-        context.dataStore.edit { preferences ->
-            val current = preferences[DIAMONDS_KEY] ?: 200
-            preferences[DIAMONDS_KEY] = current - amount
+        val current = getDiamondCount()
+        context.dataStore.edit { prefs ->
+            prefs[DIAMONDS_KEY] = (current - amount).coerceAtLeast(0)
         }
     }
 }
