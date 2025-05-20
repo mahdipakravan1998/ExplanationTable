@@ -4,39 +4,40 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.explanationtable.R
-import com.example.explanationtable.model.HintOption
+import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.easy.EasyLevelTable
 import com.example.explanationtable.repository.HintRepository
-import com.example.explanationtable.model.CellPosition
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for handling hint-related logic and state for the game.
+ * ViewModel responsible for managing hint logic and state.
  */
 class HintViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Repository for fetching hint data
+    // Repository for diamond balance and reveal logic
     private val repository = HintRepository(application)
 
-    // StateFlow for hint options and selected cells
+    // Exposed flow of available hint options
     private val _hintOptions = MutableStateFlow<List<HintOption>>(emptyList())
     val hintOptions: StateFlow<List<HintOption>> = _hintOptions.asStateFlow()
 
-    private val _selectedCells = MutableSharedFlow<List<CellPosition>>()
+    // Exposed flow of cells to reveal when a hint is used
+    private val _selectedCells = MutableSharedFlow<List<CellPosition>>(replay = 0)
     val selectedCells: SharedFlow<List<CellPosition>> = _selectedCells.asSharedFlow()
 
-    // Table states for the game
+    // Backing storage for the game’s tables
     private var originalTable: EasyLevelTable? = null
     private var currentTable: MutableMap<CellPosition, List<String>>? = null
 
-    // Difficulty level, defaulting to EASY
+    // Current difficulty setting (default EASY)
     private val _difficulty = MutableStateFlow(Difficulty.EASY)
     val difficulty: StateFlow<Difficulty> = _difficulty.asStateFlow()
 
     /**
-     * Loads hint options from the repository asynchronously.
+     * Asynchronously load and emit available hint options from the repository.
      */
     fun loadHintOptions() {
         viewModelScope.launch {
@@ -45,81 +46,73 @@ class HintViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Sets the original table state.
-     * @param table The original game table state.
+     * Store the original completed table for reference when revealing hints.
      */
     fun setOriginalTableState(table: EasyLevelTable?) {
         originalTable = table
     }
 
     /**
-     * Sets the current table state.
-     * @param table The current game table state.
+     * Store the current, partially-filled table for comparison when revealing hints.
      */
     fun setCurrentTableState(table: MutableMap<CellPosition, List<String>>?) {
         currentTable = table
     }
 
     /**
-     * Sets the difficulty level.
-     * @param diff The new difficulty level.
+     * Update the difficulty level, affecting diamond costs.
      */
     fun setDifficulty(diff: Difficulty) {
         _difficulty.value = diff
     }
 
     /**
-     * Handles the selection of a hint option and triggers the appropriate action.
-     * @param option The selected hint option.
+     * Handle when a user taps a hint option:
+     * 1. Check diamond balance
+     * 2. Deduct fee
+     * 3. Compute which cells to reveal
+     * 4. Emit those cells to the UI
      */
     fun onOptionSelected(option: HintOption) {
         viewModelScope.launch {
-            val fee = option.feeMap[_difficulty.value] ?: 0
+            val cost = option.feeMap[_difficulty.value] ?: 0
             val balance = repository.getDiamondCount()
 
-            // Bail out if not enough diamonds
-            if (balance < fee) return@launch
+            // Abort if insufficient diamonds
+            if (balance < cost) return@launch
 
-            // Deduct and then compute which cells to reveal
-            repository.spendDiamonds(fee)
+            // Deduct diamonds
+            repository.spendDiamonds(cost)
 
-            // Reveal cells according to the option tapped
+            // Determine which cells to reveal based on option text
             val context = getApplication<Application>()
-            val cells = when (option.displayText) {
-                context.getString(R.string.hint_single_word)    -> getCellsForRandomCategory()
-                context.getString(R.string.hint_single_letter)  -> getCellsForRandomCell()
+            val toReveal = when (option.displayText) {
+                context.getString(R.string.hint_single_word)    -> revealRandomCategory()
+                context.getString(R.string.hint_single_letter)  -> revealRandomCell()
                 context.getString(R.string.hint_complete_stage) -> emptyList()
                 else                                            -> emptyList()
             }
 
-            // Notify the UI of which cells to reveal
-            _selectedCells.emit(cells)
+            // Notify observers which cells should be revealed
+            _selectedCells.emit(toReveal)
         }
     }
 
     /**
-     * Fetches cells for revealing a random category.
-     * @return List of revealed cell positions.
+     * Reveal all cells in one random category.
+     * @return list of positions to reveal, or empty if tables are unset.
      */
-    private fun getCellsForRandomCategory(): List<CellPosition> {
-        return originalTable?.let { orig ->
-            currentTable?.let { curr ->
-                // Call the repository to reveal a random category of cells
-                repository.revealRandomCategory(curr, orig)
-            }
-        } ?: emptyList()
-    }
+    private fun revealRandomCategory(): List<CellPosition> =
+        originalTable
+            ?.let { orig -> currentTable?.let { curr -> repository.revealRandomCategory(curr, orig) } }
+            ?: emptyList()
 
     /**
-     * Fetches cells for revealing a random cell.
-     * @return List of revealed cell positions.
+     * Reveal one random cell.
+     * @return the position to reveal, or empty if tables are unset.
      */
-    private fun getCellsForRandomCell(): List<CellPosition> {
-        return originalTable?.let { orig ->
-            currentTable?.let { curr ->
-                // Call the repository to reveal a random cell
-                repository.revealRandomCell(curr, orig)
-            }
-        } ?: emptyList()
-    }
+    private fun revealRandomCell(): List<CellPosition> =
+        originalTable
+            ?.let { orig -> currentTable?.let { curr -> repository.revealRandomCell(curr, orig) } }
+            ?: emptyList()
 }

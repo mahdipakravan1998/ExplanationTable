@@ -1,102 +1,127 @@
 package com.example.explanationtable.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
-// Extension property to initialize DataStore with the name "settings".
-// This allows for a singleton-like access to DataStore on any Context instance.
-val Context.dataStore by preferencesDataStore(name = "settings")
+// -----------------------------------------------------------------------------
+// Extension property to lazily initialize a single DataStore instance per Context
+// -----------------------------------------------------------------------------
+private val Context.dataStore by preferencesDataStore(name = "settings")
 
 /**
- * DataStoreManager provides an interface for reading and updating application settings,
- * such as mute, theme, and diamond preferences using Android's DataStore.
+ * DataStoreManager
  *
- * @property context The Android context used to access the DataStore.
+ * Provides reactive Flows and suspend functions for reading/updating:
+ *  • Mute state
+ *  • Theme preference
+ *  • Diamond count
+ *
+ * @param context Android Context used to access the DataStore.
  */
 class DataStoreManager(private val context: Context) {
 
     companion object {
-        val IS_MUTED      = booleanPreferencesKey("is_muted")
-        val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
-        val DIAMONDS_KEY  = intPreferencesKey("diamonds")
+        // Preference Keys
+        private val KEY_IS_MUTED      = booleanPreferencesKey("is_muted")
+        private val KEY_IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
+        private val KEY_DIAMONDS      = intPreferencesKey("diamonds")
+
+        // Default Values
         private const val DEFAULT_DIAMONDS = 200
     }
 
+    // -----------------------------------------------------------------------------
+    // Public Flows
+    // -----------------------------------------------------------------------------
+
     /**
-     * Flow that emits the current mute state.
-     * Defaults to false if no value is set.
+     * Emits the current mute state.
+     * Defaults to false if not set.
      */
     val isMuted: Flow<Boolean> = context.dataStore.data
-        .map { preferences ->
-            preferences[IS_MUTED] ?: false
-        }
+        .map { prefs -> prefs[KEY_IS_MUTED] ?: false }
 
     /**
-     * Flow that emits the current theme preference.
-     * A null value indicates that no explicit theme preference has been set by the user.
+     * Emits the current theme preference:
+     *  • true  = dark theme enabled
+     *  • false = light theme enabled
+     *  • null  = user hasn’t set a preference
      */
     val isDarkTheme: Flow<Boolean?> = context.dataStore.data
-        .map { preferences ->
-            preferences[IS_DARK_THEME]
-        }
-
-    /** Flow that emits the current diamond count (default 200). */
-    val diamonds: Flow<Int> = context.dataStore.data
-        .map { prefs -> prefs[DIAMONDS_KEY] ?: DEFAULT_DIAMONDS }
+        .map { prefs -> prefs[KEY_IS_DARK_THEME] }
 
     /**
-     * Toggles the mute state in the DataStore.
-     * Reads the current mute state and then updates it to the opposite value.
+     * Emits the current diamond count.
+     * Defaults to [DEFAULT_DIAMONDS] if not set.
+     */
+    val diamonds: Flow<Int> = context.dataStore.data
+        .map { prefs -> prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS }
+
+    // -----------------------------------------------------------------------------
+    // Suspend Functions to Modify Preferences
+    // -----------------------------------------------------------------------------
+
+    /**
+     * Toggles the mute state.
+     *
+     * Reads current value and writes the opposite.
      */
     suspend fun toggleMute() {
-        context.dataStore.edit { preferences ->
-            val current = preferences[IS_MUTED] ?: false
-            preferences[IS_MUTED] = !current
+        context.dataStore.edit { prefs ->
+            val current = prefs[KEY_IS_MUTED] ?: false
+            prefs[KEY_IS_MUTED] = !current
         }
     }
 
     /**
-     * Explicitly sets the theme preference in the DataStore.
+     * Sets the theme preference explicitly.
      *
-     * @param isDark A Boolean flag indicating whether dark theme should be enabled.
+     * @param isDark true to enable dark theme, false for light theme
      */
     suspend fun setTheme(isDark: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[IS_DARK_THEME] = isDark
+        context.dataStore.edit { prefs ->
+            prefs[KEY_IS_DARK_THEME] = isDark
         }
     }
 
-    /** Returns the current diamond count, suspending until retrieved */
+    /**
+     * Retrieves the current diamond count once.
+     *
+     * @return current diamonds, or [DEFAULT_DIAMONDS] if unset
+     */
     suspend fun getDiamondCount(): Int =
         context.dataStore.data
-            .map { prefs -> prefs[DIAMONDS_KEY] ?: DEFAULT_DIAMONDS }
+            .map { prefs -> prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS }
             .first()
 
     /**
-     * Adds a specified amount of diamonds to the current count.
+     * Adds the given [amount] of diamonds.
      *
-     * @param amount The number of diamonds to add.
+     * @param amount Number to add (can be zero or negative).
      */
     suspend fun addDiamonds(amount: Int) {
         context.dataStore.edit { prefs ->
-            val current = prefs[DIAMONDS_KEY] ?: DEFAULT_DIAMONDS
-            prefs[DIAMONDS_KEY] = current + amount
+            val current = prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS
+            prefs[KEY_DIAMONDS] = current + amount
         }
     }
 
     /**
-     * Deducts the given amount of diamonds, never going below zero.
+     * Spends the given [amount] of diamonds, never dropping below zero.
+     *
+     * @param amount Number to deduct
      */
     suspend fun spendDiamonds(amount: Int) {
-        val current = getDiamondCount()
         context.dataStore.edit { prefs ->
-            prefs[DIAMONDS_KEY] = (current - amount).coerceAtLeast(0)
+            val current = prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS
+            prefs[KEY_DIAMONDS] = (current - amount).coerceAtLeast(0)
         }
     }
 }
