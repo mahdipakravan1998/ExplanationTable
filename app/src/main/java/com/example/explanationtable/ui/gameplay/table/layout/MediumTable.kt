@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
  * @param modifier    [Modifier] to be applied to the container for layout adjustments.
  */
 @Composable
-fun MediumTablePlaceholder(
+fun MediumTable(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {

@@ -28,7 +28,7 @@ private const val COLUMN_COUNT = 3   // Number of columns in the easy level
  * @param registerCellsCorrectlyPlacedCallback callback receiver for correctly-placed cell events
  */
 @Composable
-fun EasyThreeByFiveTable(
+fun EasyTable(
     isDarkTheme: Boolean,
     stageNumber: Int,
     modifier: Modifier = Modifier,

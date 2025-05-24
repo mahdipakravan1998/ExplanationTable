@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
  * @param modifier    Modifier to be applied to the composable, allowing for layout adjustments.
  */
 @Composable
-fun HardTablePlaceholder(
+fun HardTable(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
