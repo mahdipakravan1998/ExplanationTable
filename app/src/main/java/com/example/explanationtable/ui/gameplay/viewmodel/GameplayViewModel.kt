@@ -3,7 +3,7 @@ package com.example.explanationtable.ui.gameplay.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.explanationtable.model.CellPosition
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,9 +44,9 @@ class GameplayViewModel : ViewModel() {
 
     // ─── Table Data State ─────────────────────────────────────────────────────────
 
-    private val _originalTable = MutableStateFlow<EasyLevelTable?>(null)
+    private val _originalTable = MutableStateFlow<LevelTable?>(null)
     /** The immutable solution table for the current level. */
-    val originalTable: StateFlow<EasyLevelTable?> = _originalTable.asStateFlow()
+    val originalTable: StateFlow<LevelTable?> = _originalTable.asStateFlow()
 
     private val _currentTable = MutableStateFlow<MutableMap<CellPosition, List<String>>?>(null)
     /** The mutable cell-value map reflecting the player's current progress. */
@@ -109,7 +109,7 @@ class GameplayViewModel : ViewModel() {
      * @param current  The mutable map of current cell entries.
      */
     fun setTableData(
-        original: EasyLevelTable,
+        original: LevelTable,
         current: MutableMap<CellPosition, List<String>>
     ) {
         _originalTable.value = original

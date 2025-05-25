@@ -1,9 +1,9 @@
 package com.example.explanationtable.data.easy
 
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 
-val easyLevelTables: List<EasyLevelTable> = listOf(
-    EasyLevelTable(
+val easyLevelTables: List<LevelTable> = listOf(
+    LevelTable(
         id = 1,
         rows = mapOf(
             0 to mapOf(
@@ -33,7 +33,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 2,
         rows = mapOf(
             0 to mapOf(
@@ -63,7 +63,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 3,
         rows = mapOf(
             0 to mapOf(
@@ -93,7 +93,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 4,
         rows = mapOf(
             0 to mapOf(
@@ -123,7 +123,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 5,
         rows = mapOf(
             0 to mapOf(
@@ -153,7 +153,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 6,
         rows = mapOf(
             0 to mapOf(
@@ -183,7 +183,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 7,
         rows = mapOf(
             0 to mapOf(
@@ -213,7 +213,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 8,
         rows = mapOf(
             0 to mapOf(
@@ -243,7 +243,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 9,
         rows = mapOf(
             0 to mapOf(
@@ -273,7 +273,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 10,
         rows = mapOf(
             0 to mapOf(
@@ -303,7 +303,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 11,
         rows = mapOf(
             0 to mapOf(
@@ -333,7 +333,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 12,
         rows = mapOf(
             0 to mapOf(
@@ -363,7 +363,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 13,
         rows = mapOf(
             0 to mapOf(
@@ -393,7 +393,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 14,
         rows = mapOf(
             0 to mapOf(
@@ -423,7 +423,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 15,
         rows = mapOf(
             0 to mapOf(
@@ -453,7 +453,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 16,
         rows = mapOf(
             0 to mapOf(
@@ -483,7 +483,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 17,
         rows = mapOf(
             0 to mapOf(
@@ -513,7 +513,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 18,
         rows = mapOf(
             0 to mapOf(
@@ -543,7 +543,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 19,
         rows = mapOf(
             0 to mapOf(
@@ -573,7 +573,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 20,
         rows = mapOf(
             0 to mapOf(
@@ -603,7 +603,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 21,
         rows = mapOf(
             0 to mapOf(
@@ -633,7 +633,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 22,
         rows = mapOf(
             0 to mapOf(
@@ -663,7 +663,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 23,
         rows = mapOf(
             0 to mapOf(
@@ -693,7 +693,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 24,
         rows = mapOf(
             0 to mapOf(
@@ -723,7 +723,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 25,
         rows = mapOf(
             0 to mapOf(
@@ -753,7 +753,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 26,
         rows = mapOf(
             0 to mapOf(
@@ -783,7 +783,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 27,
         rows = mapOf(
             0 to mapOf(
@@ -813,7 +813,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 28,
         rows = mapOf(
             0 to mapOf(
@@ -843,7 +843,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 29,
         rows = mapOf(
             0 to mapOf(
@@ -873,7 +873,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 30,
         rows = mapOf(
             0 to mapOf(
@@ -903,7 +903,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 31,
         rows = mapOf(
             0 to mapOf(
@@ -933,7 +933,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 32,
         rows = mapOf(
             0 to mapOf(
@@ -963,7 +963,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 33,
         rows = mapOf(
             0 to mapOf(
@@ -993,7 +993,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 34,
         rows = mapOf(
             0 to mapOf(
@@ -1023,7 +1023,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 35,
         rows = mapOf(
             0 to mapOf(
@@ -1053,7 +1053,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 36,
         rows = mapOf(
             0 to mapOf(
@@ -1083,7 +1083,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 37,
         rows = mapOf(
             0 to mapOf(
@@ -1113,7 +1113,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 38,
         rows = mapOf(
             0 to mapOf(
@@ -1143,7 +1143,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 39,
         rows = mapOf(
             0 to mapOf(
@@ -1173,7 +1173,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 40,
         rows = mapOf(
             0 to mapOf(
@@ -1203,7 +1203,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 41,
         rows = mapOf(
             0 to mapOf(
@@ -1233,7 +1233,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 42,
         rows = mapOf(
             0 to mapOf(
@@ -1263,7 +1263,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 43,
         rows = mapOf(
             0 to mapOf(
@@ -1293,7 +1293,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 44,
         rows = mapOf(
             0 to mapOf(
@@ -1323,7 +1323,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 45,
         rows = mapOf(
             0 to mapOf(
@@ -1353,7 +1353,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 46,
         rows = mapOf(
             0 to mapOf(
@@ -1383,7 +1383,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 47,
         rows = mapOf(
             0 to mapOf(
@@ -1413,7 +1413,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 48,
         rows = mapOf(
             0 to mapOf(
@@ -1443,7 +1443,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 49,
         rows = mapOf(
             0 to mapOf(
@@ -1473,7 +1473,7 @@ val easyLevelTables: List<EasyLevelTable> = listOf(
             )
         )
     ),
-    EasyLevelTable(
+    LevelTable(
         id = 50,
         rows = mapOf(
             0 to mapOf(

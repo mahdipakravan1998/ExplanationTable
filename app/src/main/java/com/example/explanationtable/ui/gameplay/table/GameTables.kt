@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.Difficulty
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.ui.gameplay.table.layout.EasyTable
 import com.example.explanationtable.ui.gameplay.table.layout.HardTable
 import com.example.explanationtable.ui.gameplay.table.layout.MediumTable
@@ -35,7 +35,7 @@ fun GameTable(
     stageNumber: Int,
     modifier: Modifier = Modifier,
     onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> },
-    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
+    onTableDataInitialized: (originalTableData: LevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
     registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
     when (difficulty) {

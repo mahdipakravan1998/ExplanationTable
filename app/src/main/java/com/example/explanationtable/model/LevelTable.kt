@@ -1,4 +1,4 @@
-package com.example.explanationtable.model.easy
+package com.example.explanationtable.model
 
 /**
  * Represents a table for an easy level configuration.
@@ -9,7 +9,7 @@ package com.example.explanationtable.model.easy
  *         - The inner map key is the column identifier (Int).
  *         - The inner map value is a list of strings representing the cell values.
  */
-data class EasyLevelTable(
+data class LevelTable(
     val id: Int,
     val rows: Map<Int, Map<Int, List<String>>>
 )

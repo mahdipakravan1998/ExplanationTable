@@ -1,6 +1,6 @@
 package com.example.explanationtable.ui.hint.logic
 
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.model.CellPosition
 
 /**
@@ -12,7 +12,7 @@ import com.example.explanationtable.model.CellPosition
  */
 fun revealRandomCategory(
     currentTableData: MutableMap<CellPosition, List<String>>,
-    originalTableData: EasyLevelTable
+    originalTableData: LevelTable
 ): List<CellPosition> {
 
     // Define categories of cells based on their positions

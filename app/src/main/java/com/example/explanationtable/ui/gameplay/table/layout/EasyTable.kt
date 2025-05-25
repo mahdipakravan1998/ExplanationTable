@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.model.CellPosition
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.repository.TableRepository
 import com.example.explanationtable.ui.gameplay.table.components.cells.ColoredSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.TextSeparatedSquare
@@ -33,7 +33,7 @@ fun EasyTable(
     stageNumber: Int,
     modifier: Modifier = Modifier,
     onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> },
-    onTableDataInitialized: (originalTableData: EasyLevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
+    onTableDataInitialized: (originalTableData: LevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
     registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
     // Obtain or create the TableViewModel for this composable

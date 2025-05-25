@@ -5,7 +5,7 @@ import com.example.explanationtable.data.DataStoreManager
 import com.example.explanationtable.data.getHintOptions as fetchHintOptions
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.HintOption
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.ui.hint.logic.revealRandomCategory as logicRevealRandomCategory
 import com.example.explanationtable.ui.hint.logic.revealRandomCell as logicRevealRandomCell
 
@@ -36,7 +36,7 @@ class HintRepository(private val context: Context) {
      */
     fun revealRandomCategory(
         currentTableData: MutableMap<CellPosition, List<String>>,
-        originalTableData: EasyLevelTable
+        originalTableData: LevelTable
     ): List<CellPosition> =
         logicRevealRandomCategory(currentTableData, originalTableData)
 
@@ -49,7 +49,7 @@ class HintRepository(private val context: Context) {
      */
     fun revealRandomCell(
         currentTableData: MutableMap<CellPosition, List<String>>,
-        originalTableData: EasyLevelTable
+        originalTableData: LevelTable
     ): List<CellPosition> =
         logicRevealRandomCell(currentTableData, originalTableData)
 

@@ -2,7 +2,7 @@ package com.example.explanationtable.repository
 
 import com.example.explanationtable.data.easy.easyLevelTables
 import com.example.explanationtable.model.CellPosition
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.domain.usecase.calculateFallbackAccuracy
 import com.example.explanationtable.ui.gameplay.table.utils.solveWithAStar
 import kotlin.random.Random
@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 class TableRepository {
 
     /** Find the table for [stageNumber], or default to first. */
-    fun getOriginalTable(stageNumber: Int): EasyLevelTable =
+    fun getOriginalTable(stageNumber: Int): LevelTable =
         easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
 
     /**
@@ -26,7 +26,7 @@ class TableRepository {
      * @return a list of pairs where each pair contains the cell position and its associated data.
      */
     fun getMovableData(
-        originalTable: EasyLevelTable,
+        originalTable: LevelTable,
         fixedPositions: Set<CellPosition>
     ): List<Pair<CellPosition, String>> {
         // Transform the nested table structure into a flat list of movable cell data.

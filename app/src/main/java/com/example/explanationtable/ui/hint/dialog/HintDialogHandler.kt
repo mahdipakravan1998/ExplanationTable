@@ -3,7 +3,7 @@ package com.example.explanationtable.ui.hint.dialog
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.model.Difficulty
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.ui.hint.viewmodel.HintViewModel
 
@@ -25,7 +25,7 @@ fun HintDialogHandler(
     showDialog: Boolean,
     isDarkTheme: Boolean,
     difficulty: Difficulty,
-    originalTableState: EasyLevelTable?,
+    originalTableState: LevelTable?,
     currentTableState: MutableMap<CellPosition, List<String>>?,
     onDismiss: () -> Unit,
     onCellsRevealed: (List<CellPosition>) -> Unit

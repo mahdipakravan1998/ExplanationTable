@@ -2,7 +2,7 @@ package com.example.explanationtable.ui.gameplay.table.utils
 
 import androidx.compose.runtime.MutableState
 import com.example.explanationtable.model.CellPosition
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -21,7 +21,7 @@ fun handleCellClick(
     secondSelectedCellState: MutableState<CellPosition?>,
     isSelectionCompleteState: MutableState<Boolean>,
     playerMovesState: MutableState<Int>,
-    originalTableData: EasyLevelTable,
+    originalTableData: LevelTable,
     movablePositions: List<CellPosition>,
     transitioningCells: MutableMap<CellPosition, List<String>>,
     correctMoveCountState: MutableState<Int>,

@@ -7,7 +7,7 @@ import com.example.explanationtable.R
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.HintOption
-import com.example.explanationtable.model.easy.EasyLevelTable
+import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.repository.HintRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -29,7 +29,7 @@ class HintViewModel(application: Application) : AndroidViewModel(application) {
     val selectedCells: SharedFlow<List<CellPosition>> = _selectedCells.asSharedFlow()
 
     // Backing storage for the game’s tables
-    private var originalTable: EasyLevelTable? = null
+    private var originalTable: LevelTable? = null
     private var currentTable: MutableMap<CellPosition, List<String>>? = null
 
     // Current difficulty setting (default EASY)
@@ -48,7 +48,7 @@ class HintViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Store the original completed table for reference when revealing hints.
      */
-    fun setOriginalTableState(table: EasyLevelTable?) {
+    fun setOriginalTableState(table: LevelTable?) {
         originalTable = table
     }
 
