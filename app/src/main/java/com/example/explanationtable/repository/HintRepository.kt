@@ -2,73 +2,74 @@ package com.example.explanationtable.repository
 
 import android.content.Context
 import com.example.explanationtable.data.DataStoreManager
-import com.example.explanationtable.data.getHintOptions as fetchHintOptions
+import com.example.explanationtable.data.getHintOptions
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.LevelTable
 import kotlinx.coroutines.flow.Flow
-import com.example.explanationtable.ui.hint.logic.revealRandomCategory as logicRevealRandomCategory
-import com.example.explanationtable.ui.hint.logic.revealRandomCell as logicRevealRandomCell
+import com.example.explanationtable.ui.hint.logic.revealRandomCategory as revealRandomCategoryLogic
+import com.example.explanationtable.ui.hint.logic.revealRandomCell as revealRandomCellLogic
 
 /**
- * Single source of truth for hint-related data and business logic.
+ * Repository responsible for hint-related operations, including data retrieval
+ * and business logic for revealing hints.
  *
- * @param context Application context for accessing DataStore and resources.
+ * @param context Application context for accessing resources and DataStore.
  */
 class HintRepository(private val context: Context) {
 
-    // Lazily initialized manager for user preferences and currency (e.g., diamonds).
+    // Lazily initialized manager for user preferences and in-game currency (diamonds).
     private val dataStoreManager: DataStoreManager by lazy { DataStoreManager(context) }
 
     /**
-     * Fetches all available hint options (type, cost, description) from the data layer.
-     *
-     * @return A list of [HintOption]s that the UI can display.
+     * Retrieves all available hint options from the data layer.
+     * @return List of [HintOption] instances describing each hint's type, cost, and description.
      */
     fun getHintOptions(): List<HintOption> =
-        fetchHintOptions(context)
+        getHintOptions(context)
 
     /**
-     * Reveals an entire random category (row or column) of cells.
-     *
-     * @param currentTableData Map of already-revealed cells to their values.
-     * @param originalTableData The complete solution table for reference.
-     * @return The list of [CellPosition]s that were newly revealed.
+     * Reveals a random category (entire row or column) from the puzzle as a hint.
+     * @param currentTable Map of already-revealed cells with their values.
+     * @param originalTable The complete solution table for reference.
+     * @return List of [CellPosition] objects representing newly revealed cells.
      */
     fun revealRandomCategory(
-        currentTableData: MutableMap<CellPosition, List<String>>,
-        originalTableData: LevelTable
+        currentTable: MutableMap<CellPosition, List<String>>,
+        originalTable: LevelTable
     ): List<CellPosition> =
-        logicRevealRandomCategory(currentTableData, originalTableData)
+        revealRandomCategoryLogic(currentTable, originalTable)
 
     /**
-     * Reveals a single random cell as a hint.
-     *
-     * @param currentTableData Map of already-revealed cells to their values.
-     * @param originalTableData The complete solution table for reference.
-     * @return A list containing the single [CellPosition] that was revealed.
+     * Reveals a single random cell from the puzzle as a hint.
+     * @param currentTable Map of already-revealed cells with their values.
+     * @param originalTable The complete solution table for reference.
+     * @return List containing the single [CellPosition] that was revealed.
      */
     fun revealRandomCell(
-        currentTableData: MutableMap<CellPosition, List<String>>,
-        originalTableData: LevelTable
+        currentTable: MutableMap<CellPosition, List<String>>,
+        originalTable: LevelTable
     ): List<CellPosition> =
-        logicRevealRandomCell(currentTableData, originalTableData)
+        revealRandomCellLogic(currentTable, originalTable)
 
+    /**
+     * Flow emitting the user's current diamond balance.
+     */
     val diamondsFlow: Flow<Int> = dataStoreManager.diamonds
 
     /**
-     * Reads the user's current diamond balance.
-     *
-     * @return The total number of diamonds available.
+     * Retrieves the user's current diamond count.
+     * @return Total number of diamonds available.
      */
     suspend fun getDiamondCount(): Int =
         dataStoreManager.getDiamondCount()
 
     /**
-     * Deducts a specified amount of diamonds from the user's balance.
-     *
-     * @param amount The number of diamonds to spend.
+     * Deducts a specified number of diamonds from the user's balance.
+     * @param amount Number of diamonds to deduct.
      */
-    suspend fun spendDiamonds(amount: Int) =
+    suspend fun spendDiamonds(amount: Int) {
+        // Ensures the deduction is applied via DataStoreManager.
         dataStoreManager.spendDiamonds(amount)
+    }
 }

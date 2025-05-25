@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
@@ -27,15 +28,19 @@ import com.example.explanationtable.ui.theme.TextDarkMode
 import com.example.explanationtable.utils.toPersianDigits
 
 /**
- * Displays an interactive hint option with a gem fee and hint text.
- * Tapping the item triggers a subtle press animation and invokes [onClick].
+ * Renders a tappable hint option displaying a gem fee and hint text.
  *
- * @param modifier        Optional [Modifier] for this component.
- * @param hintOption      Provides [displayText] and a fee map per [Difficulty].
- * @param difficulty      Current difficulty, used to look up the fee.
+ * On press:
+ *  1. Applies a subtle downward offset (or disabled offset).
+ *  2. On release, resets the offset and invokes [onClick].
+ *
+ * @param modifier        Optional [Modifier] for layout customization.
+ * @param hintOption      Provides the text and fee mapping.
+ * @param difficulty      Current difficulty level to select the fee.
  * @param isDarkTheme     Whether the dark theme is active.
- * @param backgroundColor Inner background color for the hint content.
- * @param onClick         Callback invoked when the user taps the item.
+ * @param backgroundColor Inner background color of the content box.
+ * @param balance         Current user gem balance (to disable if insufficient).
+ * @param onClick         Lambda to invoke when the item is tapped.
  */
 @Composable
 fun HintOptionItem(
@@ -47,86 +52,87 @@ fun HintOptionItem(
     balance: Int,
     onClick: () -> Unit
 ) {
-    // -- Fee lookup -------------------------------------------------------------
-    // Get the fee for the current difficulty (default to 0 if missing).
-    val fee = remember(difficulty) { hintOption.feeMap[difficulty] ?: 0 }
+    // --- Compute the fee for the current difficulty (default 0 if absent) ---
+    val fee by remember(hintOption, difficulty) {
+        derivedStateOf { hintOption.feeMap[difficulty] ?: 0 }
+    }
 
-    // -- Theme-based colors -----------------------------------------------------
+    // --- Determine enabled/disabled state based on balance ---
+    val isDisabled by remember(balance, fee) {
+        derivedStateOf { balance < fee }
+    }
+
+    // --- Colors based on theme ---
     val borderColor = if (isDarkTheme) BorderDark else BorderLight
     val textColor = if (isDarkTheme) TextDarkMode else Eel
 
-    val isDisabled = balance < fee
-
-    // -- Press state & animation -----------------------------------------------
+    // --- Pressed state and animated vertical offset ---
     var isPressed by remember { mutableStateOf(false) }
-    val verticalOffset by animateDpAsState(
-        targetValue = if (isPressed || isDisabled) HintOptionDefaults.PRESSED_OFFSET else 0.dp,
-        animationSpec = tween(durationMillis = HintOptionDefaults.ANIMATION_DURATION)
+    val offsetY by animateDpAsState(
+        targetValue = if (isPressed || isDisabled) Defaults.PressedOffset else 0.dp,
+        animationSpec = tween(durationMillis = Defaults.AnimationDuration)
     )
 
-    // -- Combined modifier: size, gesture, and animation ------------------------
-    val interactiveModifier = modifier
+    // --- Modifier that handles full-width sizing, height, and tap gestures ---
+    val tapModifier = modifier
         .fillMaxWidth()
-        .height(HintOptionDefaults.ITEM_HEIGHT)
-        .pointerInput(Unit) {
+        .height(Defaults.ItemHeight)
+        .pointerInput(isDisabled) {
             detectTapGestures(
                 onPress = {
-                    if (isDisabled) return@detectTapGestures
-
-                    // Press begins: animate down
-                    isPressed = true
-                    // Await release or cancellation
-                    tryAwaitRelease()
-                    // Press ends: animate up, then invoke click
-                    isPressed = false
-                    onClick()
+                    if (!isDisabled) {
+                        isPressed = true             // start press animation
+                        tryAwaitRelease()            // wait for lift or cancel
+                        isPressed = false            // end press animation
+                        onClick()                    // trigger callback
+                    }
                 }
             )
         }
 
-    // -- Composable layout -----------------------------------------------------
+    // --- Root container that stacks shadow, border, and content layers ---
     Box(
-        modifier = interactiveModifier,
+        modifier = tapModifier,
         contentAlignment = Alignment.TopCenter
     ) {
-        // 1) Static shadow layer for depth
+        // 1) Static “shadow” layer for depth when unpressed
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(y = HintOptionDefaults.PRESSED_OFFSET)
-                .clip(RoundedCornerShape(HintOptionDefaults.CORNER_RADIUS))
+                .offset(y = Defaults.PressedOffset)
+                .clip(RoundedCornerShape(Defaults.CornerRadius))
                 .background(borderColor)
         )
 
-        // 2) Animated border + content layers
+        // 2) Moving border layer and inner content
         Box {
-            // Border: moves with press animation
+            // Border moves up/down with press
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .offset(y = verticalOffset)
-                    .clip(RoundedCornerShape(HintOptionDefaults.CORNER_RADIUS))
+                    .offset(y = offsetY)
+                    .clip(RoundedCornerShape(Defaults.CornerRadius))
                     .background(borderColor)
             )
 
-            // Inner content: fee + text
+            // Inner content: fee + hint text
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(HintOptionDefaults.BORDER_WIDTH)
-                    .offset(y = verticalOffset)
-                    .clip(RoundedCornerShape(HintOptionDefaults.CORNER_RADIUS - HintOptionDefaults.BORDER_WIDTH))
+                    .offset(y = offsetY)
+                    .padding(Defaults.BorderWidth)
+                    .clip(RoundedCornerShape(Defaults.CornerRadius - Defaults.BorderWidth))
                     .background(backgroundColor),
                 contentAlignment = Alignment.Center
             ) {
                 Row(
-                    modifier = Modifier.padding(HintOptionDefaults.CONTENT_PADDING),
+                    modifier = Modifier.padding(Defaults.ContentPadding),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Fee display: Persian digits + gem icon
+                    // --- Fee display (Persian digits + gem icon) ---
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(end = HintOptionDefaults.ICON_PADDING)
+                        modifier = Modifier.padding(end = Defaults.IconPadding)
                     ) {
                         Text(
                             text = fee.toPersianDigits().toString(),
@@ -135,14 +141,14 @@ fun HintOptionItem(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Image(
-                            painter = painterResource(id = R.drawable.ic_gem),
-                            contentDescription = null
+                            painter = painterResource(R.drawable.ic_gem),
+                            contentDescription = "Gem icon"
                         )
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Hint text
+                    // --- Hint text label ---
                     Text(
                         text = hintOption.displayText,
                         style = MaterialTheme.typography.titleMedium,
@@ -150,11 +156,12 @@ fun HintOptionItem(
                     )
                 }
 
+                // Overlay to indicate disabled state
                 if (isDisabled) {
                     Box(
-                        Modifier
+                        modifier = Modifier
                             .matchParentSize()
-                            .clip(RoundedCornerShape(HintOptionDefaults.CORNER_RADIUS - HintOptionDefaults.BORDER_WIDTH))
+                            .clip(RoundedCornerShape(Defaults.CornerRadius - Defaults.BorderWidth))
                             .background(borderColor.copy(alpha = 0.5f))
                     )
                 }
@@ -164,14 +171,14 @@ fun HintOptionItem(
 }
 
 /**
- * Default dimensions and animation specs for [HintOptionItem].
+ * Shared dimension, shape, and animation constants.
  */
-private object HintOptionDefaults {
-    val ITEM_HEIGHT = 72.dp
-    val CORNER_RADIUS = 12.dp
-    val BORDER_WIDTH = 2.dp
-    val PRESSED_OFFSET = 2.dp
-    val ANIMATION_DURATION = 30 // ms
-    val CONTENT_PADDING = 16.dp
-    val ICON_PADDING = 8.dp
+private object Defaults {
+    val ItemHeight:    Dp = 72.dp
+    val CornerRadius:  Dp = 12.dp
+    val BorderWidth:   Dp = 2.dp
+    val PressedOffset: Dp = 2.dp
+    const val AnimationDuration: Int = 30    // milliseconds
+    val ContentPadding: Dp = 16.dp
+    val IconPadding:    Dp = 8.dp
 }

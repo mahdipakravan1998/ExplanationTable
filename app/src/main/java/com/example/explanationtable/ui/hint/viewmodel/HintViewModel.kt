@@ -9,118 +9,139 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.repository.HintRepository
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel responsible for managing hint logic and state.
+ * ViewModel responsible for managing hint logic, difficulty, and diamond balance.
  */
 class HintViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Repository for diamond balance and reveal logic
+    // Repository handling diamond logic and reveal algorithms.
     private val repository = HintRepository(application)
 
-    // Exposed flow of available hint options
-    private val _hintOptions = MutableStateFlow<List<HintOption>>(emptyList())
-    val hintOptions: StateFlow<List<HintOption>> = _hintOptions.asStateFlow()
-
-    // Exposed flow of cells to reveal when a hint is used
-    private val _selectedCells = MutableSharedFlow<List<CellPosition>>(replay = 0)
-    val selectedCells: SharedFlow<List<CellPosition>> = _selectedCells.asSharedFlow()
-
-    // Backing storage for the game’s tables
-    private var originalTable: LevelTable? = null
-    private var currentTable: MutableMap<CellPosition, List<String>>? = null
-
-    // Current difficulty setting (default EASY)
+    // --- Difficulty State ---
     private val _difficulty = MutableStateFlow(Difficulty.EASY)
     val difficulty: StateFlow<Difficulty> = _difficulty.asStateFlow()
 
+    // --- Available Hint Options ---
+    private val _hintOptions = MutableStateFlow<List<HintOption>>(emptyList())
+    val hintOptions: StateFlow<List<HintOption>> = _hintOptions.asStateFlow()
+
+    // --- Diamond Balance ---
+    val diamondBalance: StateFlow<Int> = repository
+        .diamondsFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = 0
+        )
+
+    // --- Cells to Reveal Flow ---
+    private val _selectedCells = MutableSharedFlow<List<CellPosition>>()
+    val selectedCells: SharedFlow<List<CellPosition>> = _selectedCells.asSharedFlow()
+
+    // --- Backing for Puzzle Tables ---
+    private var originalTable: LevelTable? = null
+    private var currentTable: MutableMap<CellPosition, List<String>>? = null
+
     /**
-     * Asynchronously load and emit available hint options from the repository.
+     * Loads hint options from the repository asynchronously.
      */
-    fun loadHintOptions() {
-        viewModelScope.launch {
-            _hintOptions.value = repository.getHintOptions()
-        }
+    fun loadHintOptions() = viewModelScope.launch {
+        _hintOptions.value = repository.getHintOptions()
     }
 
     /**
-     * Store the original completed table for reference when revealing hints.
+     * Sets the completed solution table for reference when revealing hints.
      */
     fun setOriginalTableState(table: LevelTable?) {
         originalTable = table
     }
 
     /**
-     * Store the current, partially-filled table for comparison when revealing hints.
+     * Sets the player's current (partially-filled) table state.
      */
     fun setCurrentTableState(table: MutableMap<CellPosition, List<String>>?) {
         currentTable = table
     }
 
     /**
-     * Update the difficulty level, affecting diamond costs.
+     * Updates the difficulty level, which affects the cost of hints.
      */
-    fun setDifficulty(diff: Difficulty) {
-        _difficulty.value = diff
+    fun setDifficulty(level: Difficulty) {
+        _difficulty.value = level
     }
 
-    val diamondBalance: StateFlow<Int> = repository
-        .diamondsFlow
-        .stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            initialValue = 0
-        )
-
     /**
-     * Handle when a user taps a hint option:
-     * 1. Check diamond balance
-     * 2. Deduct fee
-     * 3. Compute which cells to reveal
-     * 4. Emit those cells to the UI
+     * Handles a user selecting a hint option:
+     *   1. Verify sufficient diamond balance.
+     *   2. Deduct the appropriate cost.
+     *   3. Compute which cells to reveal.
+     *   4. Emit those cells to the UI.
      */
-    fun onOptionSelected(option: HintOption) {
-        viewModelScope.launch {
-            val cost = option.feeMap[_difficulty.value] ?: 0
-            val balance = repository.getDiamondCount()
+    fun onOptionSelected(option: HintOption) = viewModelScope.launch {
+        val cost = option.feeMap[_difficulty.value] ?: 0
+        val balance = repository.getDiamondCount()
 
-            // Abort if insufficient diamonds
-            if (balance < cost) return@launch
-
-            // Deduct diamonds
-            repository.spendDiamonds(cost)
-
-            // Determine which cells to reveal based on option text
-            val context = getApplication<Application>()
-            val toReveal = when (option.displayText) {
-                context.getString(R.string.hint_single_word)    -> revealRandomCategory()
-                context.getString(R.string.hint_single_letter)  -> revealRandomCell()
-                context.getString(R.string.hint_complete_stage) -> emptyList()
-                else                                            -> emptyList()
-            }
-
-            // Notify observers which cells should be revealed
-            _selectedCells.emit(toReveal)
+        if (balance < cost) {
+            // Not enough diamonds: no action taken.
+            return@launch
         }
+
+        // Deduct diamonds for this hint.
+        repository.spendDiamonds(cost)
+
+        // Cache localized strings once for comparison.
+        val ctx = getApplication<Application>()
+        val singleWordKey    = ctx.getString(R.string.hint_single_word)
+        val singleLetterKey  = ctx.getString(R.string.hint_single_letter)
+        val completeStageKey = ctx.getString(R.string.hint_complete_stage)
+
+        // Decide which cells to reveal based on the selected option.
+        val cellsToReveal = when (option.displayText) {
+            singleWordKey    -> revealRandomCategory()
+            singleLetterKey  -> revealRandomCell()
+            completeStageKey -> emptyList()
+            else              -> emptyList()
+        }
+
+        // Emit positions to reveal in the UI.
+        _selectedCells.emit(cellsToReveal)
     }
 
     /**
-     * Reveal all cells in one random category.
-     * @return list of positions to reveal, or empty if tables are unset.
+     * Reveal all cells belonging to one random category.
+     *
+     * @return List of positions to reveal, or empty if tables are unset.
      */
     private fun revealRandomCategory(): List<CellPosition> =
         originalTable
-            ?.let { orig -> currentTable?.let { curr -> repository.revealRandomCategory(curr, orig) } }
+            ?.let { orig ->
+                currentTable?.let { curr ->
+                    repository.revealRandomCategory(curr, orig)
+                }
+            }
             ?: emptyList()
 
     /**
-     * Reveal one random cell.
-     * @return the position to reveal, or empty if tables are unset.
+     * Reveal one random cell from the puzzle.
+     *
+     * @return Single-element list of the chosen position, or empty if tables are unset.
      */
     private fun revealRandomCell(): List<CellPosition> =
         originalTable
-            ?.let { orig -> currentTable?.let { curr -> repository.revealRandomCell(curr, orig) } }
+            ?.let { orig ->
+                currentTable?.let { curr ->
+                    repository.revealRandomCell(curr, orig)
+                }
+            }
             ?: emptyList()
 }
