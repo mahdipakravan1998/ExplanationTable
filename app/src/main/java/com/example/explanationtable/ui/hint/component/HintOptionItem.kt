@@ -60,7 +60,7 @@ fun HintOptionItem(
     // -- Press state & animation -----------------------------------------------
     var isPressed by remember { mutableStateOf(false) }
     val verticalOffset by animateDpAsState(
-        targetValue = if (isPressed) HintOptionDefaults.PRESSED_OFFSET else 0.dp,
+        targetValue = if (isPressed || isDisabled) HintOptionDefaults.PRESSED_OFFSET else 0.dp,
         animationSpec = tween(durationMillis = HintOptionDefaults.ANIMATION_DURATION)
     )
 
