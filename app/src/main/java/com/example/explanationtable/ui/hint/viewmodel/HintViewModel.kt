@@ -66,6 +66,14 @@ class HintViewModel(application: Application) : AndroidViewModel(application) {
         _difficulty.value = diff
     }
 
+    val diamondBalance: StateFlow<Int> = repository
+        .diamondsFlow
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            initialValue = 0
+        )
+
     /**
      * Handle when a user taps a hint option:
      * 1. Check diamond balance

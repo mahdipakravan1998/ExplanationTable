@@ -48,6 +48,7 @@ fun HintDialog(
     isDarkTheme: Boolean,
     difficulty: Difficulty,
     hintOptions: List<HintOption>,
+    balance: Int,
     onOptionSelected: (HintOption) -> Unit
 ) {
     // Only render when requested
@@ -111,6 +112,7 @@ fun HintDialog(
                         difficulty = difficulty,
                         isDarkTheme = isDarkTheme,
                         backgroundColor = containerColor,
+                        balance = balance,
                         onClick = { onOptionSelected(option) }
                     )
                     // Add spacing between items, but not after the last one

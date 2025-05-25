@@ -6,6 +6,7 @@ import com.example.explanationtable.data.getHintOptions as fetchHintOptions
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.LevelTable
+import kotlinx.coroutines.flow.Flow
 import com.example.explanationtable.ui.hint.logic.revealRandomCategory as logicRevealRandomCategory
 import com.example.explanationtable.ui.hint.logic.revealRandomCell as logicRevealRandomCell
 
@@ -52,6 +53,8 @@ class HintRepository(private val context: Context) {
         originalTableData: LevelTable
     ): List<CellPosition> =
         logicRevealRandomCell(currentTableData, originalTableData)
+
+    val diamondsFlow: Flow<Int> = dataStoreManager.diamonds
 
     /**
      * Reads the user's current diamond balance.

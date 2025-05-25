@@ -55,6 +55,8 @@ fun HintDialogHandler(
     // Observe the hint options provided by the ViewModel
     val hintOptions by viewModel.hintOptions.collectAsState()
 
+    val balance by viewModel.diamondBalance.collectAsState()
+
     // Render the Hint Dialog with the required parameters and actions
     HintDialog(
         showDialog = showDialog,
@@ -62,6 +64,7 @@ fun HintDialogHandler(
         isDarkTheme = isDarkTheme,
         difficulty = difficulty,
         hintOptions = hintOptions,
+        balance = balance,
         onOptionSelected = { selectedOption ->
             // Perform the hint action by passing the selected option to the ViewModel
             viewModel.onOptionSelected(selectedOption)

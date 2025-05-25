@@ -44,6 +44,7 @@ fun HintOptionItem(
     difficulty: Difficulty,
     isDarkTheme: Boolean,
     backgroundColor: Color,
+    balance: Int,
     onClick: () -> Unit
 ) {
     // -- Fee lookup -------------------------------------------------------------
@@ -53,6 +54,8 @@ fun HintOptionItem(
     // -- Theme-based colors -----------------------------------------------------
     val borderColor = if (isDarkTheme) BorderDark else BorderLight
     val textColor = if (isDarkTheme) TextDarkMode else Eel
+
+    val isDisabled = balance < fee
 
     // -- Press state & animation -----------------------------------------------
     var isPressed by remember { mutableStateOf(false) }
@@ -68,6 +71,8 @@ fun HintOptionItem(
         .pointerInput(Unit) {
             detectTapGestures(
                 onPress = {
+                    if (isDisabled) return@detectTapGestures
+
                     // Press begins: animate down
                     isPressed = true
                     // Await release or cancellation
@@ -142,6 +147,15 @@ fun HintOptionItem(
                         text = hintOption.displayText,
                         style = MaterialTheme.typography.titleMedium,
                         color = textColor
+                    )
+                }
+
+                if (isDisabled) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(HintOptionDefaults.CORNER_RADIUS - HintOptionDefaults.BORDER_WIDTH))
+                            .background(borderColor.copy(alpha = 0.5f))
                     )
                 }
             }
