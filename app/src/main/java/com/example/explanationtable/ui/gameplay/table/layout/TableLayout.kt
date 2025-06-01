@@ -115,6 +115,7 @@ fun TableLayout(
                         // 2) Already correctly placed by the player
                         pos in viewModel.correctlyPlacedCells -> {
                             SquareWithDirectionalSign(
+                                difficulty = difficulty,
                                 isDarkTheme = isDarkTheme,
                                 position = pos,
                                 shuffledTableData = viewModel.correctlyPlacedCells,
@@ -129,6 +130,7 @@ fun TableLayout(
                         // 3) Cells currently animating/transitioning
                         pos in viewModel.transitioningCells -> {
                             SquareWithDirectionalSign(
+                                difficulty = difficulty,
                                 isDarkTheme = isDarkTheme,
                                 position = pos,
                                 shuffledTableData = viewModel.transitioningCells,
@@ -147,6 +149,7 @@ fun TableLayout(
                                     || pos == viewModel.secondSelectedCell.value
 
                             SquareWithDirectionalSign(
+                                difficulty = difficulty,
                                 isDarkTheme = isDarkTheme,
                                 position = pos,
                                 shuffledTableData = viewModel.currentTableData,

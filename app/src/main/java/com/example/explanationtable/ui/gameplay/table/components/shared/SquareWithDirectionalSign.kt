@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.model.CellPosition
+import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.gameplay.table.components.cells.BrightGreenSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.StackedSquare3D
 import com.example.explanationtable.ui.gameplay.table.components.directions.LeftDownArrow
@@ -51,6 +52,7 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun SquareWithDirectionalSign(
+    difficulty: Difficulty,
     isDarkTheme: Boolean,
     position: CellPosition,
     shuffledTableData: Map<CellPosition, List<String>>?,
@@ -156,51 +158,87 @@ fun SquareWithDirectionalSign(
         }
 
         // Conditionally render a directional sign based on the cell's position.
-        when (position) {
-            CellPosition(0, 1) -> {
-                LeftDownArrow(
-                    isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect,
-                    modifier = Modifier
-                        .size(signSize)
-                        .align(Alignment.TopEnd)
-                        .offset(y = pressOffsetDp)
-                        .padding(end = 4.dp, top = 16.dp)
-                )
+        when (difficulty) {
+            Difficulty.EASY -> {
+                when (position) {
+                    CellPosition(0, 1) -> {
+                        LeftDownArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.TopEnd)
+                                .offset(y = pressOffsetDp)
+                                .padding(end = 4.dp, top = 16.dp)
+                        )
+                    }
+                    CellPosition(1, 0), CellPosition(1, 2) -> {
+                        DownArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(y = pressOffsetDp)
+                                .padding(top = 4.dp)
+                        )
+                    }
+                    CellPosition(3, 2) -> {
+                        UpLeftArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.BottomCenter)
+                                .offset(y = pressOffsetDp)
+                                .padding(bottom = 4.dp)
+                        )
+                    }
+                    else -> {
+                        // No arrow for other positions on EASY
+                    }
+                }
             }
-            CellPosition(1, 0) -> {
-                DownArrow(
-                    isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .offset(y = pressOffsetDp)
-                        .padding(top = 4.dp)
-                )
-            }
-            CellPosition(1, 2) -> {
-                DownArrow(
-                    isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .offset(y = pressOffsetDp)
-                        .padding(top = 4.dp)
-                )
-            }
-            CellPosition(3, 2) -> {
-                UpLeftArrow(
-                    isDarkTheme = isDarkTheme,
-                    isOnCorrectSquare = isCorrect,
-                    modifier = Modifier
-                        .size(signSize)
-                        .align(Alignment.BottomCenter)
-                        .offset(y = pressOffsetDp)
-                        .padding(bottom = 4.dp)
-                )
+            Difficulty.MEDIUM -> {
+                when (position) {
+                    CellPosition(0, 0), CellPosition(0, 2) -> {
+                        LeftDownArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.TopEnd)
+                                .offset(y = pressOffsetDp)
+                                .padding(end = 4.dp, top = 16.dp)
+                        )
+                    }
+                    CellPosition(1, 1), CellPosition(1, 3) -> {
+                        DownArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(y = pressOffsetDp)
+                                .padding(top = 4.dp)
+                        )
+                    }
+                    CellPosition(2, 3) -> {
+                        UpLeftArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.BottomCenter)
+                                .offset(y = pressOffsetDp)
+                                .padding(bottom = 4.dp)
+                        )
+                    }
+                    else -> {
+                        // No arrow for other positions on MEDIUM
+                    }
+                }
             }
             else -> {
-                // No directional sign is rendered for other cell positions.
+                // Future difficulties: no arrows by default
             }
         }
     }
