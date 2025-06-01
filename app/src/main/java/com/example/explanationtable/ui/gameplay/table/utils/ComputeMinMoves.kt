@@ -249,19 +249,12 @@ private fun idaSearch(
  *
  * @param initialTable The starting board configuration.
  * @param targetTable The target board configuration.
- * @param gridWidth Grid width (must evenly divide the table size).
  * @return The minimal number of moves required or -1 if unsolvable.
- * @throws IllegalArgumentException if grid dimensions are invalid.
  */
 fun solveWithAStar(
     initialTable: List<String>,
-    targetTable: List<String>,
-    gridWidth: Int = 3
+    targetTable: List<String>
 ): Int {
-    // Validate grid dimensions.
-    if (gridWidth <= 0 || initialTable.size % gridWidth != 0) {
-        throw IllegalArgumentException("gridWidth must divide the table size evenly")
-    }
     // Check for trivial solution or unsolvable cases.
     if (initialTable == targetTable) return 0
     if (!initialTable.containsAll(targetTable) || !targetTable.containsAll(initialTable)) return -1

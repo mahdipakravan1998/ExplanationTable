@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.explanationtable.model.CellPosition
+import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.repository.TableRepository
 import com.example.explanationtable.ui.gameplay.table.utils.handleCellClick
@@ -24,7 +25,9 @@ import kotlinx.coroutines.launch
  */
 class TableViewModel(
     private val repository: TableRepository,
-    stageNumber: Int,
+    private val difficulty: Difficulty,
+    private val stageNumber: Int,
+    private val fixedPositions: Set<CellPosition>,
     private val onGameComplete: (optimalMoves: Int, accuracy: Int, moves: Int, elapsedMs: Long) -> Unit,
     onTableDataInitialized: (LevelTable, MutableMap<CellPosition, List<String>>) -> Unit,
     registerCorrectPlacementCallback: ((List<CellPosition>) -> Unit) -> Unit
@@ -37,12 +40,7 @@ class TableViewModel(
 
     // --- Immutable game setup ---
     private val gameStartTime = System.currentTimeMillis()
-    val fixedPositions = setOf(
-        CellPosition(0, 0),
-        CellPosition(0, 2),
-        CellPosition(4, 2)
-    )
-    val originalTableData: LevelTable = repository.getOriginalTable(stageNumber)
+    val originalTableData: LevelTable = repository.getOriginalTable(difficulty, stageNumber)
     private val movablePositions: List<CellPosition>
 
     // --- UI-observable state ---
@@ -190,10 +188,12 @@ class TableViewModel(
     }
 
 
-    /** Factory for dependency-injecting the repository and callbacks. */
+    /** Factory for dependency‐injecting repository, difficulty, size, and callbacks. */
     class Factory(
         private val repository: TableRepository,
+        private val difficulty: Difficulty,
         private val stageNumber: Int,
+        private val fixedPositions: Set<CellPosition>,
         private val onGameComplete: (Int, Int, Int, Long) -> Unit,
         private val onTableDataInitialized: (LevelTable, MutableMap<CellPosition, List<String>>) -> Unit,
         private val registerCallback: ((List<CellPosition>) -> Unit) -> Unit
@@ -201,11 +201,13 @@ class TableViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return TableViewModel(
-                repository,
-                stageNumber,
-                onGameComplete,
-                onTableDataInitialized,
-                registerCallback
+                repository = repository,
+                difficulty = difficulty,
+                stageNumber = stageNumber,
+                fixedPositions = fixedPositions,
+                onGameComplete = onGameComplete,
+                onTableDataInitialized = onTableDataInitialized,
+                registerCorrectPlacementCallback = registerCallback
             ) as T
         }
     }

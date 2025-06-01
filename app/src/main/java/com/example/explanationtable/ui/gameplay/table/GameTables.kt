@@ -51,7 +51,11 @@ fun GameTable(
         // For medium difficulty, render a placeholder layout.
         Difficulty.MEDIUM -> MediumTable(
             isDarkTheme = isDarkTheme,
-            modifier = modifier
+            stageNumber = stageNumber,
+            modifier = modifier,
+            onGameComplete = onGameComplete,
+            onTableDataInitialized = onTableDataInitialized,
+            registerCellsCorrectlyPlacedCallback = registerCellsCorrectlyPlacedCallback
         )
         // For hard difficulty, render a placeholder layout.
         Difficulty.HARD -> HardTable(

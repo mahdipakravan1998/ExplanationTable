@@ -1,9 +1,11 @@
 package com.example.explanationtable.repository
 
 import com.example.explanationtable.data.easy.easyLevelTables
+import com.example.explanationtable.data.medium.mediumLevelTables
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.domain.usecase.calculateFallbackAccuracy
+import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.gameplay.table.utils.solveWithAStar
 import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
@@ -11,9 +13,22 @@ import kotlinx.coroutines.withContext
 
 class TableRepository {
 
-    /** Find the table for [stageNumber], or default to first. */
-    fun getOriginalTable(stageNumber: Int): LevelTable =
-        easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
+    /**
+     * Find the table for [stageNumber] at a given [difficulty].
+     * If not found, default to the first table of that difficulty.
+     */
+    fun getOriginalTable(difficulty: Difficulty, stageNumber: Int): LevelTable {
+        return when (difficulty) {
+            Difficulty.EASY -> {
+                easyLevelTables.find { it.id == stageNumber } ?: easyLevelTables.first()
+            }
+            Difficulty.MEDIUM -> {
+                mediumLevelTables.find { it.id == stageNumber } ?: mediumLevelTables.first()
+            }
+            // Add other difficulties here if needed
+            Difficulty.HARD -> TODO()
+        }
+    }
 
     /**
      * Extracts movable cell data from the original table data.
@@ -113,7 +128,7 @@ class TableRepository {
     /** Off-main-thread A* solver. */
     suspend fun solveMinMoves(
         shuffled: List<String>,
-        target: List<String>
+        target: List<String>,
     ): Int = withContext(Dispatchers.Default) {
         solveWithAStar(shuffled, target)
     }
