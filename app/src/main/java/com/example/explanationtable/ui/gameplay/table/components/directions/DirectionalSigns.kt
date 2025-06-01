@@ -20,7 +20,7 @@ import com.example.explanationtable.ui.theme.TextDarkMode
  * @param modifier Modifier for styling and layout.
  */
 @Composable
-fun DirectionalSign0_1(
+fun LeftDownArrow(
     isDarkTheme: Boolean,
     isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier
@@ -88,7 +88,7 @@ fun DirectionalSign0_1(
  * @param modifier Modifier for styling and layout.
  */
 @Composable
-fun DirectionalSign1_0(
+fun DownArrow(
     isDarkTheme: Boolean,
     isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier
@@ -131,29 +131,6 @@ fun DirectionalSign1_0(
 }
 
 /**
- * An alias for DirectionalSign1_0 to maintain consistency in design.
- *
- * This function reuses the implementation of DirectionalSign1_0.
- *
- * @param isDarkTheme Boolean flag to indicate if dark theme is enabled.
- * @param isOnCorrectSquare Optional flag to indicate if the sign is on the correct square.
- * @param modifier Modifier for styling and layout.
- */
-@Composable
-fun DirectionalSign1_2(
-    isDarkTheme: Boolean,
-    isOnCorrectSquare: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    // Reuse the vertical directional sign.
-    DirectionalSign1_0(
-        isDarkTheme = isDarkTheme,
-        isOnCorrectSquare = isOnCorrectSquare,
-        modifier = modifier
-    )
-}
-
-/**
  * Renders a directional arrow sign with a vertical component and a leftward pointing arrowhead.
  *
  * The sign's color depends on whether it is on the correct square or if the dark theme is active.
@@ -163,7 +140,7 @@ fun DirectionalSign1_2(
  * @param modifier Modifier for styling and layout.
  */
 @Composable
-fun DirectionalSign3_2(
+fun UpLeftArrow(
     isDarkTheme: Boolean,
     isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier

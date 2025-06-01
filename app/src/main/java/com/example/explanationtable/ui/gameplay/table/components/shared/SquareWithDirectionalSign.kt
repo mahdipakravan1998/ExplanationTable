@@ -30,10 +30,9 @@ import androidx.compose.ui.unit.dp
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.ui.gameplay.table.components.cells.BrightGreenSquare
 import com.example.explanationtable.ui.gameplay.table.components.cells.StackedSquare3D
-import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign0_1
-import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign1_0
-import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign1_2
-import com.example.explanationtable.ui.gameplay.table.components.directions.DirectionalSign3_2
+import com.example.explanationtable.ui.gameplay.table.components.directions.LeftDownArrow
+import com.example.explanationtable.ui.gameplay.table.components.directions.DownArrow
+import com.example.explanationtable.ui.gameplay.table.components.directions.UpLeftArrow
 import kotlinx.coroutines.delay
 
 /**
@@ -159,7 +158,7 @@ fun SquareWithDirectionalSign(
         // Conditionally render a directional sign based on the cell's position.
         when (position) {
             CellPosition(0, 1) -> {
-                DirectionalSign0_1(
+                LeftDownArrow(
                     isDarkTheme = isDarkTheme,
                     isOnCorrectSquare = isCorrect,
                     modifier = Modifier
@@ -170,7 +169,7 @@ fun SquareWithDirectionalSign(
                 )
             }
             CellPosition(1, 0) -> {
-                DirectionalSign1_0(
+                DownArrow(
                     isDarkTheme = isDarkTheme,
                     isOnCorrectSquare = isCorrect,
                     modifier = Modifier
@@ -180,7 +179,7 @@ fun SquareWithDirectionalSign(
                 )
             }
             CellPosition(1, 2) -> {
-                DirectionalSign1_2(
+                DownArrow(
                     isDarkTheme = isDarkTheme,
                     isOnCorrectSquare = isCorrect,
                     modifier = Modifier
@@ -190,7 +189,7 @@ fun SquareWithDirectionalSign(
                 )
             }
             CellPosition(3, 2) -> {
-                DirectionalSign3_2(
+                UpLeftArrow(
                     isDarkTheme = isDarkTheme,
                     isOnCorrectSquare = isCorrect,
                     modifier = Modifier
