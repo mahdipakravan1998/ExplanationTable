@@ -20,11 +20,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.theme.VazirmatnFontFamily
+import com.example.explanationtable.utils.toPersianDigits
 
 /**
  * A helper composable that automatically resizes text to fit within its constraints,
  * trying first to render the text in up to [maxLines] lines. If it still overflows,
  * the font size is reduced until it fits.
+ *
+ * Additionally, if the input [text] contains any Western digits (0–9), each maximal
+ * digit‐sequence (e.g. “1234”) is converted to its Persian equivalent (e.g. “۱۲۳۴”)
+ * using the existing Int.toPersianDigits() extension.
  *
  * By default, [maxLines] is set to two so that text is split into two lines before
  * reducing the font size.
@@ -44,26 +49,35 @@ fun AutoResizingText(
     maxLines: Int = Int.MAX_VALUE,
     fontFamily: FontFamily = VazirmatnFontFamily
 ) {
-    // State holding the current text size, starting at the maximum allowed size.
+    // 1) First, convert any Western- digit‐sequences to Persian digits
+    //    We use a regex (\d+) to capture each consecutive run of digits,
+    //    then attempt to parse it as Int; if successful, call toPersianDigits().
+    //    If parsing fails (e.g. extremely large number), we leave it unchanged.
+    val persianifiedText = text.replace(Regex("\\d+")) { matchResult ->
+        val digitSequence = matchResult.value
+        digitSequence.toIntOrNull()?.toPersianDigits() ?: digitSequence
+    }
+
+    // 2) State holding the current text size, starting at the maximum allowed size.
     var currentTextSize by remember { mutableStateOf(maxTextSize) }
 
-    // Remember a text measurer to measure text dimensions without composing UI.
+    // 3) Remember a text measurer to measure text dimensions without composing UI.
     val textMeasurer = rememberTextMeasurer()
 
     BoxWithConstraints(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        // Obtain the current layout constraints (available width and height).
+        // 4) Obtain the current layout constraints (available width and height).
         val constraints = this.constraints
 
-        // Attempt to adjust the text size until it fits within the constraints.
-        // We limit the number of attempts to prevent an infinite loop.
+        // 5) Attempt to adjust the text size until it fits within the constraints.
+        //    We limit the number of attempts to prevent an infinite loop.
         var attempts = 0
         while (attempts < 20 && currentTextSize >= minTextSize) {
-            // Measure the text with the current text style.
+            // Measure the “Persian‐converted” text with the current text style.
             val measuredText = textMeasurer.measure(
-                text = AnnotatedString(text),
+                text = AnnotatedString(persianifiedText),
                 style = TextStyle(
                     fontSize = currentTextSize,
                     color = color,
@@ -78,19 +92,18 @@ fun AutoResizingText(
             if (measuredText.size.width <= constraints.maxWidth &&
                 measuredText.size.height <= constraints.maxHeight
             ) {
-                // Text fits; exit the loop.
+                // Text now fits; exit the loop.
                 break
             } else {
-                // Text does not fit; reduce the text size by 1 sp and try again.
+                // Text still overflows; shrink font size by 1 sp and retry.
                 currentTextSize = (currentTextSize.value - 1).sp
             }
             attempts++
         }
 
-        // Render the text with the adjusted text size.
-        // Overflow is clipped to avoid ellipses since size adjustments are handled above.
+        // 6) Finally, render the “Persian‐converted” text with the adjusted font size.
         Text(
-            text = text,
+            text = persianifiedText,
             style = TextStyle(
                 fontSize = currentTextSize,
                 color = color,
