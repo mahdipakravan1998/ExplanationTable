@@ -27,6 +27,11 @@ import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 // Constants for cell text styling.
 // These values help maintain consistency and ease future style adjustments.
 //-------------------------------------------------------------------------------------
+private val SquareSize = 80.dp
+private val CornerRadius = 16.dp
+private val SquarePadding = 8.dp
+private val DividerPadding = 4.dp
+private val DividerThickness = 1.dp
 private val cellTextColor = DarkBrown
 private val cellFontWeight = FontWeight.Bold
 private val cellMinTextSize = 10.sp
@@ -74,16 +79,16 @@ fun TextSeparatedSquare(
 ) {
     // Outer container: sets a fixed size (80x80 dp) and centers its content.
     Box(
-        modifier = modifier.size(80.dp),
+        modifier = modifier.size(SquareSize),
         contentAlignment = Alignment.Center
     ) {
         // Inner container: applies rounded corners, a background color, and padding.
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(CornerRadius))
                 .background(Bee)
-                .padding(8.dp)
+                .padding(SquarePadding)
         ) {
             // Column layout: vertically arranges the top text, divider, and bottom text.
             Column(
@@ -103,9 +108,9 @@ fun TextSeparatedSquare(
                 HorizontalDivider(
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = DividerPadding),
                     color = cellTextColor,
-                    thickness = 1.dp
+                    thickness = DividerThickness
                 )
 
                 // Bottom text section: displays auto-resizing text centered within its area.

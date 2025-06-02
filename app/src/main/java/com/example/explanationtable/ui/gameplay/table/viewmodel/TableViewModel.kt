@@ -33,9 +33,15 @@ class TableViewModel(
     registerCorrectPlacementCallback: ((List<CellPosition>) -> Unit) -> Unit
 ) : ViewModel() {
 
-    // --- UI layout constants ---
+    // --- UI layout constants (vary by difficulty) ---
     val cellSize = 80.dp
-    val spacing = 12.dp
+    val spacing = when (difficulty) {
+        Difficulty.EASY -> 12.dp
+        Difficulty.MEDIUM -> 6.dp
+        Difficulty.HARD -> 6.dp
+        else -> 12.dp
+    }
+
     val signSize = 16.dp
 
     // --- Immutable game setup ---

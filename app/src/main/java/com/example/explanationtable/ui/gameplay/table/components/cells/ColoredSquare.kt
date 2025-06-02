@@ -23,7 +23,7 @@ import com.example.explanationtable.ui.theme.VazirmatnFontFamily
 private val SquareSize = 80.dp
 private val CornerRadius = 16.dp
 private val SquarePadding = 8.dp
-private val MinTextSize = 14.sp
+private val MinTextSize = 12.sp
 private val MaxTextSize = 16.sp
 
 /**
