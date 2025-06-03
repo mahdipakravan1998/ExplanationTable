@@ -1,12 +1,12 @@
 package com.example.explanationtable.data.easy
 
-import com.example.explanationtable.model.easy.EasyLevelComponentsTable
+import com.example.explanationtable.model.LevelComponentsTable
 
 /**
- * A list of EasyLevelComponentsTable that stores different components for each level.
+ * A list of LevelComponentsTable that stores different components for each level.
  */
-val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
-    EasyLevelComponentsTable(
+val easyLevelComponentsData: List<LevelComponentsTable> = listOf(
+    LevelComponentsTable(
         id = 1,
         components = mapOf(
             0 to listOf("صالح"),
@@ -15,7 +15,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("بال")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 2,
         components = mapOf(
             0 to listOf("انعم"),
@@ -24,7 +24,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("شیع"),
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 3,
         components = mapOf(
             0 to listOf("سائل"),
@@ -33,7 +33,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("ماء")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 4,
         components = mapOf(
             0 to listOf("اقرب"),
@@ -42,7 +42,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("بدر")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 5,
         components = mapOf(
             0 to listOf("امین"),
@@ -51,7 +51,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("رای")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 6,
         components = mapOf(
             0 to listOf("آمین"),
@@ -60,7 +60,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("رای")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 7,
         components = mapOf(
             0 to listOf("اصدق"),
@@ -69,7 +69,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("راد")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 8,
         components = mapOf(
             0 to listOf("جودی"),
@@ -78,7 +78,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("جید")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 9,
         components = mapOf(
             0 to listOf("صالح"),
@@ -87,7 +87,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("صال")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 10,
         components = mapOf(
             0 to listOf("مسمع"),
@@ -96,7 +96,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("زعم")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 11,
         components = mapOf(
             0 to listOf("اخفی"),
@@ -105,7 +105,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("ضیف")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 12,
         components = mapOf(
             0 to listOf("کوکب"),
@@ -114,7 +114,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("درک")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 13,
         components = mapOf(
             0 to listOf("بشری"),
@@ -123,7 +123,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("حجر")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 14,
         components = mapOf(
             0 to listOf("اعرج"),
@@ -132,7 +132,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("بور")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 15,
         components = mapOf(
             0 to listOf("سفلی"),
@@ -141,7 +141,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("قیل")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 16,
         components = mapOf(
             0 to listOf("عقبه"),
@@ -150,7 +150,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("غیب")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 17,
         components = mapOf(
             0 to listOf("عالی"),
@@ -159,7 +159,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("عال")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 18,
         components = mapOf(
             0 to listOf("مودت"),
@@ -168,7 +168,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("عاد")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 19,
         components = mapOf(
             0 to listOf("مخلص"),
@@ -177,7 +177,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("مال")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 20,
         components = mapOf(
             0 to listOf("مظلم"),
@@ -186,7 +186,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("حبل")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 21,
         components = mapOf(
             0 to listOf("مصرف"),
@@ -195,7 +195,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("عذز")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 22,
         components = mapOf(
             0 to listOf("مدبر"),
@@ -204,7 +204,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("قاب")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 23,
         components = mapOf(
             0 to listOf("لینه"),
@@ -213,7 +213,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("دان")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 24,
         components = mapOf(
             0 to listOf("ثالث"),
@@ -222,7 +222,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("وال")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 25,
         components = mapOf(
             0 to listOf("مسیح"),
@@ -231,7 +231,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("سمی")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 26,
         components = mapOf(
             0 to listOf("اخری"),
@@ -240,7 +240,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("حور")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 27,
         components = mapOf(
             0 to listOf("مصدق"),
@@ -249,7 +249,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("سود")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 28,
         components = mapOf(
             0 to listOf("معین"),
@@ -258,7 +258,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("دری")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 29,
         components = mapOf(
             0 to listOf("مسلم"),
@@ -267,7 +267,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("قتل")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 30,
         components = mapOf(
             0 to listOf("لومه"),
@@ -276,7 +276,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("روم")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 31,
         components = mapOf(
             0 to listOf("اکنه"),
@@ -285,7 +285,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("نون")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 32,
         components = mapOf(
             0 to listOf("بغته"),
@@ -294,7 +294,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("لات")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 33,
         components = mapOf(
             0 to listOf("الیم"),
@@ -303,7 +303,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("عزی")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 34,
         components = mapOf(
             0 to listOf("جلده"),
@@ -312,7 +312,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("عهد")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 35,
         components = mapOf(
             0 to listOf("اسیر"),
@@ -321,7 +321,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("رضی")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 36,
         components = mapOf(
             0 to listOf("بدیع"),
@@ -330,7 +330,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("قوی")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 37,
         components = mapOf(
             0 to listOf("مصلح"),
@@ -339,7 +339,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("قول")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 38,
         components = mapOf(
             0 to listOf("اسوه"),
@@ -348,7 +348,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("دلو")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 39,
         components = mapOf(
             0 to listOf("بلیغ"),
@@ -357,7 +357,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("سعی")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 40,
         components = mapOf(
             0 to listOf("معقب"),
@@ -366,7 +366,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("راق")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 41,
         components = mapOf(
             0 to listOf("غافل"),
@@ -375,7 +375,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("سقف")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 42,
         components = mapOf(
             0 to listOf("ابیض"),
@@ -384,7 +384,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("عشی")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 43,
         components = mapOf(
             0 to listOf("مفسد"),
@@ -393,7 +393,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("قبس")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 44,
         components = mapOf(
             0 to listOf("مشعر"),
@@ -402,7 +402,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("دمع")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 45,
         components = mapOf(
             0 to listOf("مخلص"),
@@ -411,7 +411,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("حول")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 46,
         components = mapOf(
             0 to listOf("شانئ"),
@@ -420,7 +420,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("فان")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 47,
         components = mapOf(
             0 to listOf("شوکت"),
@@ -429,7 +429,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("فلک")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 48,
         components = mapOf(
             0 to listOf("مذکر"),
@@ -438,7 +438,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("ملک")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 49,
         components = mapOf(
             0 to listOf("طامه"),
@@ -447,7 +447,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
             3 to listOf("فوم")
         )
     ),
-    EasyLevelComponentsTable(
+    LevelComponentsTable(
         id = 50,
         components = mapOf(
             0 to listOf("محبت"),
@@ -459,7 +459,7 @@ val easyLevelComponentsData: List<EasyLevelComponentsTable> = listOf(
 )
 
 // A brief summary of what the code does:
-// This code defines a data structure `easyLevelComponentsData` that stores a list of `EasyLevelComponentsTable` objects.
+// This code defines a data structure `easyLevelComponentsData` that stores a list of `LevelComponentsTable` objects.
 // Each object in the list represents an entry for a specific easy level (from 1 to 50), and each entry contains a map
 // associating indices with lists of Arabic words (components). The structure provides easy access to these components
 // based on the index and level ID for processing in your application.

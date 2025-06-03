@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.data.easy.easyLevelComponentsData
 import com.example.explanationtable.data.easy.easyLevelTables
-import com.example.explanationtable.model.easy.EasyLevelComponentsTable
+import com.example.explanationtable.model.LevelComponentsTable
 import com.example.explanationtable.model.LevelTable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.res.stringResource
@@ -47,7 +47,7 @@ fun StageReviewTable(
     val headerHeight = 48.dp
 
     // Retrieve data using stageNumber (adjusted for 0-indexing)
-    val componentsData: EasyLevelComponentsTable? = easyLevelComponentsData.getOrNull(stageNumber - 1)
+    val componentsData: LevelComponentsTable? = easyLevelComponentsData.getOrNull(stageNumber - 1)
     val tableData: LevelTable? = easyLevelTables.getOrNull(stageNumber - 1)
 
     // If data is missing, display an error message and exit early.
