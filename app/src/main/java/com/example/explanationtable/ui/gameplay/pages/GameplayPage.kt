@@ -128,6 +128,7 @@ fun GameplayPage(
                     } else {
                         // Review table shown after game over
                         StageReviewTable(
+                            difficulty = difficulty,
                             stageNumber = stageNumber,
                             isDarkTheme = isDarkTheme
                         )
