@@ -7,31 +7,45 @@ import com.example.explanationtable.data.medium.mediumLevelTables
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.StageData
 
+/**
+ * Repository responsible for retrieving stage review data
+ * (components + tables) for a given [Difficulty] and 1-based stage number.
+ */
 class StageReviewRepository {
 
     /**
-     * Retrieves the component and table data for a given difficulty and stage number.
+     * Retrieves the [StageData] for the specified [difficulty] and [stageNumber].
      *
      * @param difficulty The difficulty level (EASY, MEDIUM, HARD).
-     * @param stageNumber The 1-indexed stage number.
-     * @return A [StageData] object if found, otherwise null.
+     * @param stageNumber 1-based stage number.
+     * @return A [StageData] instance if both component and table data exist; otherwise null.
+     * @throws NotImplementedError when [Difficulty.HARD] is requested.
      */
     fun getStageData(difficulty: Difficulty, stageNumber: Int): StageData? {
-        val index = stageNumber - 1
+        // Convert 1-based stageNumber to zero-based index
+        val stageIndex = stageNumber - 1
 
-        // pick the right pair of lists based on difficulty
+        // Select the appropriate data lists based on the difficulty
         val (componentsList, tablesList) = when (difficulty) {
-            Difficulty.EASY   -> easyLevelComponentsData   to easyLevelTables
+            Difficulty.EASY -> easyLevelComponentsData to easyLevelTables
             Difficulty.MEDIUM -> mediumLevelComponentsData to mediumLevelTables
-            Difficulty.HARD   -> TODO()
+            Difficulty.HARD ->
+                // HARD difficulty is not yet supported
+                throw NotImplementedError("Stage data for HARD difficulty is not implemented.")
         }
 
-        val componentsData = componentsList.getOrNull(index)
-        val tableData      = tablesList.getOrNull(index)
+        // Safely attempt to retrieve the component and table data at the given index
+        val componentData = componentsList.getOrNull(stageIndex)
+        val tableData = tablesList.getOrNull(stageIndex)
 
-        return if (componentsData != null && tableData != null) {
-            StageData(componentsData = componentsData, tableData = tableData)
+        // Only return a StageData if both parts are present
+        return if (componentData != null && tableData != null) {
+            StageData(
+                componentsData = componentData,
+                tableData = tableData
+            )
         } else {
+            // One or both lists didn't have an entry at the requested index
             null
         }
     }
