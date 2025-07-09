@@ -15,20 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.review.viewmodel.StageReviewViewModel
-import com.example.explanationtable.ui.theme.BorderColorDark
-import com.example.explanationtable.ui.theme.BorderColorLight
-import com.example.explanationtable.ui.theme.HeaderBackgroundDark
-import com.example.explanationtable.ui.theme.HeaderBackgroundLight
-import com.example.explanationtable.ui.theme.TextColorDark
-import com.example.explanationtable.ui.theme.TextColorLight
+import com.example.explanationtable.ui.theme.*
 
 /**
- * Displays a stage review table based on the provided difficulty and stage number.
+ * Renders a two-column review table for a given [difficulty] and [stageNumber].
+ *
+ * Triggers data load on mount and whenever the inputs change.
  */
 @Composable
 fun StageReviewTable(
@@ -37,98 +35,162 @@ fun StageReviewTable(
     isDarkTheme: Boolean,
     viewModel: StageReviewViewModel = viewModel()
 ) {
-    // Reload whenever difficulty or stageNumber changes
+    // Load or reload data when parameters change
     LaunchedEffect(difficulty, stageNumber) {
         viewModel.loadStageData(difficulty, stageNumber)
     }
 
+    // Collect UI state from ViewModel
     val uiState by viewModel.uiState.collectAsState()
 
+    // Show error if present
     uiState.errorMessage?.let { error ->
-        Text(text = error, color = if (isDarkTheme) TextColorLight else TextColorDark)
+        Text(
+            text = error,
+            color = if (isDarkTheme) TextColorLight else TextColorDark,
+            modifier = Modifier.padding(16.dp)
+        )
         return
     }
 
+    // Nothing to show while loading or when there's no data
     if (uiState.isLoading || uiState.rows.isEmpty()) {
         // Optionally show a loading spinner
         return
     }
 
-    // Styling constants
-    val lineThickness    = 2.dp
-    val headerHeight     = 48.dp
-    val headerBgColor    = if (isDarkTheme) HeaderBackgroundDark else HeaderBackgroundLight
-    val borderColor      = if (isDarkTheme) BorderColorDark else BorderColorLight
-    val textColor        = if (isDarkTheme) TextColorDark else TextColorLight
+    // Common dimensions and colors
+    val borderWidth = 2.dp
+    val headerHeight = 48.dp
+    val cornerRadius = 16.dp
 
+    val headerBg = if (isDarkTheme) HeaderBackgroundDark else HeaderBackgroundLight
+    val borderClr = if (isDarkTheme) BorderColorDark else BorderColorLight
+    val textClr   = if (isDarkTheme) TextColorDark else TextColorLight
+
+    // Text styles
+    val headerTextStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp)
+    val cellTextStyle   = MaterialTheme.typography.bodyLarge
+
+    // Reusable border between columns
+    val columnDivider = Modifier
+        .width(borderWidth)
+        .fillMaxHeight()
+        .background(borderClr)
+
+    // Container for the entire table
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .border(width = lineThickness, color = borderColor, shape = RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(cornerRadius))
+            .border(borderWidth, borderClr, RoundedCornerShape(cornerRadius))
     ) {
-        // Header row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(headerBgColor)
-                .height(headerHeight),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text      = uiState.headerLeft,
-                modifier  = Modifier.weight(1f).padding(horizontal = 4.dp),
-                style     = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp),
-                textAlign = TextAlign.Center,
-                color     = textColor
-            )
-            Box(
-                modifier = Modifier
-                    .width(lineThickness)
-                    .fillMaxHeight()
-                    .background(borderColor)
-            )
-            Text(
-                text      = uiState.headerRight,
-                modifier  = Modifier.weight(1f).padding(horizontal = 4.dp),
-                style     = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp),
-                textAlign = TextAlign.Center,
-                color     = textColor
-            )
-        }
-        HorizontalDivider(color = borderColor, thickness = lineThickness)
+        // --- Header Row ---
+        TableHeader(
+            leftText      = uiState.headerLeft,
+            rightText     = uiState.headerRight,
+            height        = headerHeight,
+            background    = headerBg,
+            divider       = columnDivider,
+            textStyle     = headerTextStyle,
+            textColor     = textClr
+        )
 
-        // Data rows
-        uiState.rows.forEachIndexed { i, rowData ->
-            Row(
-                modifier          = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text      = rowData.leftText,
-                    modifier  = Modifier.weight(1f).padding(8.dp),
-                    style     = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color     = textColor
-                )
-                Box(
-                    modifier = Modifier
-                        .width(lineThickness)
-                        .fillMaxHeight()
-                        .background(borderColor)
-                )
-                Text(
-                    text      = rowData.rightText,
-                    modifier  = Modifier.weight(1f).padding(8.dp),
-                    style     = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color     = textColor
-                )
-            }
-            if (i < uiState.rows.lastIndex) {
-                HorizontalDivider(color = borderColor, thickness = lineThickness)
+        HorizontalDivider(color = borderClr, thickness = borderWidth)
+
+        // --- Data Rows ---
+        uiState.rows.forEachIndexed { index, row ->
+            TableRow(
+                leftText    = row.leftText,
+                rightText   = row.rightText,
+                divider     = columnDivider,
+                textStyle   = cellTextStyle,
+                textColor   = textClr
+            )
+            // Divider between rows, but not after the last row
+            if (index < uiState.rows.lastIndex) {
+                HorizontalDivider(color = borderClr, thickness = borderWidth)
             }
         }
+    }
+}
+
+/**
+ * Renders the table header with two centered titles.
+ */
+@Composable
+private fun TableHeader(
+    leftText: String,
+    rightText: String,
+    height: Dp,
+    background: androidx.compose.ui.graphics.Color,
+    divider: Modifier,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    textColor: androidx.compose.ui.graphics.Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(background)
+            .height(height),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Left header cell
+        Text(
+            text      = leftText,
+            modifier  = Modifier.weight(1f).padding(horizontal = 4.dp),
+            style     = textStyle,
+            textAlign = TextAlign.Center,
+            color     = textColor
+        )
+        Box(modifier = divider)
+        // Right header cell
+        Text(
+            text      = rightText,
+            modifier  = Modifier.weight(1f).padding(horizontal = 4.dp),
+            style     = textStyle,
+            textAlign = TextAlign.Center,
+            color     = textColor
+        )
+    }
+}
+
+/**
+ * Renders a single data row with two centered cells.
+ */
+@Composable
+private fun TableRow(
+    leftText: String,
+    rightText: String,
+    divider: Modifier,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    textColor: androidx.compose.ui.graphics.Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Max),  // Ensures divider matches row height
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Left cell
+        Text(
+            text      = leftText,
+            modifier  = Modifier.weight(1f).padding(8.dp),
+            style     = textStyle,
+            textAlign = TextAlign.Center,
+            color     = textColor
+        )
+
+        Box(modifier = divider)
+
+        // Right cell
+        Text(
+            text      = rightText,
+            modifier  = Modifier.weight(1f).padding(8.dp),
+            style     = textStyle,
+            textAlign = TextAlign.Center,
+            color     = textColor
+        )
     }
 }
