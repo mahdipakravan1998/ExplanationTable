@@ -14,78 +14,117 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for the “Stage Review” screen.
+ *
+ * Loads data from [StageReviewRepository] and emits a [StageReviewUiState] that the UI observes.
+ */
 class StageReviewViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = StageReviewRepository()
 
+    // Backing stateflow for UI
     private val _uiState = MutableStateFlow(StageReviewUiState())
     val uiState: StateFlow<StageReviewUiState> = _uiState.asStateFlow()
 
+    companion object {
+        // Define row→(tableRow, tableCol, itemIndex) mappings for each difficulty.
+        private val EASY_SCHEMA = mapOf(
+            0 to Triple(0, 0, 0),
+            1 to Triple(0, 2, 0),
+            2 to Triple(0, 2, 1),
+            3 to Triple(4, 2, 0)
+        )
+        private val MEDIUM_SCHEMA = mapOf(
+            0 to Triple(0, 3, 1),
+            1 to Triple(0, 3, 0),
+            2 to Triple(0, 1, 1),
+            3 to Triple(0, 1, 0),
+            4 to Triple(3, 3, 0)
+        )
+        // HARD schema TBD when definition is available
+        private val HARD_SCHEMA = emptyMap<Int, Triple<Int, Int, Int>>()
+    }
+
     /**
-     * Loads the data for a specific difficulty and stage, then updates UI state.
+     * Public API to load data for a given [difficulty] and [stageNumber].
+     * Emits loading, error, or populated state into [_uiState].
      */
     fun loadStageData(difficulty: Difficulty, stageNumber: Int) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            // Grab Application once for all string lookups
+            val app = getApplication<Application>()
 
+            // 1) Show loading state
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            // 2) Fetch data
             val stageData = repository.getStageData(difficulty, stageNumber)
-
             if (stageData == null) {
-                _uiState.update {
-                    it.copy(
-                        isLoading    = false,
-                        errorMessage = getApplication<Application>()
-                            .getString(R.string.error_no_data, stageNumber)
-                    )
-                }
+                // 3a) No data → show error message
+                val errorMsg = app.getString(R.string.error_no_data, stageNumber)
+                _uiState.update { it.copy(isLoading = false, errorMessage = errorMsg) }
                 return@launch
             }
 
-            val componentsData = stageData.componentsData
-            val tableData      = stageData.tableData
-            val rowCount       = componentsData.components.size
-
-            val tableRows = (0 until rowCount).map { i ->
-                // Left column is always in-order
-                val leftColumnData = componentsData.components[i]?.firstOrNull() ?: ""
-
-                // Right column depends on difficulty
-                val rightColumnData = when (difficulty) {
-                    Difficulty.EASY -> when (i) {
-                        0 -> tableData.rows[0]?.get(0)?.firstOrNull() ?: ""
-                        1 -> tableData.rows[0]?.get(2)?.getOrNull(0) ?: ""
-                        2 -> tableData.rows[0]?.get(2)?.getOrNull(1) ?: ""
-                        3 -> tableData.rows[4]?.get(2)?.firstOrNull() ?: ""
-                        else -> ""
-                    }
-
-                    Difficulty.MEDIUM -> when (i) {
-                        0 -> tableData.rows[0]?.get(3)?.getOrNull(1) ?: ""
-                        1 -> tableData.rows[0]?.get(3)?.getOrNull(0) ?: ""
-                        2 -> tableData.rows[0]?.get(1)?.getOrNull(1) ?: ""
-                        3 -> tableData.rows[0]?.get(1)?.getOrNull(0) ?: ""
-                        4 -> tableData.rows[3]?.get(3)?.firstOrNull() ?: ""
-                        else -> ""
-                    }
-
-                    Difficulty.HARD -> "" // fill in once you have your hard-level schema
-                }
-
-                ReviewTableRow(
-                    leftText  = leftColumnData,
-                    rightText = rightColumnData
-                )
-            }
+            // 3b) Build rows and then update UI state
+            val rows = buildTableRows(
+                difficulty    = difficulty,
+                componentsMap = stageData.componentsData.components,
+                tableMap      = stageData.tableData.rows
+            )
 
             _uiState.update {
                 it.copy(
                     isLoading    = false,
                     errorMessage = null,
-                    headerLeft   = getApplication<Application>().getString(R.string.header_left),
-                    headerRight  = getApplication<Application>().getString(R.string.header_right),
-                    rows         = tableRows
+                    headerLeft   = app.getString(R.string.header_left),
+                    headerRight  = app.getString(R.string.header_right),
+                    rows         = rows
                 )
             }
         }
+    }
+
+    /**
+     * Converts the raw maps into a list of [ReviewTableRow], preserving order by index 0..n-1.
+     */
+    private fun buildTableRows(
+        difficulty: Difficulty,
+        componentsMap: Map<Int, List<String>>,
+        tableMap: Map<Int, Map<Int, List<String>>>
+    ): List<ReviewTableRow> {
+        // We assume componentsMap keys are 0..N-1
+        return List(componentsMap.size) { index ->
+            val leftText  = componentsMap[index]?.firstOrNull().orEmpty()
+            val rightText = resolveRightText(difficulty, index, tableMap)
+            ReviewTableRow(leftText = leftText, rightText = rightText)
+        }
+    }
+
+    /**
+     * Looks up the (row, col, item) triple for this [difficulty] and [rowIndex], then
+     * safely retrieves the string or returns "" if any lookup fails.
+     */
+    private fun resolveRightText(
+        difficulty: Difficulty,
+        rowIndex: Int,
+        tableMap: Map<Int, Map<Int, List<String>>>
+    ): String {
+        // Pick the correct schema map
+        val schema = when (difficulty) {
+            Difficulty.EASY   -> EASY_SCHEMA
+            Difficulty.MEDIUM -> MEDIUM_SCHEMA
+            Difficulty.HARD   -> HARD_SCHEMA
+        }
+
+        // Look up the triple and then fetch from the nested maps safely
+        return schema[rowIndex]
+            ?.let { (tableRow, tableCol, itemIdx) ->
+                tableMap[tableRow]
+                    ?.get(tableCol)
+                    ?.getOrNull(itemIdx)
+            }
+            .orEmpty()
     }
 }
