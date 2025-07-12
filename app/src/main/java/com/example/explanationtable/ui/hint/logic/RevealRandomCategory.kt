@@ -2,6 +2,7 @@ package com.example.explanationtable.ui.hint.logic
 
 import com.example.explanationtable.model.LevelTable
 import com.example.explanationtable.model.CellPosition
+import com.example.explanationtable.model.Difficulty
 
 /**
  * Reveals a random category of cells by swapping items until the category is solved.
@@ -12,36 +13,33 @@ import com.example.explanationtable.model.CellPosition
  */
 fun revealRandomCategory(
     currentTableData: MutableMap<CellPosition, List<String>>,
-    originalTableData: LevelTable
+    originalTableData: LevelTable,
+    difficulty: Difficulty
 ): List<CellPosition> {
 
-    // Define categories of cells based on their positions
-    val firstCategory = setOf(
-        CellPosition(1, 0),
-        CellPosition(2, 0),
-        CellPosition(3, 0),
-        CellPosition(4, 0)
-    )
-    val secondCategory = setOf(
-        CellPosition(0, 1),
-        CellPosition(1, 1),
-        CellPosition(2, 1),
-        CellPosition(3, 1),
-        CellPosition(4, 1)
-    )
-    val thirdCategory = setOf(
-        CellPosition(1, 2),
-        CellPosition(2, 2),
-        CellPosition(3, 2)
-    )
-    val fourthCategory = setOf(
-        CellPosition(3, 0),
-        CellPosition(3, 1),
-        CellPosition(3, 2)
+    // Categories for EASY
+    val easyCategories = listOf(
+        setOf(CellPosition(1, 0), CellPosition(2, 0), CellPosition(3, 0), CellPosition(4, 0)),
+        setOf(CellPosition(0, 1), CellPosition(1, 1), CellPosition(2, 1), CellPosition(3, 1), CellPosition(4, 1)),
+        setOf(CellPosition(1, 2), CellPosition(2, 2), CellPosition(3, 2)),
+        setOf(CellPosition(3, 0), CellPosition(3, 1), CellPosition(3, 2))
     )
 
-    // Store all categories in a list
-    val categories = listOf(firstCategory, secondCategory, thirdCategory, fourthCategory)
+    // Categories for MEDIUM
+    val mediumCategories = listOf(
+        setOf(CellPosition(1, 3), CellPosition(2, 3)),
+        setOf(CellPosition(0, 2), CellPosition(1, 2), CellPosition(2, 2), CellPosition(3, 2)),
+        setOf(CellPosition(1, 1), CellPosition(2, 1), CellPosition(3, 1)),
+        setOf(CellPosition(0, 0), CellPosition(1, 0), CellPosition(2, 0), CellPosition(3, 0)),
+        setOf(CellPosition(2, 3), CellPosition(2, 2), CellPosition(2, 1), CellPosition(2, 0))
+    )
+
+    // Pick the right set based on difficulty
+    val categories = when (difficulty) {
+        Difficulty.EASY   -> easyCategories
+        Difficulty.MEDIUM -> mediumCategories
+        else              -> return emptyList()
+    }
 
     /**
      * Checks if a cell is correctly placed by comparing it with the original table data.

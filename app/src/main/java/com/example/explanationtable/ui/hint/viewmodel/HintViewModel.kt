@@ -126,7 +126,7 @@ class HintViewModel(application: Application) : AndroidViewModel(application) {
         originalTable
             ?.let { orig ->
                 currentTable?.let { curr ->
-                    repository.revealRandomCategory(curr, orig)
+                    repository.revealRandomCategory(curr, orig, _difficulty.value)
                 }
             }
             ?: emptyList()

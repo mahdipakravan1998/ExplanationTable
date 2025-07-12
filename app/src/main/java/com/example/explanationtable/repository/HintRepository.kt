@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.explanationtable.data.DataStoreManager
 import com.example.explanationtable.data.getHintOptions
 import com.example.explanationtable.model.CellPosition
+import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.LevelTable
 import kotlinx.coroutines.flow.Flow
@@ -36,9 +37,10 @@ class HintRepository(private val context: Context) {
      */
     fun revealRandomCategory(
         currentTable: MutableMap<CellPosition, List<String>>,
-        originalTable: LevelTable
+        originalTable: LevelTable,
+        difficulty: Difficulty
     ): List<CellPosition> =
-        revealRandomCategoryLogic(currentTable, originalTable)
+        revealRandomCategoryLogic(currentTable, originalTable, difficulty)
 
     /**
      * Reveals a single random cell from the puzzle as a hint.
