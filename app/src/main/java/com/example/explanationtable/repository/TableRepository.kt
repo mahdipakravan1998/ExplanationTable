@@ -1,6 +1,7 @@
 package com.example.explanationtable.repository
 
 import com.example.explanationtable.data.easy.easyLevelTables
+import com.example.explanationtable.data.hard.hardLevelTables
 import com.example.explanationtable.data.medium.mediumLevelTables
 import com.example.explanationtable.model.CellPosition
 import com.example.explanationtable.model.LevelTable
@@ -25,8 +26,9 @@ class TableRepository {
             Difficulty.MEDIUM -> {
                 mediumLevelTables.find { it.id == stageNumber } ?: mediumLevelTables.first()
             }
-            // Add other difficulties here if needed
-            Difficulty.HARD -> TODO()
+            Difficulty.HARD -> {
+                hardLevelTables.find { it.id == stageNumber } ?: hardLevelTables.first()
+            }
         }
     }
 

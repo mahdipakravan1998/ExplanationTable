@@ -1,27 +1,56 @@
 package com.example.explanationtable.ui.gameplay.table.layout
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.example.explanationtable.model.CellPosition
+import com.example.explanationtable.model.Difficulty
 
 /**
- * HardTablePlaceholder is a composable placeholder for the future "hard" table layout.
+ * Thin wrapper around TableLayout configured for the 5×4 "hard" puzzle.
  *
- * This layout is intended to eventually display cells arranged in a unique order (for example, a 5x5 grid).
- * The [isDarkTheme] parameter is provided to potentially adjust styling based on the active theme.
- *
- * @param isDarkTheme Boolean flag indicating whether the dark theme is enabled.
- *                    (Currently unused, but reserved for future styling logic.)
- * @param modifier    Modifier to be applied to the composable, allowing for layout adjustments.
+ * Fixed cells:
+ *  • (0, 0) → TextSeparatedSquare
+ *  • (0, 3) → TextSeparatedSquare
+ *  • (4, 3) → TextSeparatedSquare
  */
 @Composable
 fun HardTable(
     isDarkTheme: Boolean,
-    modifier: Modifier = Modifier
+    stageNumber: Int,
+    modifier: Modifier = Modifier,
+    onGameComplete: (optimalMoves: Int, userAccuracy: Int, playerMoves: Int, elapsedTime: Long) -> Unit = { _, _, _, _ -> },
+    onTableDataInitialized: (originalTableData: com.example.explanationtable.model.LevelTable, currentTableData: MutableMap<CellPosition, List<String>>) -> Unit = { _, _ -> },
+    registerCellsCorrectlyPlacedCallback: ((List<CellPosition>) -> Unit) -> Unit = {}
 ) {
-    // TODO: Implement the specific cell arrangement for the hard table layout.
-    // For now, a simple Box is used as a placeholder.
-    Box(modifier = modifier) {
-        // Placeholder content: future implementation might arrange cells in a grid (e.g., 5x5).
-    }
+    // Dimensions for hard:
+    val rowsCount = 5
+    val colsCount = 4
+
+    // Fixed positions for hard:
+    val fixedPositions = setOf(
+        CellPosition(0, 0),
+        CellPosition(0, 3),
+        CellPosition(4, 3)
+    )
+
+    // Tell TableLayout which fixed position uses which cell type
+    val fixedCellTypes = mapOf(
+        CellPosition(0, 0) to FixedCellType.TEXT_SEPARATED,
+        CellPosition(0, 3) to FixedCellType.TEXT_SEPARATED,
+        CellPosition(4, 3) to FixedCellType.TEXT_SEPARATED
+    )
+
+    TableLayout(
+        isDarkTheme = isDarkTheme,
+        difficulty = Difficulty.HARD,
+        stageNumber = stageNumber,
+        rowsCount = rowsCount,
+        colsCount = colsCount,
+        fixedPositions = fixedPositions,
+        fixedCellTypes = fixedCellTypes,
+        modifier = modifier,
+        onGameComplete = onGameComplete,
+        onTableDataInitialized = onTableDataInitialized,
+        registerCellsCorrectlyPlacedCallback = registerCellsCorrectlyPlacedCallback
+    )
 }

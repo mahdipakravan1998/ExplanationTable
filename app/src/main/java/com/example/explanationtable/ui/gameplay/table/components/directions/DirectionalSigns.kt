@@ -93,42 +93,43 @@ fun DownArrow(
     isOnCorrectSquare: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    // Determine the color based on theme or selection.
+    // Choose the color based on theme or selection.
     val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
 
     Canvas(modifier = modifier.size(10.dp)) {
-        // Define stroke width and conversion for the arrowhead offset.
         val strokeWidth = 2.dp.toPx()
-        val arrowheadOffset = 2.dp.toPx()
-        val arrowWidth = size.width
-        val arrowHeight = size.height
+        val verticalArrowLength = 10.dp.toPx()
+        val arrowHeadOffset = 3.dp.toPx()
+        val centerX = size.width / 2
 
-        // Draw the main vertical line of the arrow.
+        // Draw vertical line downwards.
         drawLine(
             color = signColor,
-            start = Offset(x = arrowWidth / 2, y = 0f),
-            end = Offset(x = arrowWidth / 2, y = arrowHeight * 0.7f),
+            start = Offset(x = centerX, y = 0f),
+            end = Offset(x = centerX, y = verticalArrowLength),
             strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
-        // Draw the left side of the arrowhead.
+
+        // Left side of the arrowhead
         drawLine(
             color = signColor,
-            start = Offset(x = arrowWidth / 2 - arrowheadOffset, y = arrowHeight * 0.7f),
-            end = Offset(x = arrowWidth / 2, y = arrowHeight),
+            start = Offset(x = centerX - arrowHeadOffset, y = verticalArrowLength - arrowHeadOffset),
+            end = Offset(x = centerX,           y = verticalArrowLength),
             strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
-        // Draw the right side of the arrowhead.
+        // Right side of the arrowhead
         drawLine(
             color = signColor,
-            start = Offset(x = arrowWidth / 2 + arrowheadOffset, y = arrowHeight * 0.7f),
-            end = Offset(x = arrowWidth / 2, y = arrowHeight),
+            start = Offset(x = centerX + arrowHeadOffset, y = verticalArrowLength - arrowHeadOffset),
+            end = Offset(x = centerX,           y = verticalArrowLength),
             strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
     }
 }
+
 
 /**
  * Renders a directional arrow sign with a vertical component and a leftward pointing arrowhead.
@@ -191,6 +192,119 @@ fun UpLeftArrow(
             color = signColor,
             start = Offset(x = arrowEndX + arrowheadOffset, y = arrowStartY + arrowheadOffset),
             end = Offset(x = arrowEndX, y = arrowStartY),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+/**
+ * Renders an arrow sign that first goes right, then down.
+ *
+ * The sign’s color depends on whether it’s on the correct square or if dark theme is active.
+ *
+ * @param isDarkTheme Boolean flag to indicate if dark theme is enabled.
+ * @param isOnCorrectSquare Optional flag to indicate if the sign is on the correct square.
+ * @param modifier Modifier for styling and layout.
+ */
+@Composable
+fun RightDownArrow(
+    isDarkTheme: Boolean,
+    isOnCorrectSquare: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
+
+    Canvas(modifier = modifier.size(20.dp)) {
+        val strokeWidth = 2.dp.toPx()
+        val horizontalOffset = 9.dp.toPx()
+        val arrowHeadOffset = 3.dp.toPx()
+        val verticalArrowLength = 10.dp.toPx()
+
+        // Draw horizontal line from left to right.
+        drawLine(
+            color = signColor,
+            start = Offset(x = 0f, y = size.height / 2),
+            end = Offset(x = horizontalOffset, y = size.height / 2),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+
+        // Draw vertical line downwards.
+        val arrowStartX = horizontalOffset
+        val arrowStartY = size.height / 2
+        val arrowEndY = arrowStartY + verticalArrowLength
+        drawLine(
+            color = signColor,
+            start = Offset(x = arrowStartX, y = arrowStartY),
+            end = Offset(x = arrowStartX, y = arrowEndY),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+
+        // Draw downward arrowhead.
+        drawLine(
+            color = signColor,
+            start = Offset(x = arrowStartX - arrowHeadOffset, y = arrowEndY - arrowHeadOffset),
+            end = Offset(x = arrowStartX, y = arrowEndY),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = signColor,
+            start = Offset(x = arrowStartX + arrowHeadOffset, y = arrowEndY - arrowHeadOffset),
+            end = Offset(x = arrowStartX, y = arrowEndY),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+/**
+ * Renders a horizontal arrow sign pointing left.
+ *
+ * The sign’s color depends on whether it’s on the correct square or if dark theme is active.
+ *
+ * @param isDarkTheme Boolean flag to indicate if dark theme is enabled.
+ * @param isOnCorrectSquare Optional flag to indicate if the sign is on the correct square.
+ * @param modifier Modifier for styling and layout.
+ */
+@Composable
+fun LeftArrow(
+    isDarkTheme: Boolean,
+    isOnCorrectSquare: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val signColor = if (isOnCorrectSquare || isDarkTheme) TextDarkMode else Eel
+
+    Canvas(modifier = modifier.size(20.dp)) {
+        val strokeWidth = 2.dp.toPx()
+        val horizontalArrowLength = 10.dp.toPx()
+        val arrowHeadOffset = 3.dp.toPx()
+
+        // Draw horizontal line from right to left.
+        drawLine(
+            color = signColor,
+            start = Offset(x = size.width, y = size.height / 2),
+            end = Offset(x = size.width - horizontalArrowLength, y = size.height / 2),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+
+        // Draw left-pointing arrowhead.
+        val arrowEndX = size.width - horizontalArrowLength
+        val arrowY = size.height / 2
+        drawLine(
+            color = signColor,
+            start = Offset(x = arrowEndX + arrowHeadOffset, y = arrowY - arrowHeadOffset),
+            end = Offset(x = arrowEndX, y = arrowY),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = signColor,
+            start = Offset(x = arrowEndX + arrowHeadOffset, y = arrowY + arrowHeadOffset),
+            end = Offset(x = arrowEndX, y = arrowY),
             strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )

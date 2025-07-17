@@ -48,7 +48,7 @@ fun GameTable(
             onTableDataInitialized = onTableDataInitialized,
             registerCellsCorrectlyPlacedCallback = registerCellsCorrectlyPlacedCallback
         )
-        // For medium difficulty, render a placeholder layout.
+        // For medium difficulty, render the fixed 4x4 table layout.
         Difficulty.MEDIUM -> MediumTable(
             isDarkTheme = isDarkTheme,
             stageNumber = stageNumber,
@@ -57,10 +57,14 @@ fun GameTable(
             onTableDataInitialized = onTableDataInitialized,
             registerCellsCorrectlyPlacedCallback = registerCellsCorrectlyPlacedCallback
         )
-        // For hard difficulty, render a placeholder layout.
+        // For hard difficulty, render the fixed 5x4 table layout.
         Difficulty.HARD -> HardTable(
             isDarkTheme = isDarkTheme,
-            modifier = modifier
+            stageNumber = stageNumber,
+            modifier = modifier,
+            onGameComplete = onGameComplete,
+            onTableDataInitialized = onTableDataInitialized,
+            registerCellsCorrectlyPlacedCallback = registerCellsCorrectlyPlacedCallback
         )
     }
 }

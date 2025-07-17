@@ -33,6 +33,8 @@ import com.example.explanationtable.ui.gameplay.table.components.cells.BrightGre
 import com.example.explanationtable.ui.gameplay.table.components.cells.StackedSquare3D
 import com.example.explanationtable.ui.gameplay.table.components.directions.LeftDownArrow
 import com.example.explanationtable.ui.gameplay.table.components.directions.DownArrow
+import com.example.explanationtable.ui.gameplay.table.components.directions.LeftArrow
+import com.example.explanationtable.ui.gameplay.table.components.directions.RightDownArrow
 import com.example.explanationtable.ui.gameplay.table.components.directions.UpLeftArrow
 import kotlinx.coroutines.delay
 
@@ -237,8 +239,66 @@ fun SquareWithDirectionalSign(
                     }
                 }
             }
-            else -> {
-                // Future difficulties: no arrows by default
+            Difficulty.HARD -> {
+                when (position) {
+                    CellPosition(0, 1) -> {
+                        RightDownArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.TopStart)
+                                .offset(y = pressOffsetDp)
+                                .padding(start = 4.dp, top = 16.dp)
+                        )
+                    }
+                    CellPosition(0, 2) -> {
+                        LeftDownArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.TopEnd)
+                                .offset(y = pressOffsetDp)
+                                .padding(end = 4.dp, top = 16.dp)
+                        )
+                    }
+                    CellPosition(1, 0), CellPosition(1, 3) -> {
+                        DownArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(y = pressOffsetDp)
+                                .padding(top = 4.dp)
+                        )
+                    }
+                    CellPosition(3, 3) -> {
+                        UpLeftArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.BottomCenter)
+                                .offset(y = pressOffsetDp)
+                                .padding(bottom = 4.dp)
+                        )
+                    }
+                    CellPosition(4, 2) -> {
+                        LeftArrow(
+                            isDarkTheme = isDarkTheme,
+                            isOnCorrectSquare = isCorrect,
+                            modifier = Modifier
+                                .size(signSize)
+                                .align(Alignment.BottomEnd)
+                                .offset(y = pressOffsetDp)
+                                .padding(end = 4.dp, bottom = 16.dp)
+                        )
+                    }
+                    else -> {
+                        // No arrow for other positions on HARD
+                    }
+                }
             }
         }
     }
