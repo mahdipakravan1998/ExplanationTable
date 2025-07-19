@@ -1906,7 +1906,7 @@ val hardLevelTables: List<LevelTable> = listOf(
                 0 to listOf("ر"),
                 1 to listOf("ج"),
                 2 to listOf("ف"),
-                3 to listOf("قائم‌به‌ذات", "سپیده‌دم")
+                3 to listOf("قائم به ذات", "سپیده‌دم")
             )
         )
     ),
@@ -1915,7 +1915,7 @@ val hardLevelTables: List<LevelTable> = listOf(
         id = 54,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("سوره صدوهفت", "ستاره شعری"),
+                0 to listOf("سورهٔ ۱۰۷", "ستاره شعری"),
                 1 to listOf("م"),
                 2 to listOf("م"),
                 3 to listOf("ورودکننده", "قوم هود")
@@ -2671,7 +2671,7 @@ val hardLevelTables: List<LevelTable> = listOf(
         id = 75,
         rows = mapOf(
             0 to mapOf(
-                0 to listOf("سوره 45", "رونده در راه"),
+                0 to listOf("سورهٔ ۴۵", "رونده در راه"),
                 1 to listOf("ج"),
                 2 to listOf("س"),
                 3 to listOf("غل و زنجیر", "بلندمرتبه")

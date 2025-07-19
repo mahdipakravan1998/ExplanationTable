@@ -42,8 +42,14 @@ class StageReviewViewModel(application: Application) : AndroidViewModel(applicat
             3 to Triple(0, 1, 0),
             4 to Triple(3, 3, 0)
         )
-        // HARD schema TBD when definition is available
-        private val HARD_SCHEMA = emptyMap<Int, Triple<Int, Int, Int>>()
+        private val HARD_SCHEMA = mapOf(
+            0 to Triple(0, 3, 1),
+            1 to Triple(0, 3, 0),
+            2 to Triple(0, 0, 0),
+            3 to Triple(0, 0, 1),
+            4 to Triple(4, 3, 0),
+            5 to Triple(4, 3, 1)
+        )
     }
 
     /**

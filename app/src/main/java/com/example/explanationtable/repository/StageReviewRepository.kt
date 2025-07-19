@@ -2,6 +2,8 @@ package com.example.explanationtable.repository
 
 import com.example.explanationtable.data.easy.easyLevelComponentsData
 import com.example.explanationtable.data.easy.easyLevelTables
+import com.example.explanationtable.data.hard.hardLevelComponentsData
+import com.example.explanationtable.data.hard.hardLevelTables
 import com.example.explanationtable.data.medium.mediumLevelComponentsData
 import com.example.explanationtable.data.medium.mediumLevelTables
 import com.example.explanationtable.model.Difficulty
@@ -29,9 +31,7 @@ class StageReviewRepository {
         val (componentsList, tablesList) = when (difficulty) {
             Difficulty.EASY -> easyLevelComponentsData to easyLevelTables
             Difficulty.MEDIUM -> mediumLevelComponentsData to mediumLevelTables
-            Difficulty.HARD ->
-                // HARD difficulty is not yet supported
-                throw NotImplementedError("Stage data for HARD difficulty is not implemented.")
+            Difficulty.HARD -> hardLevelComponentsData to hardLevelTables
         }
 
         // Safely attempt to retrieve the component and table data at the given index
