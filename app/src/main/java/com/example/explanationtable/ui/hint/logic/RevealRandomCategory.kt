@@ -34,10 +34,21 @@ fun revealRandomCategory(
         setOf(CellPosition(2, 3), CellPosition(2, 2), CellPosition(2, 1), CellPosition(2, 0))
     )
 
+    // Categories for HARD
+    val hardCategories = listOf(
+        setOf(CellPosition(1, 3), CellPosition(2, 3), CellPosition(3, 3)),
+        setOf(CellPosition(0, 2), CellPosition(1, 2), CellPosition(2, 2), CellPosition(3, 2), CellPosition(4, 2)),
+        setOf(CellPosition(0, 1), CellPosition(1, 1), CellPosition(2, 1), CellPosition(3, 1), CellPosition(4, 1)),
+        setOf(CellPosition(1, 0), CellPosition(2, 0), CellPosition(3, 0), CellPosition(4, 0)),
+        setOf(CellPosition(3, 3), CellPosition(3, 2), CellPosition(3, 1), CellPosition(3, 0)),
+        setOf(CellPosition(4, 2), CellPosition(4, 1), CellPosition(4, 0))
+    )
+
     // Pick the right set based on difficulty
     val categories = when (difficulty) {
         Difficulty.EASY   -> easyCategories
         Difficulty.MEDIUM -> mediumCategories
+        Difficulty.HARD   -> hardCategories
         else              -> return emptyList()
     }
 
