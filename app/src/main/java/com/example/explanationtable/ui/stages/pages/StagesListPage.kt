@@ -72,6 +72,7 @@ fun StagesListPage(
             // The actual list of stages delegates to its own Composable
             StagesListContent(
                 navController = navController,
+                isDarkTheme     = isDarkTheme,
                 difficulty    = difficulty
             )
 

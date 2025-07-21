@@ -25,6 +25,7 @@ import com.example.explanationtable.ui.hint.dialog.HintDialogHandler
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.ui.gameplay.viewmodel.GameplayViewModel
+import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.utils.toPersianDigits
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -58,6 +59,8 @@ fun GameplayPage(
     val originalTable by gameplayViewModel.originalTable.collectAsState()
     val currentTable by gameplayViewModel.currentTable.collectAsState()
 
+    val progressVm: StageProgressViewModel = viewModel()
+
     // UI state flags for dialogs
     var isSettingsDialogVisible by remember { mutableStateOf(false) }
     var isHintDialogVisible by remember { mutableStateOf(false) }
@@ -65,6 +68,13 @@ fun GameplayPage(
     // Android context and activity for dialog callbacks
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // as soon as the game-over flag becomes true, unlock the next stage
+    LaunchedEffect(result.over) {
+        if (result.over) {
+            progressVm.markStageCompleted(difficulty, stageNumber)
+        }
+    }
 
     // Whenever stage number or difficulty changes, reset the game state
     LaunchedEffect(stageNumber, difficulty) {

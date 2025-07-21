@@ -14,16 +14,23 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.stages.components.DifficultyStepButton
+import com.example.explanationtable.ui.stages.components.LockedStepButton
+import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
 
 @Composable
 fun StagesListContent(
     navController: NavController,
+    isDarkTheme: Boolean,
     difficulty: Difficulty,
     stageViewModel: StageViewModel = viewModel()
 ) {
+    val stageProgress: StageProgressViewModel = viewModel()
+
     // Get the stage count from ViewModel
     val totalSteps by stageViewModel.stageCount.collectAsState()
+    val unlockedMap by stageProgress.lastUnlocked.collectAsState()
+    val unlockedForThis = unlockedMap[difficulty] ?: 1
 
     // Define a symmetric base pattern for horizontal offsets
     val baseOffsetPattern = listOf(
@@ -44,13 +51,17 @@ fun StagesListContent(
             val stageNumber = index + 1
 
             Box(modifier = Modifier.offset(x = offset).padding(vertical = 24.dp)) {
-                DifficultyStepButton(
-                    difficulty = difficulty,
-                    stepNumber = stageNumber,
-                    onClick = {
-                        navController.navigate("GAMEPLAY/$stageNumber/${difficulty.name.lowercase()}")
-                    }
-                )
+                if (stageNumber <= unlockedForThis) {
+                    DifficultyStepButton(
+                        difficulty = difficulty,
+                        stepNumber = stageNumber,
+                        onClick = {
+                            navController.navigate("GAMEPLAY/$stageNumber/${difficulty.name}")
+                        }
+                    )
+                } else {
+                    LockedStepButton(isDarkTheme = isDarkTheme)
+                }
             }
         }
 
