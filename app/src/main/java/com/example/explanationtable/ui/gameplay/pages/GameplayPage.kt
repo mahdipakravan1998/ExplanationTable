@@ -59,7 +59,8 @@ fun GameplayPage(
     val originalTable by gameplayViewModel.originalTable.collectAsState()
     val currentTable by gameplayViewModel.currentTable.collectAsState()
 
-    val progressVm: StageProgressViewModel = viewModel()
+    // Obtain the ViewModel responsible for tracking stage progress
+    val stageProgressViewModel: StageProgressViewModel = viewModel()
 
     // UI state flags for dialogs
     var isSettingsDialogVisible by remember { mutableStateOf(false) }
@@ -69,10 +70,13 @@ fun GameplayPage(
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // as soon as the game-over flag becomes true, unlock the next stage
+    // Side‐effect: when the game-over flag flips to true, mark this stage as completed
     LaunchedEffect(result.over) {
         if (result.over) {
-            progressVm.markStageCompleted(difficulty, stageNumber)
+            stageProgressViewModel.markStageCompleted(
+                difficulty = difficulty,
+                stage = stageNumber
+            )
         }
     }
 
