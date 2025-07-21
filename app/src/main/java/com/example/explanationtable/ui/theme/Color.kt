@@ -191,3 +191,5 @@ val StrokeColor = Color(0xFFFFC801)
 val SpecialFillColor = Color(0xFFD79534)
 val SpecialFillGlowColor = Color(0xFFFFD334)
 val TitleTextColorDark = Color(0xFFF2F7FB)
+
+val Seal = Color(0xFFB7B7B7)
