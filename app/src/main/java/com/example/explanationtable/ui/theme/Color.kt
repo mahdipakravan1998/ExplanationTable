@@ -193,3 +193,6 @@ val SpecialFillGlowColor = Color(0xFFFFD334)
 val TitleTextColorDark = Color(0xFFF2F7FB)
 
 val Seal = Color(0xFFB7B7B7)
+val Raven   = Color(0xFF2C383F)
+val Pigeon  = Color(0xFF37464F)
+val Heron   = Color(0xFF52656D)

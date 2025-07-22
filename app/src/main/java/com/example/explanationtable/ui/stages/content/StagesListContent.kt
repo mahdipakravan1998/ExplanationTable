@@ -91,7 +91,10 @@ fun StagesListContent(
                     )
                 } else {
                     // Locked: show a placeholder LockedStepButton
-                    LockedStepButton(isDarkTheme = isDarkTheme)
+                    LockedStepButton(
+                        isDarkTheme = isDarkTheme,
+                        stepNumber = stageNumber
+                    )
                 }
             }
         }
