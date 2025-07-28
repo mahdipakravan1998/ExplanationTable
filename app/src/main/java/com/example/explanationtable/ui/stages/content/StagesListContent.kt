@@ -19,45 +19,35 @@ import com.example.explanationtable.ui.stages.components.DifficultyStepButton
 import com.example.explanationtable.ui.stages.components.LockedStepButton
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
-import kotlinx.coroutines.delay
 
-// A reusable, symmetric pattern of horizontal offsets (in dp) for stage buttons.
-private val BASE_OFFSET_PATTERN = listOf(
+// Pattern of horizontal offsets for stage buttons, creating a symmetrical zig-zag layout.
+private val OFFSET_PATTERN = listOf(
     0.dp, 40.dp, 80.dp, 40.dp, 0.dp,
     (-40).dp, (-80).dp, (-40).dp, 0.dp
 )
 
-// --- Named Constants for Layout Calculations ---
-
-// The size of the container Box for each stage button.
-private val STAGE_BUTTON_CONTAINER_SIZE = 82.dp
-
-// The vertical padding applied to each stage button's container, pushing items apart.
-private val STAGE_BUTTON_VERTICAL_PADDING = 24.dp
-
-// The vertical padding for the entire scrolling Column.
-private val STAGES_LIST_VERTICAL_PADDING = 16.dp
-
+// Size and padding constants for layout calculations
+private val BUTTON_CONTAINER_SIZE = 82.dp                // Height of each stage button container
+private val BUTTON_VERTICAL_PADDING = 24.dp              // Vertical spacing around each button
+private val LIST_VERTICAL_PADDING = 16.dp                // Vertical padding for the entire list
 
 /**
- * Produces a list of horizontal offsets for each stage button,
- * cycling through a base pattern (excluding the first element to avoid duplicate 0.dp ends).
- *
- * @param totalSteps Number of offsets (i.e., stages) to generate.
- * @param basePattern The repeating pattern of offsets.
- * @return List of Dp offsets, one per stage.
+ * Generate a list of horizontal offsets for [totalSteps] items, cycling through [basePattern].
+ * The first pattern element is only used once to avoid duplicate 0.dp at the sequence ends.
  */
 fun generateStepOffsets(
     totalSteps: Int,
-    basePattern: List<Dp> = BASE_OFFSET_PATTERN
+    basePattern: List<Dp> = OFFSET_PATTERN
 ): List<Dp> = List(totalSteps) { index ->
-    if (index < basePattern.size) {
-        // Within the initial pattern length, take directly.
-        basePattern[index]
-    } else {
-        // Beyond the initial pattern, cycle through basePattern[1..end]
-        val cycleIndex = (index - 1) % (basePattern.size - 1) + 1
-        basePattern[cycleIndex]
+    when {
+        index < basePattern.size ->
+            basePattern[index]  // Directly use the initial pattern segment
+        else -> {
+            // Cycle through basePattern[1..end] for subsequent items
+            val cycleSize = basePattern.size - 1
+            val cycleIndex = ((index - 1) % cycleSize) + 1
+            basePattern[cycleIndex]
+        }
     }
 }
 
@@ -69,59 +59,53 @@ fun StagesListContent(
     stageViewModel: StageViewModel = viewModel(),
     progressViewModel: StageProgressViewModel = viewModel()
 ) {
-    // 1. Fetch stage count when difficulty changes
+    // Fetch updated stage count whenever the difficulty setting changes
     LaunchedEffect(difficulty) {
         stageViewModel.fetchStagesCount(difficulty)
     }
 
-    // Observe total number of stages
+    // Total number of stages available for this difficulty
     val totalSteps by stageViewModel.stageCount.collectAsState()
 
-    // Observe map of last unlocked stages per difficulty, default to 1 if missing
+    // Map of last unlocked stage index per difficulty; default to 1 if not present
     val unlockedMap by progressViewModel.lastUnlocked.collectAsState()
-    val unlockedForThis = unlockedMap[difficulty] ?: 1
+    val unlockedStage = unlockedMap[difficulty] ?: 1
 
-    // Precompute offsets for all stages in one go
-    val stepOffsets = generateStepOffsets(totalSteps)
+    // Precompute horizontal offsets once per totalSteps change
+    val stepOffsets = remember(totalSteps) {
+        generateStepOffsets(totalSteps)
+    }
 
-    // 2. State to hold the measured height of the Column
+    // Holds the pixel height of the scrolling column, captured via onGloballyPositioned
     var columnHeightPx by remember { mutableStateOf(0) }
 
-    // 3. Create a controllable ScrollState and get local density for pixel calculations
+    // Scroll state for vertical scrolling
     val scrollState = rememberScrollState()
     val density = LocalDensity.current
 
-    // 4. This effect scrolls to the last unlocked stage when its data and the column height are available
-    LaunchedEffect(unlockedForThis, totalSteps, columnHeightPx) {
-        // Ensure the list and the layout are ready before trying to scroll
+    // Automatically animate scroll to center the unlocked stage when layout & data are ready
+    LaunchedEffect(unlockedStage, totalSteps, columnHeightPx) {
         if (totalSteps > 0 && columnHeightPx > 0) {
-            // ✅ **REFACTORED**: Calculation now uses named constants for clarity.
-            // The total height of a single stage item in the list.
-            val itemHeightDp = STAGE_BUTTON_CONTAINER_SIZE + (STAGE_BUTTON_VERTICAL_PADDING * 2)
-            val itemHeightPx = with(density) { itemHeightDp.toPx() }
+            // Compute the pixel height of one list item (container + padding)
+            val itemHeightPx = with(density) {
+                (BUTTON_CONTAINER_SIZE + BUTTON_VERTICAL_PADDING * 2).toPx()
+            }
+            // Total top padding applied: inner list padding * 2 (accounting for parent and child)
+            val totalTopPaddingPx = with(density) {
+                LIST_VERTICAL_PADDING.toPx() * 2
+            }
+            // Index of the target item (0-based)
+            val targetIndex = unlockedStage - 1
+            // Center position of target item relative to top of the Column
+            val targetCenterPx = totalTopPaddingPx + (targetIndex * itemHeightPx) + (itemHeightPx / 2f)
+            // Scroll offset to bring target center into the viewport center
+            val scrollTo = (targetCenterPx - columnHeightPx / 2f).toInt()
 
-            // The padding applied to the top of the scrolling Column itself.
-            val columnInnerTopPaddingPx = with(density) { STAGES_LIST_VERTICAL_PADDING.toPx() }
-
-            // This calculation assumes an additional 16.dp of padding is being applied by a
-            // parent container, for a total of 32.dp. The ideal fix is to remove the
-            // outer padding, but this will work for the current layout.
-            val totalTopPaddingPx = columnInnerTopPaddingPx * 2
-
-            val targetIndex = unlockedForThis - 1
-
-            // Calculate the absolute center position of the target item from the top of the Column
-            val targetItemCenterPx = totalTopPaddingPx + (targetIndex * itemHeightPx) + (itemHeightPx / 2f)
-
-            // Calculate the scroll amount needed to place the item's center in the viewport's center
-            val targetScrollPx = (targetItemCenterPx - columnHeightPx / 2f).toInt()
-
-            // Animate scroll to the target. The value is automatically clamped within valid bounds.
             scrollState.animateScrollTo(
-                value = targetScrollPx,
+                scrollTo,
                 animationSpec = tween(
-                    durationMillis = 600, // Slower, smoother scroll duration
-                    easing = EaseInOutCubic // Starts and ends slow, accelerates in the middle
+                    durationMillis = 600,
+                    easing = EaseInOutCubic
                 )
             )
         }
@@ -131,28 +115,26 @@ fun StagesListContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            // 5. Use onGloballyPositioned to capture the Column's height
-            .onGloballyPositioned { coordinates ->
-                if (columnHeightPx == 0) { // Set the height only once
-                    columnHeightPx = coordinates.size.height
+            .onGloballyPositioned { coords ->
+                // Capture the Column height once for scroll calculations
+                if (columnHeightPx == 0) {
+                    columnHeightPx = coords.size.height
                 }
             }
-            // ✅ **REFACTORED**: Using the named constant for padding.
-            .padding(vertical = STAGES_LIST_VERTICAL_PADDING),
+            .padding(vertical = LIST_VERTICAL_PADDING),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Display each stage button with its calculated offset
+        // Render each stage button at its computed horizontal offset
         stepOffsets.forEachIndexed { index, offset ->
             val stageNumber = index + 1
 
             Box(
                 modifier = Modifier
                     .offset(x = offset)
-                    // ✅ **REFACTORED**: Using the named constant for padding.
-                    .padding(vertical = STAGE_BUTTON_VERTICAL_PADDING)
+                    .padding(vertical = BUTTON_VERTICAL_PADDING)
             ) {
-                if (stageNumber <= unlockedForThis) {
-                    // Unlocked: show a DifficultyStepButton that navigates into gameplay
+                if (stageNumber <= unlockedStage) {
+                    // Unlocked stage: clickable gameplay button
                     DifficultyStepButton(
                         difficulty = difficulty,
                         stepNumber = stageNumber,
@@ -161,7 +143,7 @@ fun StagesListContent(
                         }
                     )
                 } else {
-                    // Locked: show a placeholder LockedStepButton
+                    // Locked stage: placeholder button indicating locked status
                     LockedStepButton(
                         isDarkTheme = isDarkTheme,
                         stepNumber = stageNumber
@@ -170,7 +152,7 @@ fun StagesListContent(
             }
         }
 
-        // Bottom padding to ensure last button isn't cut off
-        Spacer(modifier = Modifier.height(24.dp))
+        // Ensure the last button has space below it
+        Spacer(modifier = Modifier.height(BUTTON_VERTICAL_PADDING))
     }
 }
