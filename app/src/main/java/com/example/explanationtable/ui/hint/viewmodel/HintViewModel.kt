@@ -109,13 +109,25 @@ class HintViewModel(application: Application) : AndroidViewModel(application) {
         val cellsToReveal = when (option.displayText) {
             singleWordKey    -> revealRandomCategory()
             singleLetterKey  -> revealRandomCell()
-            completeStageKey -> emptyList()
+            completeStageKey -> revealAllCells()
             else              -> emptyList()
         }
 
         // Emit positions to reveal in the UI.
         _selectedCells.emit(cellsToReveal)
     }
+
+    /**
+    * Reveal every remaining unsolved cell from the puzzle.
+    */
+    private fun revealAllCells(): List<CellPosition> =
+        originalTable
+            ?.let { orig ->
+        currentTable?.let { curr ->
+            repository.revealAllCells(curr, orig)
+        }
+    }
+    ?: emptyList()
 
     /**
      * Reveal all cells belonging to one random category.

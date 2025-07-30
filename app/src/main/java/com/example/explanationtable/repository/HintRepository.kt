@@ -8,6 +8,7 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.LevelTable
 import kotlinx.coroutines.flow.Flow
+import com.example.explanationtable.ui.hint.logic.revealAllCells as revealAllCellsLogic
 import com.example.explanationtable.ui.hint.logic.revealRandomCategory as revealRandomCategoryLogic
 import com.example.explanationtable.ui.hint.logic.revealRandomCell as revealRandomCellLogic
 
@@ -28,6 +29,15 @@ class HintRepository(private val context: Context) {
      */
     fun getHintOptions(): List<HintOption> =
         getHintOptions(context)
+
+    /**
+     * Reveals every remaining unsolved cell in the puzzle.
+     */
+    fun revealAllCells(
+        currentTable: MutableMap<CellPosition, List<String>>,
+        originalTable: LevelTable
+    ): List<CellPosition> =
+        revealAllCellsLogic(currentTable, originalTable)
 
     /**
      * Reveals a random category (entire row or column) from the puzzle as a hint.
