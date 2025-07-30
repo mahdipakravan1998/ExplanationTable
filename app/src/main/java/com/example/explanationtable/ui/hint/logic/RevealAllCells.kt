@@ -11,7 +11,7 @@ import com.example.explanationtable.model.CellPosition
  * @param originalTableData The original table containing the correct data.
  * @return A list of cell positions that were newly correctly placed.
  */
-fun revealAllCells(
+fun revealAllCellsLogic(
     currentTableData: MutableMap<CellPosition, List<String>>,
     originalTableData: LevelTable
 ): List<CellPosition> {

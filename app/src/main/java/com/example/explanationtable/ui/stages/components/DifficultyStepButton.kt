@@ -138,13 +138,13 @@ fun DifficultyStepButton(
     // Box layout that holds the button's visual elements.
     Box(
         modifier = gestureModifier
-            .size(82.dp),
+            .size(77.dp),
         contentAlignment = Alignment.Center
     ) {
         // Canvas to draw the three layered circles with diagonal split colors.
         Canvas(modifier = Modifier.matchParentSize()) {
             // Define the dimensions of the main (outer) circle.
-            val mainDiameterDp = 75.dp
+            val mainDiameterDp = 70.dp
             val mainDiameterPx = mainDiameterDp.toPx()
             val outerRadius = mainDiameterPx / 2f
             // The inner circle's radius is set to 77% of the outer circle's radius.

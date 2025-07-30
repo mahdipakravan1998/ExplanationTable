@@ -8,7 +8,7 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.model.LevelTable
 import kotlinx.coroutines.flow.Flow
-import com.example.explanationtable.ui.hint.logic.revealAllCells as revealAllCellsLogic
+import com.example.explanationtable.ui.hint.logic.revealAllCellsLogic
 import com.example.explanationtable.ui.hint.logic.revealRandomCategory as revealRandomCategoryLogic
 import com.example.explanationtable.ui.hint.logic.revealRandomCell as revealRandomCellLogic
 

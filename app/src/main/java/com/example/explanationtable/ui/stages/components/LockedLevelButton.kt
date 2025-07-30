@@ -36,8 +36,8 @@ import com.example.explanationtable.ui.theme.Swan
 import com.example.explanationtable.utils.toPersianDigits
 
 // Button dimensions and animation constants
-private val BUTTON_SIZE: Dp = 82.dp
-private val MAIN_DIAMETER: Dp = 75.dp
+private val BUTTON_SIZE: Dp = 77.dp
+private val MAIN_DIAMETER: Dp = 70.dp
 private val PRESS_OFFSET: Dp = 7.dp
 private const val ANIMATION_DURATION_MS = 30
 

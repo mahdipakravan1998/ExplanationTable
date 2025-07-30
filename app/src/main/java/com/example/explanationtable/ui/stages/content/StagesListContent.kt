@@ -27,8 +27,8 @@ private val OFFSET_PATTERN = listOf(
 )
 
 // Size and padding constants for layout calculations
-private val BUTTON_CONTAINER_SIZE = 82.dp                // Height of each stage button container
-private val BUTTON_VERTICAL_PADDING = 24.dp              // Vertical spacing around each button
+private val BUTTON_CONTAINER_SIZE = 77.dp                // Height of each stage button container
+private val BUTTON_VERTICAL_PADDING = 8.dp              // Vertical spacing around each button
 private val LIST_VERTICAL_PADDING = 16.dp                // Vertical padding for the entire list
 
 /**

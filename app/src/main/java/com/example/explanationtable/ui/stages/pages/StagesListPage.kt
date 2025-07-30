@@ -2,13 +2,17 @@ package com.example.explanationtable.ui.stages.pages
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.explanationtable.R
@@ -18,6 +22,7 @@ import com.example.explanationtable.ui.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
+import com.example.explanationtable.ui.stages.components.ScrollAnchor
 import com.example.explanationtable.ui.stages.content.StagesListContent
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
 
@@ -57,30 +62,41 @@ fun StagesListPage(
     }
 
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Top bar with gems and difficulty
-            AppTopBar(
-                isHomePage      = false,
-                isDarkTheme     = isDarkTheme,
-                title           = stringResource(id = R.string.stages_list),
-                gems            = diamonds,
-                difficulty      = difficulty,
-                onSettingsClick = { showSettingsDialog = true },
-                iconTint        = MaterialTheme.colorScheme.onSurface
-            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Top bar with gems and difficulty
+                AppTopBar(
+                    isHomePage = false,
+                    isDarkTheme = isDarkTheme,
+                    title = stringResource(id = R.string.stages_list),
+                    gems = diamonds,
+                    difficulty = difficulty,
+                    onSettingsClick = { showSettingsDialog = true },
+                    iconTint = MaterialTheme.colorScheme.onSurface
+                )
 
-            // The actual list of stages delegates to its own Composable
-            StagesListContent(
-                navController = navController,
-                isDarkTheme     = isDarkTheme,
-                difficulty    = difficulty
-            )
+                // The actual list of stages delegates to its own Composable
+                StagesListContent(
+                    navController = navController,
+                    isDarkTheme = isDarkTheme,
+                    difficulty = difficulty
+                )
 
-            // Settings dialog (theme, mute, exit)
-            SettingsDialog(
-                showDialog = showSettingsDialog,
-                onDismiss  = { showSettingsDialog = false },
-                onExit     = { activity?.finishAndRemoveTask() }
+                // Settings dialog (theme, mute, exit)
+                SettingsDialog(
+                    showDialog = showSettingsDialog,
+                    onDismiss = { showSettingsDialog = false },
+                    onExit = { activity?.finishAndRemoveTask() }
+                )
+            }
+            ScrollAnchor(
+                isDarkTheme = isDarkTheme,
+                onClick = {
+                    // TODO: hook up to your scroll logic, e.g. scroll state.animateScrollToItem(0)
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 96.dp)
             )
         }
     }
