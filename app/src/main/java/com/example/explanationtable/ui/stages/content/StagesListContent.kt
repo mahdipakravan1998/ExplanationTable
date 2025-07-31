@@ -23,15 +23,15 @@ import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
 
 // Pattern of horizontal offsets for stage buttons, creating a symmetrical zig-zag layout.
-private val OFFSET_PATTERN = listOf(
+val OFFSET_PATTERN = listOf(
     0.dp, 40.dp, 80.dp, 40.dp, 0.dp,
     (-40).dp, (-80).dp, (-40).dp, 0.dp
 )
 
 // Size and padding constants for layout calculations
-private val BUTTON_CONTAINER_SIZE = 77.dp                // Height of each stage button container
-private val BUTTON_VERTICAL_PADDING = 8.dp               // Vertical spacing around each button
-private val LIST_VERTICAL_PADDING = 16.dp                // Vertical padding for the entire list
+val BUTTON_CONTAINER_SIZE = 77.dp                // Height of each stage button container
+val BUTTON_VERTICAL_PADDING = 8.dp               // Vertical spacing around each button
+val LIST_VERTICAL_PADDING = 16.dp                // Vertical padding for the entire list
 
 /**
  * Generate a list of horizontal offsets for [totalSteps] items, cycling through [basePattern].
@@ -60,6 +60,7 @@ fun StagesListContent(
     difficulty: Difficulty,
     scrollState: ScrollState,
     onTargetOffsetChanged: (Int) -> Unit = {},
+    onViewportHeightChanged: (Int) -> Unit = {},
     stageViewModel: StageViewModel = viewModel(),
     progressViewModel: StageProgressViewModel = viewModel()
 ) {
@@ -80,7 +81,7 @@ fun StagesListContent(
         generateStepOffsets(totalSteps)
     }
 
-    // Holds the pixel height of the scrolling column, captured via onGloballyPositioned
+    // Holds the pixel height of the scrolling column (viewport), captured via onGloballyPositioned
     var columnHeightPx by remember { mutableStateOf(0) }
 
     // Density for dp-to-px conversions
@@ -117,9 +118,10 @@ fun StagesListContent(
             .fillMaxSize()
             .verticalScroll(scrollState)
             .onGloballyPositioned { coords ->
-                // Capture the Column height once for scroll calculations
+                // Capture the viewport height once for visibility and scroll calculations
                 if (columnHeightPx == 0) {
                     columnHeightPx = coords.size.height
+                    onViewportHeightChanged(columnHeightPx)
                 }
             }
             .padding(vertical = LIST_VERTICAL_PADDING),

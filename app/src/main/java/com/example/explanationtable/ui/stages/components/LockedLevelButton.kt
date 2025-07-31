@@ -117,7 +117,7 @@ fun LockedStepButton(
         // adjusting its vertical position based on the press animation.
         Text(
             text = stepNumber.toPersianDigits(),
-            style = AppTypography.headlineMedium.copy(
+            style = AppTypography.headlineSmall.copy(
                 color = iconTint,
                 fontWeight = FontWeight.Bold
             ),

@@ -206,7 +206,7 @@ fun DifficultyStepButton(
         // adjusting its vertical position based on the press animation.
         Text(
             text = stepNumber.toPersianDigits(),
-            style = AppTypography.headlineMedium.copy(
+            style = AppTypography.headlineSmall.copy(
                 color = White,
                 fontWeight = FontWeight.Bold
             ),
