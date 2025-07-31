@@ -19,7 +19,7 @@ class GameplayViewModel : ViewModel() {
 
     private companion object {
         /** Delay before marking the game as over (ms) to match final UI animation. */
-        const val FINAL_ANIMATION_DELAY_MS = 600L
+        const val FINAL_ANIMATION_DELAY_MS = 3000L
         /** Delay before showing the prize (ms) to match prize animation. */
         const val PRIZE_ANIMATION_DELAY_MS = 300L
     }

@@ -2,10 +2,13 @@ package com.example.explanationtable.ui.stages.pages
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +28,7 @@ import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.ui.stages.components.ScrollAnchor
 import com.example.explanationtable.ui.stages.content.StagesListContent
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Composable that sets up and renders the stage list screen.
@@ -48,6 +52,11 @@ fun StagesListPage(
     // For exit
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Shared ScrollState and target offset for centering
+    val scrollState = rememberScrollState()
+    var targetOffset by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
 
     // Handle Android back
     BackHandler {
@@ -79,7 +88,9 @@ fun StagesListPage(
                 StagesListContent(
                     navController = navController,
                     isDarkTheme = isDarkTheme,
-                    difficulty = difficulty
+                    difficulty = difficulty,
+                    scrollState = scrollState,
+                    onTargetOffsetChanged = { offset -> targetOffset = offset }
                 )
 
                 // Settings dialog (theme, mute, exit)
@@ -92,11 +103,19 @@ fun StagesListPage(
             ScrollAnchor(
                 isDarkTheme = isDarkTheme,
                 onClick = {
-                    // TODO: hook up to your scroll logic, e.g. scroll state.animateScrollToItem(0)
+                    coroutineScope.launch {
+                        scrollState.animateScrollTo(
+                            targetOffset,
+                            animationSpec = tween(
+                                durationMillis = 600,
+                                easing = EaseInOutCubic
+                            )
+                        )
+                    }
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 96.dp)
+                    .padding(end = 16.dp, bottom = 16.dp)
             )
         }
     }

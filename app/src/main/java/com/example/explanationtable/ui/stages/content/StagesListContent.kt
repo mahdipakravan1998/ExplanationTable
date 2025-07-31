@@ -2,10 +2,11 @@ package com.example.explanationtable.ui.stages.content
 
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -17,6 +18,7 @@ import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.stages.components.DifficultyStepButton
 import com.example.explanationtable.ui.stages.components.LockedStepButton
+import com.example.explanationtable.ui.stages.util.computeCenterOffset
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
 
@@ -28,7 +30,7 @@ private val OFFSET_PATTERN = listOf(
 
 // Size and padding constants for layout calculations
 private val BUTTON_CONTAINER_SIZE = 77.dp                // Height of each stage button container
-private val BUTTON_VERTICAL_PADDING = 8.dp              // Vertical spacing around each button
+private val BUTTON_VERTICAL_PADDING = 8.dp               // Vertical spacing around each button
 private val LIST_VERTICAL_PADDING = 16.dp                // Vertical padding for the entire list
 
 /**
@@ -56,6 +58,8 @@ fun StagesListContent(
     navController: NavController,
     isDarkTheme: Boolean,
     difficulty: Difficulty,
+    scrollState: ScrollState,
+    onTargetOffsetChanged: (Int) -> Unit = {},
     stageViewModel: StageViewModel = viewModel(),
     progressViewModel: StageProgressViewModel = viewModel()
 ) {
@@ -79,28 +83,25 @@ fun StagesListContent(
     // Holds the pixel height of the scrolling column, captured via onGloballyPositioned
     var columnHeightPx by remember { mutableStateOf(0) }
 
-    // Scroll state for vertical scrolling
-    val scrollState = rememberScrollState()
+    // Density for dp-to-px conversions
     val density = LocalDensity.current
+
+    // Exposed target offset for parent callback
+    var targetCenterOffset by remember { mutableIntStateOf(0) }
 
     // Automatically animate scroll to center the unlocked stage when layout & data are ready
     LaunchedEffect(unlockedStage, totalSteps, columnHeightPx) {
         if (totalSteps > 0 && columnHeightPx > 0) {
-            // Compute the pixel height of one list item (container + padding)
-            val itemHeightPx = with(density) {
-                (BUTTON_CONTAINER_SIZE + BUTTON_VERTICAL_PADDING * 2).toPx()
-            }
-            // Total top padding applied: inner list padding * 2 (accounting for parent and child)
-            val totalTopPaddingPx = with(density) {
-                LIST_VERTICAL_PADDING.toPx() * 2
-            }
-            // Index of the target item (0-based)
-            val targetIndex = unlockedStage - 1
-            // Center position of target item relative to top of the Column
-            val targetCenterPx = totalTopPaddingPx + (targetIndex * itemHeightPx) + (itemHeightPx / 2f)
-            // Scroll offset to bring target center into the viewport center
-            val scrollTo = (targetCenterPx - columnHeightPx / 2f).toInt()
-
+            val scrollTo = computeCenterOffset(
+                unlockedStage = unlockedStage,
+                columnHeightPx = columnHeightPx,
+                density = density,
+                buttonContainerSize = BUTTON_CONTAINER_SIZE,
+                buttonVerticalPadding = BUTTON_VERTICAL_PADDING,
+                listVerticalPadding = LIST_VERTICAL_PADDING
+            )
+            targetCenterOffset = scrollTo
+            onTargetOffsetChanged(scrollTo)
             scrollState.animateScrollTo(
                 scrollTo,
                 animationSpec = tween(
