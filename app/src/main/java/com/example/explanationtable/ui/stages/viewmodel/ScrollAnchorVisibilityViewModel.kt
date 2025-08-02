@@ -2,7 +2,11 @@ package com.example.explanationtable.ui.stages.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 
 class ScrollAnchorVisibilityViewModel : ViewModel() {
     private val scrollOffsetFlow = MutableStateFlow(0)
@@ -26,6 +30,20 @@ class ScrollAnchorVisibilityViewModel : ViewModel() {
         val itemBottom = itemTop + itemHeight
         val visible = (scrollOffset <= itemBottom) && (scrollOffset + viewportHeight >= itemTop)
         !visible
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * Emits `true` when the unlocked stage item is above the visible window
+     * (i.e., user has scrolled past it upwards), so arrow should point down.
+     */
+    val isStageAbove: StateFlow<Boolean> = combine(
+        scrollOffsetFlow,
+        totalTopPaddingFlow,
+        itemHeightFlow,
+        unlockedStageFlow
+    ) { scrollOffset, totalTopPadding, itemHeight, unlockedStage ->
+        // itemBottom = totalTopPadding + unlockedStage * itemHeight
+        scrollOffset > (totalTopPadding + unlockedStage * itemHeight)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /**

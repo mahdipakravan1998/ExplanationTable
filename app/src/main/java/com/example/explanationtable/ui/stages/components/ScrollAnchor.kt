@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -32,15 +33,15 @@ import com.example.explanationtable.ui.theme.BorderLight
 import com.example.explanationtable.R
 
 /**
- * A small “scroll to content” button that shows a simple arrow icon.
- *
  * @param isDarkTheme  whether to use dark-theme colors
+ * @param flipVertical if true, flips the arrow vertically (arrow points down)
  * @param onClick      callback when the user taps it (should scroll to your main content)
  * @param modifier     for external layout/styling
  */
 @Composable
 fun ScrollAnchor(
     isDarkTheme: Boolean,
+    flipVertical: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -49,7 +50,6 @@ fun ScrollAnchor(
     val density = LocalDensity.current
     val defaultOffsetY = 2.dp
 
-    // animate vertical offset on press for tactile feedback
     val pressOffsetPx by animateFloatAsState(
         targetValue = if (isPressed) with(density) { defaultOffsetY.toPx() } else 0f,
         animationSpec = tween(durationMillis = 50)
@@ -66,7 +66,7 @@ fun ScrollAnchor(
     val frontColor  = if (isDarkTheme) BackgroundDark else BackgroundLight
     val borderColor = if (isDarkTheme) BorderDark    else BorderLight
 
-    // --- Gesture Handling (press + click) ---
+    // --- Gesture Handling ---
     val gestureModifier = Modifier.pointerInput(Unit) {
         awaitEachGesture {
             awaitFirstDown()
@@ -118,7 +118,9 @@ fun ScrollAnchor(
             Image(
                 painter = painterResource(id = R.drawable.ic_arrow),
                 contentDescription = "Scroll to content",
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier
+                    .size(20.dp)
+                    .graphicsLayer { scaleY = if (flipVertical) 1f else -1f }
             )
         }
     }
