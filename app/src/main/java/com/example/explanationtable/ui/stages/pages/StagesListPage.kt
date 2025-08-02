@@ -2,15 +2,10 @@ package com.example.explanationtable.ui.stages.pages
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
@@ -30,19 +25,21 @@ import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.ui.stages.components.ScrollAnchor
-import com.example.explanationtable.ui.stages.content.BUTTON_CONTAINER_SIZE
-import com.example.explanationtable.ui.stages.content.BUTTON_VERTICAL_PADDING
-import com.example.explanationtable.ui.stages.content.LIST_VERTICAL_PADDING
-import com.example.explanationtable.ui.stages.content.StagesListContent
-import com.example.explanationtable.ui.stages.viewmodel.ScrollAnchorVisibilityViewModel
-import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
-import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
+import com.example.explanationtable.ui.stages.content.*
+import com.example.explanationtable.ui.stages.content.StageListDefaults.ButtonContainerHeight
+import com.example.explanationtable.ui.stages.content.StageListDefaults.ButtonVerticalPadding
+import com.example.explanationtable.ui.stages.content.StageListDefaults.ListVerticalPadding
+import com.example.explanationtable.ui.stages.viewmodel.*
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
- * Composable that sets up and renders the stage list screen with conditional,
- * animated appearance and orientation of the ScrollAnchor.
+ * Screen showing a scrollable list of stages for a given [difficulty].
+ * Displays a floating “scroll to unlocked stage” anchor and a settings dialog.
+ *
+ * @param navController used to navigate back/home.
+ * @param difficulty initial level; triggers reload when changed.
+ * @param isDarkTheme toggle for theming.
  */
 @Composable
 fun StagesListPage(
@@ -50,82 +47,88 @@ fun StagesListPage(
     difficulty: Difficulty = Difficulty.EASY,
     isDarkTheme: Boolean
 ) {
-    // App-wide state
+    //---- Shared ViewModels & State ----
     val mainViewModel: MainViewModel = viewModel()
     val diamonds by mainViewModel.diamonds.collectAsState()
 
-    // Stage data
     val stageViewModel: StageViewModel = viewModel()
     val progressViewModel: StageProgressViewModel = viewModel()
     val unlockedMap by progressViewModel.lastUnlocked.collectAsState()
     val unlockedStage = unlockedMap[difficulty] ?: 1
 
-    // Visibility logic
     val visibilityViewModel: ScrollAnchorVisibilityViewModel = viewModel()
     val showScrollAnchor by visibilityViewModel.showScrollAnchor.collectAsState()
     val isStageAbove by visibilityViewModel.isStageAbove.collectAsState()
 
-    // Freeze arrow flip at the moment of showing, so exit animation keeps correct orientation
+    // Remembered flip flag so the arrow orientation “freezes” during exit animation
     val anchorFlip = remember { mutableStateOf(false) }
     LaunchedEffect(showScrollAnchor) {
-        if (showScrollAnchor) {
-            anchorFlip.value = isStageAbove
-        }
+        if (showScrollAnchor) anchorFlip.value = isStageAbove
     }
 
-    // UI state
+    //---- UI State ----
     var showSettingsDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Scroll and measurements
+    //---- Scroll & Layout Metrics ----
     val scrollState = rememberScrollState()
     var targetOffset by remember { mutableStateOf(0) }
     var viewportHeight by remember { mutableStateOf(0) }
-    val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
+    val coroutineScope = rememberCoroutineScope()
 
-    // Back handling
+    //---- Back Handler ----
     BackHandler {
         navController.navigate(Routes.MAIN) {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
-// Load stages on difficulty change
+
+    // Reload available stages when difficulty changes
     LaunchedEffect(difficulty) {
         stageViewModel.fetchStagesCount(difficulty)
     }
 
-    // Feed scroll and size into visibility ViewModel
+    // Feed scroll position, viewport size, and unlocked stage into visibility logic
     LaunchedEffect(scrollState, viewportHeight, unlockedStage) {
         snapshotFlow { Triple(scrollState.value, viewportHeight, unlockedStage) }
             .distinctUntilChanged()
             .collect { (offset, height, stage) ->
-                val itemHeightPx = with(density) { (BUTTON_CONTAINER_SIZE + BUTTON_VERTICAL_PADDING * 2).toPx() }.toInt()
-                val totalTopPaddingPx = with(density) { LIST_VERTICAL_PADDING.toPx() * 2 }.toInt()
+                // Convert Dp to pixels
+                val itemPx = with(density) {
+                    (ButtonContainerHeight + ButtonVerticalPadding  * 2).toPx()
+                }.toInt()
+                val paddingPx = with(density) {
+                    ListVerticalPadding .toPx() * 2
+                }.toInt()
+
                 visibilityViewModel.updateParams(
                     scrollOffset = offset,
                     viewportHeight = height,
-                    itemHeight = itemHeightPx,
-                    totalTopPadding = totalTopPaddingPx,
+                    itemHeight = itemPx,
+                    totalTopPadding = paddingPx,
                     unlockedStage = stage
                 )
             }
     }
 
+    //---- Main UI ----
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
-        Box(Modifier.fillMaxSize()) {
-            Column(Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Top bar with title, gem count, difficulty selector, and settings icon
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
-                    title = stringResource(id = R.string.stages_list),
+                    title = stringResource(R.string.stages_list),
                     gems = diamonds,
                     difficulty = difficulty,
                     onSettingsClick = { showSettingsDialog = true },
                     iconTint = MaterialTheme.colorScheme.onSurface
                 )
 
+                // Scrollable list of stages
                 StagesListContent(
                     navController = navController,
                     isDarkTheme = isDarkTheme,
@@ -137,6 +140,7 @@ fun StagesListPage(
                     progressViewModel = progressViewModel
                 )
 
+                // Settings pop-up dialog
                 SettingsDialog(
                     showDialog = showSettingsDialog,
                     onDismiss = { showSettingsDialog = false },
@@ -144,11 +148,17 @@ fun StagesListPage(
                 )
             }
 
-            // Animated appearance/hide with scale and fixed flipVertical
+            // Floating scroll–to–stage anchor with scale animation
             AnimatedVisibility(
                 visible = showScrollAnchor,
-                enter = scaleIn(initialScale = 0f, animationSpec = tween(300, easing = EaseInOutCubic)),
-                exit = scaleOut(targetScale = 0f, animationSpec = tween(300, easing = EaseInOutCubic)),
+                enter = scaleIn(
+                    initialScale = 0f,
+                    animationSpec = tween(150, easing = EaseInOutCubic)
+                ),
+                exit = scaleOut(
+                    targetScale = 0f,
+                    animationSpec = tween(150, easing = EaseInOutCubic)
+                ),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 16.dp)

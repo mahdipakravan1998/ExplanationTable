@@ -3,8 +3,8 @@ package com.example.explanationtable.ui.stages.content
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
@@ -22,34 +22,50 @@ import com.example.explanationtable.ui.stages.util.computeCenterOffset
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
 
-// Pattern of horizontal offsets for stage buttons, creating a symmetrical zig-zag layout.
-val OFFSET_PATTERN = listOf(
+/**
+ * Layout constants for the stages list.
+ */
+object StageListDefaults {
+    val ButtonContainerHeight = 77.dp
+    val ButtonVerticalPadding = 8.dp
+    val ListVerticalPadding = 16.dp
+}
+
+/**
+ * A repeating zig-zag offset pattern for stage buttons.
+ * The first entry is unique; subsequent cycles skip the zero to avoid duplication.
+ */
+private val DefaultOffsetPattern: List<Dp> = listOf(
     0.dp, 40.dp, 80.dp, 40.dp, 0.dp,
     (-40).dp, (-80).dp, (-40).dp, 0.dp
 )
 
-// Size and padding constants for layout calculations
-val BUTTON_CONTAINER_SIZE = 77.dp                // Height of each stage button container
-val BUTTON_VERTICAL_PADDING = 8.dp               // Vertical spacing around each button
-val LIST_VERTICAL_PADDING = 16.dp                // Vertical padding for the entire list
-
 /**
- * Generate a list of horizontal offsets for [totalSteps] items, cycling through [basePattern].
- * The first pattern element is only used once to avoid duplicate 0.dp at the sequence ends.
+ * Generate horizontal offsets for each stage button so they form
+ * a zig-zag pattern. If totalSteps exceeds the base pattern length,
+ * the pattern (excluding its first element) repeats as needed.
+ *
+ * @param totalSteps number of stages
+ * @param basePattern zig-zag pattern template
+ * @return list of offsets, one per stage
  */
 fun generateStepOffsets(
     totalSteps: Int,
-    basePattern: List<Dp> = OFFSET_PATTERN
-): List<Dp> = List(totalSteps) { index ->
-    when {
-        index < basePattern.size ->
-            basePattern[index]  // Directly use the initial pattern segment
-        else -> {
-            // Cycle through basePattern[1..end] for subsequent items
-            val cycleSize = basePattern.size - 1
-            val cycleIndex = ((index - 1) % cycleSize) + 1
-            basePattern[cycleIndex]
-        }
+    basePattern: List<Dp> = DefaultOffsetPattern
+): List<Dp> = buildList {
+    if (totalSteps <= basePattern.size) {
+        // If fewer stages than pattern entries, just truncate the pattern
+        addAll(basePattern.take(totalSteps))
+        return@buildList
+    }
+
+    // Emit full base pattern once
+    addAll(basePattern)
+
+    // Then repeat the remainder of the pattern (excluding the first element)
+    val cycle = basePattern.drop(1)
+    repeat(totalSteps - basePattern.size) { index ->
+        add(cycle[index % cycle.size])
     }
 }
 
@@ -64,47 +80,46 @@ fun StagesListContent(
     stageViewModel: StageViewModel = viewModel(),
     progressViewModel: StageProgressViewModel = viewModel()
 ) {
-    // Fetch updated stage count whenever the difficulty setting changes
+    // Refresh stage count whenever difficulty changes
     LaunchedEffect(difficulty) {
         stageViewModel.fetchStagesCount(difficulty)
     }
 
-    // Total number of stages available for this difficulty
-    val totalSteps by stageViewModel.stageCount.collectAsState()
+    // Collect total number of stages (initially zero)
+    val totalSteps by stageViewModel.stageCount.collectAsState(initial = 0)
 
-    // Map of last unlocked stage index per difficulty; default to 1 if not present
-    val unlockedMap by progressViewModel.lastUnlocked.collectAsState()
+    // Collect last unlocked stage per difficulty; default to stage 1
+    val unlockedMap by progressViewModel.lastUnlocked.collectAsState(initial = emptyMap())
     val unlockedStage = unlockedMap[difficulty] ?: 1
 
-    // Precompute horizontal offsets once per totalSteps change
+    // Compute horizontal offsets once per totalSteps change
     val stepOffsets = remember(totalSteps) {
         generateStepOffsets(totalSteps)
     }
 
-    // Holds the pixel height of the scrolling column (viewport), captured via onGloballyPositioned
-    var columnHeightPx by remember { mutableStateOf(0) }
-
-    // Density for dp-to-px conversions
+    // Track viewport height in pixels (for centering logic)
+    var viewportHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
 
-    // Exposed target offset for parent callback
-    var targetCenterOffset by remember { mutableIntStateOf(0) }
+    // Target scroll position (px) for centering the unlocked stage
+    var targetOffsetPx by remember { mutableIntStateOf(0) }
 
-    // Automatically animate scroll to center the unlocked stage when layout & data are ready
-    LaunchedEffect(unlockedStage, totalSteps, columnHeightPx) {
-        if (totalSteps > 0 && columnHeightPx > 0) {
-            val scrollTo = computeCenterOffset(
+    // When prerequisites are ready, animate scroll to center the unlocked stage
+    LaunchedEffect(unlockedStage, totalSteps, viewportHeightPx) {
+        if (totalSteps > 0 && viewportHeightPx > 0) {
+            val scrollTarget = computeCenterOffset(
                 unlockedStage = unlockedStage,
-                columnHeightPx = columnHeightPx,
+                viewportHeightPx = viewportHeightPx,
                 density = density,
-                buttonContainerSize = BUTTON_CONTAINER_SIZE,
-                buttonVerticalPadding = BUTTON_VERTICAL_PADDING,
-                listVerticalPadding = LIST_VERTICAL_PADDING
+                buttonHeightDp = StageListDefaults.ButtonContainerHeight,
+                buttonPaddingDp = StageListDefaults.ButtonVerticalPadding,
+                listPaddingDp = StageListDefaults.ListVerticalPadding
             )
-            targetCenterOffset = scrollTo
-            onTargetOffsetChanged(scrollTo)
+            targetOffsetPx = scrollTarget
+            onTargetOffsetChanged(scrollTarget)
+
             scrollState.animateScrollTo(
-                scrollTo,
+                scrollTarget,
                 animationSpec = tween(
                     durationMillis = 600,
                     easing = EaseInOutCubic
@@ -113,31 +128,31 @@ fun StagesListContent(
         }
     }
 
+    // Main scrollable column containing all stage buttons
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
             .onGloballyPositioned { coords ->
-                // Capture the viewport height once for visibility and scroll calculations
-                if (columnHeightPx == 0) {
-                    columnHeightPx = coords.size.height
-                    onViewportHeightChanged(columnHeightPx)
+                // Capture viewport height once and notify
+                if (viewportHeightPx == 0) {
+                    viewportHeightPx = coords.size.height
+                    onViewportHeightChanged(viewportHeightPx)
                 }
             }
-            .padding(vertical = LIST_VERTICAL_PADDING),
+            .padding(vertical = StageListDefaults.ListVerticalPadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Render each stage button at its computed horizontal offset
         stepOffsets.forEachIndexed { index, offset ->
             val stageNumber = index + 1
 
             Box(
                 modifier = Modifier
                     .offset(x = offset)
-                    .padding(vertical = BUTTON_VERTICAL_PADDING)
+                    .padding(vertical = StageListDefaults.ButtonVerticalPadding)
             ) {
                 if (stageNumber <= unlockedStage) {
-                    // Unlocked stage: clickable gameplay button
+                    // Unlocked: show clickable difficulty-themed button
                     DifficultyStepButton(
                         difficulty = difficulty,
                         stepNumber = stageNumber,
@@ -146,7 +161,7 @@ fun StagesListContent(
                         }
                     )
                 } else {
-                    // Locked stage: placeholder button indicating locked status
+                    // Locked: show non-interactive placeholder
                     LockedStepButton(
                         isDarkTheme = isDarkTheme,
                         stepNumber = stageNumber
@@ -155,7 +170,7 @@ fun StagesListContent(
             }
         }
 
-        // Ensure the last button has space below it
-        Spacer(modifier = Modifier.height(BUTTON_VERTICAL_PADDING))
+        // Add bottom padding so last button isn't flush to the bottom
+        Spacer(modifier = Modifier.height(StageListDefaults.ButtonVerticalPadding))
     }
 }

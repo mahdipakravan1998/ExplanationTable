@@ -1,41 +1,36 @@
 package com.example.explanationtable.ui.stages.components
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.explanationtable.R
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
 import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
-import com.example.explanationtable.R
 
 /**
- * @param isDarkTheme  whether to use dark-theme colors
- * @param flipVertical if true, flips the arrow vertically (arrow points down)
- * @param onClick      callback when the user taps it (should scroll to your main content)
+ * A pressable anchor that indicates “scroll to main content.”
+ *
+ * Layers three boxes (shadow, border, content) to simulate elevation
+ * and animates a small downward shift on press.
+ *
+ * @param isDarkTheme  whether to use dark or light theme colors
+ * @param flipVertical if true, arrow points down; otherwise, up
+ * @param onClick      callback invoked when the anchor is tapped
  * @param modifier     for external layout/styling
  */
 @Composable
@@ -45,74 +40,91 @@ fun ScrollAnchor(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // --- Press Animation State ---
+    // -----------------------------------------------------------------------------------------
+    // Press state and animation
+    // -----------------------------------------------------------------------------------------
     var isPressed by remember { mutableStateOf(false) }
-    val density = LocalDensity.current
-    val defaultOffsetY = 2.dp
 
-    val pressOffsetPx by animateFloatAsState(
-        targetValue = if (isPressed) with(density) { defaultOffsetY.toPx() } else 0f,
-        animationSpec = tween(durationMillis = 50)
+    // Duration for the press animation
+    val animationSpec = tween<Dp>(durationMillis = 50)
+
+    // How far the layers shift when pressed
+    val defaultOffset = 2.dp
+
+    // Animate between 0.dp and defaultOffset when pressed/released
+    val pressOffset: Dp by animateDpAsState(
+        targetValue = if (isPressed) defaultOffset else 0.dp,
+        animationSpec = animationSpec
     )
-    val pressOffsetDp = with(density) { pressOffsetPx.toDp() }
 
-    // --- Dimensions & Colors ---
+    // -----------------------------------------------------------------------------------------
+    // Constants: sizes, shapes, and colors
+    // -----------------------------------------------------------------------------------------
     val cellSize = 52.dp
     val innerSize = 47.dp
     val outerHeight = 54.dp
-    val cornerRadius = 16.dp
-    val innerCornerRadius = 13.dp
 
-    val frontColor  = if (isDarkTheme) BackgroundDark else BackgroundLight
-    val borderColor = if (isDarkTheme) BorderDark    else BorderLight
+    val outerShape = RoundedCornerShape(16.dp)
+    val innerShape = RoundedCornerShape(13.dp)
 
-    // --- Gesture Handling ---
+    val borderColor = if (isDarkTheme) BorderDark else BorderLight
+    val backgroundColor = if (isDarkTheme) BackgroundDark else BackgroundLight
+
+    // -----------------------------------------------------------------------------------------
+    // Handle tap gestures, updating press state and firing onClick
+    // -----------------------------------------------------------------------------------------
     val gestureModifier = Modifier.pointerInput(Unit) {
-        awaitEachGesture {
-            awaitFirstDown()
-            isPressed = true
-            val up = waitForUpOrCancellation()
-            isPressed = false
-            if (up != null) {
-                onClick()
+        detectTapGestures(
+            onPress = {
+                // User presses down: show pressed state
+                isPressed = true
+                // Suspend until release or cancellation
+                val released = tryAwaitRelease()
+                // Always clear pressed state
+                isPressed = false
+                // If it was a full tap (not cancelled), invoke click callback
+                if (released) onClick()
             }
-        }
+        )
     }
 
-    // --- Layout ---
+    // -----------------------------------------------------------------------------------------
+    // Layout: three stacked boxes to create depth & press effect
+    // -----------------------------------------------------------------------------------------
     Box(
         modifier = modifier
-            .width(cellSize)
-            .height(outerHeight)
+            .size(width = cellSize, height = outerHeight)
             .then(gestureModifier),
         contentAlignment = Alignment.TopCenter
     ) {
-        // shadow layer
+        // 1) Shadow layer: static, offset by defaultOffset
         Box(
             Modifier
                 .align(Alignment.Center)
-                .offset(y = defaultOffsetY)
+                .offset(y = defaultOffset)
                 .size(cellSize)
-                .clip(RoundedCornerShape(cornerRadius))
+                .clip(outerShape)
                 .background(borderColor)
         )
-        // border layer (moves on press)
+
+        // 2) Border layer: moves down when pressed
         Box(
             Modifier
                 .align(Alignment.Center)
-                .offset(y = pressOffsetDp)
+                .offset(y = pressOffset)
                 .size(cellSize)
-                .clip(RoundedCornerShape(cornerRadius))
+                .clip(outerShape)
                 .background(borderColor)
         )
-        // front layer with icon
+
+        // 3) Front/content layer: holds the arrow icon
         Box(
             Modifier
                 .align(Alignment.Center)
-                .offset(y = pressOffsetDp)
+                .offset(y = pressOffset)
                 .size(innerSize)
-                .clip(RoundedCornerShape(innerCornerRadius))
-                .background(frontColor),
+                .clip(innerShape)
+                .background(backgroundColor),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -120,6 +132,7 @@ fun ScrollAnchor(
                 contentDescription = "Scroll to content",
                 modifier = Modifier
                     .size(20.dp)
+                    // Flip the arrow vertically if requested
                     .graphicsLayer { scaleY = if (flipVertical) 1f else -1f }
             )
         }
