@@ -6,31 +6,47 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.repository.StageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the stages‐list screen.
- * Internally instantiates a StageRepository so it has a no-arg constructor.
+ * ViewModel for the stages-list screen.
+ *
+ * Exposes:
+ * - stageCount (current difficulty)
+ * - allStageCounts (all difficulties) → used to compute global Bee/Pencil ordinals.
  */
 class StageViewModel : ViewModel() {
 
-    // Repository that knows how many stages each difficulty has
     private val stageRepository = StageRepository()
 
-    // Backing state for the stage count
+    // Current difficulty count (legacy use)
     private val _stageCount = MutableStateFlow(0)
     val stageCount: StateFlow<Int> = _stageCount
 
-    /**
-     * Load the number of stages for the given difficulty.
-     */
     fun fetchStagesCount(difficulty: Difficulty) {
         viewModelScope.launch {
-            stageRepository
-                .getStagesCount(difficulty)
-                .collect { count ->
-                    _stageCount.value = count
-                }
+            stageRepository.getStagesCount(difficulty).collect { count ->
+                _stageCount.value = count
+            }
+        }
+    }
+
+    // All difficulties → needed for global ordinal math
+    private val _allStageCounts = MutableStateFlow(
+        Difficulty.entries.associateWith { 0 }
+    )
+    val allStageCounts: StateFlow<Map<Difficulty, Int>> = _allStageCounts
+
+    fun fetchAllStageCounts() {
+        viewModelScope.launch {
+            val flows = Difficulty.entries.map { d ->
+                stageRepository.getStagesCount(d).map { c -> d to c }
+            }
+            combine(flows) { it.toMap() }.collect { map ->
+                _allStageCounts.value = map
+            }
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.example.explanationtable.ui.stages.content
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
@@ -9,65 +11,201 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.stages.components.DifficultyStepButton
 import com.example.explanationtable.ui.stages.components.LockedStepButton
 import com.example.explanationtable.ui.stages.util.computeCenterOffset
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
+import kotlin.math.abs
 
 /**
- * Layout constants for the stages list.
+ * Layout constants for the stages list (700x700 sources; xxxhdpi pixel-perfect at ~175dp).
  */
 object StageListDefaults {
     val ButtonContainerHeight = 77.dp
     val ButtonVerticalPadding = 8.dp
     val ListVerticalPadding = 16.dp
+
+    // Uniform visual height for ALL side art
+    val SideImageDesiredHeight = 152.dp
+
+    // Make both chests slightly smaller
+    const val ChestScaleFactor: Float = 0.80f
+
+    // Row baseline height so scaling won't affect spacing
+    val SideImageBaseHeight = ButtonContainerHeight
+
+    // Optional width cap (usually unnecessary with square 700x700 canvases)
+    val SideImageMaxWidth: Dp = Dp.Unspecified
 }
 
-/**
- * A repeating zig-zag offset pattern for stage buttons.
- * The first entry is unique; subsequent cycles skip the zero to avoid duplication.
- */
+/** Zig-zag; extreme lanes exactly at ±80.dp. */
 private val DefaultOffsetPattern: List<Dp> = listOf(
     0.dp, 40.dp, 80.dp, 40.dp, 0.dp,
     (-40).dp, (-80).dp, (-40).dp, 0.dp
 )
 
-/**
- * Generate horizontal offsets for each stage button so they form
- * a zig-zag pattern. If totalSteps exceeds the base pattern length,
- * the pattern (excluding its first element) repeats as needed.
- *
- * @param totalSteps number of stages
- * @param basePattern zig-zag pattern template
- * @return list of offsets, one per stage
- */
-fun generateStepOffsets(
-    totalSteps: Int,
-    basePattern: List<Dp> = DefaultOffsetPattern
-): List<Dp> = buildList {
-    if (totalSteps <= basePattern.size) {
-        // If fewer stages than pattern entries, just truncate the pattern
-        addAll(basePattern.take(totalSteps))
-        return@buildList
+fun generateStepOffsets(totalSteps: Int, basePattern: List<Dp> = DefaultOffsetPattern): List<Dp> =
+    buildList {
+        if (totalSteps <= basePattern.size) {
+            addAll(basePattern.take(totalSteps)); return@buildList
+        }
+        addAll(basePattern)
+        val cycle = basePattern.drop(1)
+        repeat(totalSteps - basePattern.size) { i -> add(cycle[i % cycle.size]) }
     }
 
-    // Emit full base pattern once
-    addAll(basePattern)
+/* ---------- Sequence & assets ---------- */
 
-    // Then repeat the remainder of the pattern (excluding the first element)
-    val cycle = basePattern.drop(1)
-    repeat(totalSteps - basePattern.size) { index ->
-        add(cycle[index % cycle.size])
-    }
+private enum class Slot { BEE, PENCIL, CHEST }
+
+/** Your exact extreme-slot sequences (by extreme ordinal, 1-based). */
+private fun extremeSequenceFor(difficulty: Difficulty): List<Slot> = when (difficulty) {
+    Difficulty.EASY -> listOf(
+        // Easy (12) — P at 2,7,11
+        Slot.BEE, Slot.PENCIL, Slot.BEE, Slot.CHEST, Slot.BEE, Slot.CHEST,
+        Slot.PENCIL, Slot.BEE, Slot.CHEST, Slot.BEE, Slot.PENCIL, Slot.CHEST
+    )
+    Difficulty.MEDIUM -> listOf(
+        // Medium (17) — P at 2,9,16
+        Slot.BEE, Slot.PENCIL, Slot.BEE, Slot.CHEST, Slot.BEE, Slot.CHEST,
+        Slot.BEE, Slot.CHEST, Slot.PENCIL, Slot.BEE, Slot.CHEST, Slot.BEE,
+        Slot.CHEST, Slot.BEE, Slot.CHEST, Slot.PENCIL, Slot.CHEST
+    )
+    Difficulty.HARD -> listOf(
+        // Hard (25) — P at 2,13,24; late double-chest
+        Slot.BEE, Slot.PENCIL, Slot.BEE, Slot.CHEST, Slot.BEE, Slot.CHEST,
+        Slot.BEE, Slot.CHEST, Slot.BEE, Slot.CHEST, Slot.BEE, Slot.CHEST,
+        Slot.PENCIL, Slot.BEE, Slot.CHEST, Slot.BEE, Slot.CHEST, Slot.BEE,
+        Slot.CHEST, Slot.CHEST, Slot.BEE, Slot.CHEST, Slot.BEE, Slot.PENCIL, Slot.CHEST
+    )
 }
+
+/** Bee/Pencil art pools (700x700 each). */
+@DrawableRes private val PencilImages = listOf(
+    R.drawable.char_pencil_traveler,
+    R.drawable.char_pencil_shadow,
+    R.drawable.char_pencil_podcast,
+    R.drawable.char_pencil_museum,
+    R.drawable.char_pencil_chef,
+    R.drawable.char_pencil_campfire,
+    R.drawable.char_pencil_waiter,
+    R.drawable.char_pencil_beanstalk,
+    R.drawable.char_pencil_armchair,
+)
+@DrawableRes private val BeeImages = listOf(
+    R.drawable.char_bee_spacesuit,
+    R.drawable.char_bee_samurai,
+    R.drawable.char_bee_detective,
+    R.drawable.char_bee_speeding,
+    R.drawable.char_bee_surfboard,
+    R.drawable.char_bee_miner,
+    R.drawable.char_bee_sitting,
+)
+
+@DrawableRes private val ChestUnlocked = R.drawable.img_gold_chest
+@DrawableRes private val ChestLocked = R.drawable.img_locked_gold_chest
+
+/** Per-art scale overrides (non-chest). */
+private val PerArtScaleOverrides: Map<Int, Float> = mapOf(
+    R.drawable.char_pencil_beanstalk to 1.20f // small readability bump
+)
+
+/** Extreme stage numbers (1-based) for ±80.dp lanes. */
+private fun extremeStageIndices(offsets: List<Dp>): List<Int> =
+    offsets.mapIndexedNotNull { idx, off -> if (off == 80.dp || off == (-80).dp) idx + 1 else null }
+
+/* ---------- Cross-device deterministic, non-repeating variant selection ---------- */
+
+// Global permutation seed; bump to reshuffle for all users/devices.
+private const val ART_SEED = "ART_GLOBAL_V1"
+
+/** gcd utility */
+private tailrec fun gcd(a0: Int, b0: Int): Int {
+    var a = if (a0 < 0) -a0 else a0
+    var b = if (b0 < 0) -b0 else b0
+    return if (b == 0) a else gcd(b, a % b)
+}
+
+/** Derive permutation (start, step) for pool of size N; step ⟂ N → full-cycle permutation. */
+private fun permutationParams(poolSize: Int, tag: String): Pair<Int, Int> {
+    require(poolSize > 0)
+    val h = abs("$tag|$ART_SEED".hashCode())
+    val start = h % poolSize
+    var step = 1 + (h / (poolSize.coerceAtLeast(1))) % (poolSize - 1).coerceAtLeast(1)
+    if (gcd(step, poolSize) != 1) {
+        var s = step
+        repeat(poolSize) {
+            s = (s % (poolSize - 1).coerceAtLeast(1)) + 1
+            if (gcd(s, poolSize) == 1) { step = s; return@repeat }
+        }
+        step = 1
+    }
+    return start to step
+}
+
+/** k-th (1-based) index under permutation (start, step). */
+private inline fun permutedIndex(start: Int, step: Int, poolSize: Int, ordinal1: Int): Int {
+    val k = ordinal1 - 1
+    val idx = (start + (k.toLong() * step.toLong())).mod(poolSize.toLong())
+    return idx.toInt()
+}
+
+/* ---------- Global B/P ordinals across difficulties ---------- */
+
+private val DifficultyOrder = listOf(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD)
+private data class Counts(val bees: Int, val pencils: Int)
+
+/** Count B/P in the first [len] items of a repeated extreme sequence. */
+private fun countInRepeatedPrefix(seq: List<Slot>, len: Int): Counts {
+    if (len <= 0 || seq.isEmpty()) return Counts(0, 0)
+    val beesPer = seq.count { it == Slot.BEE }
+    val pencilsPer = seq.count { it == Slot.PENCIL }
+    val cycles = len / seq.size
+    val rem = len % seq.size
+    val bees = cycles * beesPer + seq.take(rem).count { it == Slot.BEE }
+    val pencils = cycles * pencilsPer + seq.take(rem).count { it == Slot.PENCIL }
+    return Counts(bees, pencils)
+}
+
+/** # of extreme slots for a given total step count. */
+private fun extremeCountFor(totalSteps: Int): Int =
+    generateStepOffsets(totalSteps).count { it == 80.dp || it == (-80).dp }
+
+/** Global offsets: how many B/P already consumed by earlier difficulties. */
+private fun globalOffsetsFor(
+    current: Difficulty,
+    allStageCounts: Map<Difficulty, Int>
+): Counts {
+    var beeOffset = 0
+    var pencilOffset = 0
+    for (d in DifficultyOrder) {
+        if (d == current) break
+        val total = allStageCounts[d] ?: 0
+        if (total <= 0) continue
+        val extremes = extremeCountFor(total)
+        val used = countInRepeatedPrefix(extremeSequenceFor(d), extremes)
+        beeOffset += used.bees
+        pencilOffset += used.pencils
+    }
+    return Counts(beeOffset, pencilOffset)
+}
+
+/* ---------- UI ---------- */
 
 @Composable
 fun StagesListContent(
@@ -80,31 +218,82 @@ fun StagesListContent(
     stageViewModel: StageViewModel = viewModel(),
     progressViewModel: StageProgressViewModel = viewModel()
 ) {
-    // Refresh stage count whenever difficulty changes
-    LaunchedEffect(difficulty) {
-        stageViewModel.fetchStagesCount(difficulty)
-    }
+    // Counts for current & all difficulties
+    LaunchedEffect(difficulty) { stageViewModel.fetchStagesCount(difficulty) }
+    LaunchedEffect(Unit) { stageViewModel.fetchAllStageCounts() }
 
-    // Collect total number of stages (initially zero)
     val totalSteps by stageViewModel.stageCount.collectAsState(initial = 0)
+    val allCounts by stageViewModel.allStageCounts.collectAsState()
 
-    // Collect last unlocked stage per difficulty; default to stage 1
     val unlockedMap by progressViewModel.lastUnlocked.collectAsState(initial = emptyMap())
     val unlockedStage = unlockedMap[difficulty] ?: 1
 
-    // Compute horizontal offsets once per totalSteps change
-    val stepOffsets = remember(totalSteps) {
-        generateStepOffsets(totalSteps)
+    // Zig-zag & extreme rows for CURRENT difficulty
+    val stepOffsets = remember(totalSteps) { generateStepOffsets(totalSteps) }
+    val extremeStages = remember(stepOffsets) { extremeStageIndices(stepOffsets) }
+    val extremeSeq = remember(difficulty) { extremeSequenceFor(difficulty) }
+
+    // Map extreme ordinal → slot, then assign to concrete stage numbers
+    val extremeSlotMap: Map<Int, Slot> = remember(extremeStages, extremeSeq) {
+        buildMap {
+            extremeStages.forEachIndexed { ordZero, stageNum ->
+                val slot = if (extremeSeq.isNotEmpty()) extremeSeq[ordZero % extremeSeq.size] else Slot.BEE
+                put(stageNum, slot)
+            }
+        }
     }
 
-    // Track viewport height in pixels (for centering logic)
-    var viewportHeightPx by remember { mutableStateOf(0) }
-    val density = LocalDensity.current
+    // GLOBAL ordinals: how many B/P were used by earlier difficulties?
+    val offsets = remember(difficulty, allCounts) { globalOffsetsFor(difficulty, allCounts) }
 
-    // Target scroll position (px) for centering the unlocked stage
+    // One global permutation per pool (same across difficulties/devices)
+    val (beeStart, beeStep) = remember { permutationParams(BeeImages.size, "BEE|GLOBAL") }
+    val (pencilStart, pencilStep) = remember { permutationParams(PencilImages.size, "PENCIL|GLOBAL") }
+
+    // Build concrete art assignment — advance permutation by GLOBAL B/P ordinals
+    val extremeArtAssignment: Map<Int, Int?> = remember(difficulty, extremeSlotMap, offsets, beeStart, beeStep, pencilStart, pencilStep) {
+        var localBee = 0
+        var localPencil = 0
+        buildMap {
+            extremeStages.forEach { stage ->
+                when (extremeSlotMap[stage]) {
+                    Slot.BEE -> {
+                        localBee += 1
+                        val globalBeeOrd = offsets.bees + localBee // 1-based
+                        val idx = permutedIndex(beeStart, beeStep, BeeImages.size, globalBeeOrd)
+                        put(stage, BeeImages[idx])
+                    }
+                    Slot.PENCIL -> {
+                        localPencil += 1
+                        val globalPencilOrd = offsets.pencils + localPencil // 1-based
+                        val idx = permutedIndex(pencilStart, pencilStep, PencilImages.size, globalPencilOrd)
+                        put(stage, PencilImages[idx])
+                    }
+                    Slot.CHEST, null -> put(stage, null) // chest resolved at render
+                }
+            }
+        }
+    }
+
+    // Visual-only scaling (no layout reflow)
+    val density = LocalDensity.current
+    val basePx = with(density) { StageListDefaults.SideImageBaseHeight.toPx() }
+    val uniformScale = remember(density) {
+        val desiredPx = with(density) { StageListDefaults.SideImageDesiredHeight.toPx() }
+        if (basePx > 0f) desiredPx / basePx else 1f
+    }
+    val chestScale = remember(uniformScale) { uniformScale * StageListDefaults.ChestScaleFactor }
+
+    // 🎨 One-time grayscale filter (preserves alpha channel)
+    val grayscaleFilter = remember {
+        val m = ColorMatrix().apply { setToSaturation(0f) } // leaves alpha intact
+        ColorFilter.colorMatrix(m)
+    }
+
+    // Centering uses BUTTON height
+    var viewportHeightPx by remember { mutableStateOf(0) }
     var targetOffsetPx by remember { mutableIntStateOf(0) }
 
-    // When prerequisites are ready, animate scroll to center the unlocked stage
     LaunchedEffect(unlockedStage, totalSteps, viewportHeightPx) {
         if (totalSteps > 0 && viewportHeightPx > 0) {
             val scrollTarget = computeCenterOffset(
@@ -117,24 +306,18 @@ fun StagesListContent(
             )
             targetOffsetPx = scrollTarget
             onTargetOffsetChanged(scrollTarget)
-
             scrollState.animateScrollTo(
                 scrollTarget,
-                animationSpec = tween(
-                    durationMillis = 600,
-                    easing = EaseInOutCubic
-                )
+                animationSpec = tween(600, easing = EaseInOutCubic)
             )
         }
     }
 
-    // Main scrollable column containing all stage buttons
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
             .onGloballyPositioned { coords ->
-                // Capture viewport height once and notify
                 if (viewportHeightPx == 0) {
                     viewportHeightPx = coords.size.height
                     onViewportHeightChanged(viewportHeightPx)
@@ -145,32 +328,89 @@ fun StagesListContent(
     ) {
         stepOffsets.forEachIndexed { index, offset ->
             val stageNumber = index + 1
+            val isExtreme = (offset == 80.dp || offset == (-80).dp)
 
             Box(
                 modifier = Modifier
-                    .offset(x = offset)
+                    .fillMaxWidth()
+                    .heightIn(min = StageListDefaults.ButtonContainerHeight)
                     .padding(vertical = StageListDefaults.ButtonVerticalPadding)
             ) {
-                if (stageNumber <= unlockedStage) {
-                    // Unlocked: show clickable difficulty-themed button
-                    DifficultyStepButton(
-                        difficulty = difficulty,
-                        stepNumber = stageNumber,
-                        onClick = {
-                            navController.navigate("GAMEPLAY/$stageNumber/${difficulty.name}")
+                // Side art on extreme lanes
+                if (isExtreme) {
+                    val slot = extremeSlotMap[stageNumber] ?: Slot.BEE
+                    val resolvedArtId: Int? = when (slot) {
+                        Slot.CHEST ->
+                            if (stageNumber <= unlockedStage) ChestUnlocked else ChestLocked
+                        Slot.BEE, Slot.PENCIL ->
+                            extremeArtAssignment[stageNumber]
+                    }
+
+                    if (resolvedArtId != null) {
+                        val placeLeft = (offset == 80.dp)
+
+                        // Base scale: chests use chestScale; others use uniformScale (+ per-art overrides)
+                        var scale = when (slot) {
+                            Slot.CHEST -> chestScale
+                            Slot.BEE, Slot.PENCIL -> uniformScale
                         }
-                    )
-                } else {
-                    // Locked: show non-interactive placeholder
-                    LockedStepButton(
-                        isDarkTheme = isDarkTheme,
-                        stepNumber = stageNumber
-                    )
+                        if (slot != Slot.CHEST) {
+                            PerArtScaleOverrides[resolvedArtId]?.let { scale *= it }
+                        }
+
+                        // ✅ Grayscale (but keep transparency) for Bee/Pencil AFTER last unlocked step
+                        val applyBw =
+                            (slot == Slot.BEE || slot == Slot.PENCIL) && stageNumber > unlockedStage
+                        val colorFilter = if (applyBw) grayscaleFilter else null
+
+                        Image(
+                            painter = painterResource(id = resolvedArtId),
+                            contentDescription = when (slot) {
+                                Slot.CHEST -> if (stageNumber <= unlockedStage) "Gold chest" else "Locked gold chest"
+                                Slot.BEE -> "Bee character"
+                                Slot.PENCIL -> "Pencil character"
+                            },
+                            contentScale = ContentScale.Fit,
+                            colorFilter = colorFilter, // ← grayscale when applyBw = true
+                            modifier = Modifier
+                                .align(if (placeLeft) Alignment.CenterStart else Alignment.CenterEnd)
+                                .padding(horizontal = 12.dp)
+                                .height(StageListDefaults.SideImageBaseHeight) // measured height (no reflow)
+                                .then(
+                                    if (StageListDefaults.SideImageMaxWidth != Dp.Unspecified)
+                                        Modifier.widthIn(max = StageListDefaults.SideImageMaxWidth)
+                                    else Modifier
+                                )
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                    transformOrigin = TransformOrigin(
+                                        pivotFractionX = if (placeLeft) 0f else 1f,
+                                        pivotFractionY = 0.5f
+                                    )
+                                }
+                        )
+                    }
+                }
+
+                // Stage button (center + horizontal offset)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = offset)
+                ) {
+                    if (stageNumber <= unlockedStage) {
+                        DifficultyStepButton(
+                            difficulty = difficulty,
+                            stepNumber = stageNumber,
+                            onClick = { navController.navigate("GAMEPLAY/$stageNumber/${difficulty.name}") }
+                        )
+                    } else {
+                        LockedStepButton(isDarkTheme = isDarkTheme, stepNumber = stageNumber)
+                    }
                 }
             }
         }
-
-        // Add bottom padding so last button isn't flush to the bottom
-        Spacer(modifier = Modifier.height(StageListDefaults.ButtonVerticalPadding))
+        Spacer(Modifier.height(StageListDefaults.ButtonVerticalPadding))
     }
 }
