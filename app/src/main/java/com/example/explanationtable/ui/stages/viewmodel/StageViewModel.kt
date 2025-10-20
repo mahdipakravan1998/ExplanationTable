@@ -1,7 +1,9 @@
 package com.example.explanationtable.ui.stages.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.explanationtable.data.DataStoreManager
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.repository.StageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,10 +18,14 @@ import kotlinx.coroutines.launch
  * Exposes:
  * - stageCount (current difficulty)
  * - allStageCounts (all difficulties) → used to compute global Bee/Pencil ordinals.
+ * - claimedChests(difficulty): Flow<Set<Int>>
+ * - claimChest(difficulty, stageNumber)
  */
-class StageViewModel : ViewModel() {
+class StageViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val stageRepository = StageRepository()
+    private val stageRepository = StageRepository(
+        dataStore = DataStoreManager(application)
+    )
 
     // Current difficulty count (legacy use)
     private val _stageCount = MutableStateFlow(0)
@@ -47,6 +53,17 @@ class StageViewModel : ViewModel() {
             combine(flows) { it.toMap() }.collect { map ->
                 _allStageCounts.value = map
             }
+        }
+    }
+
+    /** Observe claimed chest stage numbers for a difficulty. */
+    fun claimedChests(difficulty: Difficulty) =
+        stageRepository.observeClaimedChests(difficulty)
+
+    /** Attempt to claim a chest (one-time). No-op if already claimed or locked. */
+    fun claimChest(difficulty: Difficulty, stageNumber: Int) {
+        viewModelScope.launch {
+            stageRepository.claimChestIfEligible(difficulty, stageNumber)
         }
     }
 }

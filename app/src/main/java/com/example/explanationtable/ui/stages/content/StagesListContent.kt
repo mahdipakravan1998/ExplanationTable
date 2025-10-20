@@ -5,6 +5,7 @@ import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
@@ -41,16 +42,22 @@ object StageListDefaults {
     val ListVerticalPadding = 16.dp
 
     // Uniform visual height for ALL side art
-    val SideImageDesiredHeight = 152.dp
+    val SideImageDesiredHeight = 136.dp
 
     // Make both chests slightly smaller
-    const val ChestScaleFactor: Float = 0.80f
+    const val ChestScaleFactor: Float = 0.60f
 
     // Row baseline height so scaling won't affect spacing
     val SideImageBaseHeight = ButtonContainerHeight
 
     // Optional width cap (usually unnecessary with square 700x700 canvases)
     val SideImageMaxWidth: Dp = Dp.Unspecified
+
+    // Existing generic edge padding used by all side art
+    val SideImageEdgePadding = 32.dp
+
+    // Extra inward inset ONLY for gold chests (tweak to taste)
+    val ChestSideInset = 24.dp
 }
 
 /** Zig-zag; extreme lanes exactly at ±80.dp. */
@@ -119,6 +126,7 @@ private fun extremeSequenceFor(difficulty: Difficulty): List<Slot> = when (diffi
 
 @DrawableRes private val ChestUnlocked = R.drawable.img_gold_chest
 @DrawableRes private val ChestLocked = R.drawable.img_locked_gold_chest
+@DrawableRes private val ChestOpened = R.drawable.img_opened_gold_chest
 
 /** Per-art scale overrides (non-chest). */
 private val PerArtScaleOverrides: Map<Int, Float> = mapOf(
@@ -186,7 +194,7 @@ private fun countInRepeatedPrefix(seq: List<Slot>, len: Int): Counts {
 private fun extremeCountFor(totalSteps: Int): Int =
     generateStepOffsets(totalSteps).count { it == 80.dp || it == (-80).dp }
 
-/** Global offsets: how many B/P already consumed by earlier difficulties. */
+/** Global offsets: how many B/P already consumed by earlier difficulties? */
 private fun globalOffsetsFor(
     current: Difficulty,
     allStageCounts: Map<Difficulty, Int>
@@ -228,6 +236,14 @@ fun StagesListContent(
     val unlockedMap by progressViewModel.lastUnlocked.collectAsState(initial = emptyMap())
     val unlockedStage = unlockedMap[difficulty] ?: 1
 
+    // Observe claimed chests for this difficulty
+    val claimedChests: Set<Int> by stageViewModel
+        .claimedChests(difficulty)
+        .collectAsState(initial = emptySet())
+
+    // Optimistic UI: immediately show "opened" art on tap, even before persistence emits.
+    val justOpenedRemember = remember { mutableStateListOf<Int>() }
+
     // Zig-zag & extreme rows for CURRENT difficulty
     val stepOffsets = remember(totalSteps) { generateStepOffsets(totalSteps) }
     val extremeStages = remember(stepOffsets) { extremeStageIndices(stepOffsets) }
@@ -251,7 +267,9 @@ fun StagesListContent(
     val (pencilStart, pencilStep) = remember { permutationParams(PencilImages.size, "PENCIL|GLOBAL") }
 
     // Build concrete art assignment — advance permutation by GLOBAL B/P ordinals
-    val extremeArtAssignment: Map<Int, Int?> = remember(difficulty, extremeSlotMap, offsets, beeStart, beeStep, pencilStart, pencilStep) {
+    val extremeArtAssignment: Map<Int, Int?> = remember(
+        difficulty, extremeSlotMap, offsets, beeStart, beeStep, pencilStart, pencilStep
+    ) {
         var localBee = 0
         var localPencil = 0
         buildMap {
@@ -340,8 +358,16 @@ fun StagesListContent(
                 if (isExtreme) {
                     val slot = extremeSlotMap[stageNumber] ?: Slot.BEE
                     val resolvedArtId: Int? = when (slot) {
-                        Slot.CHEST ->
-                            if (stageNumber <= unlockedStage) ChestUnlocked else ChestLocked
+                        Slot.CHEST -> {
+                            val isUnlocked = stageNumber <= unlockedStage
+                            val isClaimed = claimedChests.contains(stageNumber)
+                            val isJustOpened = justOpenedRemember.contains(stageNumber)
+                            when {
+                                !isUnlocked -> ChestLocked
+                                isClaimed || isJustOpened -> ChestOpened
+                                else -> ChestUnlocked
+                            }
+                        }
                         Slot.BEE, Slot.PENCIL ->
                             extremeArtAssignment[stageNumber]
                     }
@@ -363,19 +389,39 @@ fun StagesListContent(
                             (slot == Slot.BEE || slot == Slot.PENCIL) && stageNumber > unlockedStage
                         val colorFilter = if (applyBw) grayscaleFilter else null
 
+                        val isChestClickable =
+                            slot == Slot.CHEST &&
+                                    stageNumber <= unlockedStage &&
+                                    !claimedChests.contains(stageNumber)
+
                         Image(
                             painter = painterResource(id = resolvedArtId),
                             contentDescription = when (slot) {
-                                Slot.CHEST -> if (stageNumber <= unlockedStage) "Gold chest" else "Locked gold chest"
+                                Slot.CHEST -> when {
+                                    stageNumber > unlockedStage -> "Locked gold chest"
+                                    claimedChests.contains(stageNumber) -> "Opened gold chest"
+                                    else -> "Gold chest"
+                                }
                                 Slot.BEE -> "Bee character"
                                 Slot.PENCIL -> "Pencil character"
                             },
                             contentScale = ContentScale.Fit,
-                            colorFilter = colorFilter, // ← grayscale when applyBw = true
+                            colorFilter = colorFilter,
                             modifier = Modifier
                                 .align(if (placeLeft) Alignment.CenterStart else Alignment.CenterEnd)
-                                .padding(horizontal = 12.dp)
-                                .height(StageListDefaults.SideImageBaseHeight) // measured height (no reflow)
+                                .padding(
+                                    start = if (placeLeft)
+                                        StageListDefaults.SideImageEdgePadding +
+                                                (if (slot == Slot.CHEST) StageListDefaults.ChestSideInset else 0.dp)
+                                    else
+                                        StageListDefaults.SideImageEdgePadding,
+                                    end = if (!placeLeft)
+                                        StageListDefaults.SideImageEdgePadding +
+                                                (if (slot == Slot.CHEST) StageListDefaults.ChestSideInset else 0.dp)
+                                    else
+                                        StageListDefaults.SideImageEdgePadding
+                                )
+                                .height(StageListDefaults.SideImageBaseHeight)
                                 .then(
                                     if (StageListDefaults.SideImageMaxWidth != Dp.Unspecified)
                                         Modifier.widthIn(max = StageListDefaults.SideImageMaxWidth)
@@ -389,7 +435,18 @@ fun StagesListContent(
                                         pivotFractionY = 0.5f
                                     )
                                 }
+                                .then(
+                                    if (isChestClickable) {
+                                        Modifier.clickable {
+                                            if (!justOpenedRemember.contains(stageNumber)) {
+                                                justOpenedRemember.add(stageNumber)
+                                            }
+                                            stageViewModel.claimChest(difficulty, stageNumber)
+                                        }
+                                    } else Modifier
+                                )
                         )
+
                     }
                 }
 
