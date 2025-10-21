@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
@@ -223,6 +224,8 @@ fun StagesListContent(
     scrollState: ScrollState,
     onTargetOffsetChanged: (Int) -> Unit = {},
     onViewportHeightChanged: (Int) -> Unit = {},
+    // Reports the unlocked step anchor in window coords: (centerX, topY_of_visible_front_ellipse)
+    onUnlockedStageAnchorInWindow: (Float, Float) -> Unit = { _, _ -> },
     stageViewModel: StageViewModel = viewModel(),
     progressViewModel: StageProgressViewModel = viewModel()
 ) {
@@ -331,6 +334,12 @@ fun StagesListContent(
         }
     }
 
+    // Visible top inset of the FRONT ellipse inside DifficultyStepButton:
+    // container 77.dp, front ellipse height = 0.9 * 70.dp = 63.dp → inset = (77 - 63) / 2 = 7.dp
+    val visibleTopInsetDp = remember { (StageListDefaults.ButtonContainerHeight - 70.dp * 0.9f) / 2f }
+    // PRECOMPUTE in px with a captured density (so we don't call LocalDensity.current inside non-composable lambdas)
+    val visibleTopInsetPx = with(density) { visibleTopInsetDp.toPx() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -384,9 +393,8 @@ fun StagesListContent(
                             PerArtScaleOverrides[resolvedArtId]?.let { scale *= it }
                         }
 
-                        // ✅ Grayscale (but keep transparency) for Bee/Pencil AFTER last unlocked step
-                        val applyBw =
-                            (slot == Slot.BEE || slot == Slot.PENCIL) && stageNumber > unlockedStage
+                        // ✅ Grayscale for Bee/Pencil AFTER last unlocked step
+                        val applyBw = (slot == Slot.BEE || slot == Slot.PENCIL) && stageNumber > unlockedStage
                         val colorFilter = if (applyBw) grayscaleFilter else null
 
                         val isChestClickable =
@@ -446,7 +454,6 @@ fun StagesListContent(
                                     } else Modifier
                                 )
                         )
-
                     }
                 }
 
@@ -455,6 +462,17 @@ fun StagesListContent(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .offset(x = offset)
+                        // Report anchor: (centerX, TOP of the visible front ellipse) in window coords.
+                        .then(
+                            if (stageNumber == unlockedStage)
+                                Modifier.onGloballyPositioned { coords ->
+                                    val b = coords.boundsInWindow()
+                                    // Add the precomputed px inset to the container top
+                                    val adjTopPx = b.top + visibleTopInsetPx
+                                    onUnlockedStageAnchorInWindow(b.center.x, adjTopPx)
+                                }
+                            else Modifier
+                        )
                 ) {
                     if (stageNumber <= unlockedStage) {
                         DifficultyStepButton(

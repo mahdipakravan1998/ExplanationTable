@@ -9,79 +9,97 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
+import com.example.explanationtable.ui.theme.BackgroundDark
+import com.example.explanationtable.ui.theme.BackgroundLight
+import com.example.explanationtable.ui.theme.BorderDark
+import com.example.explanationtable.ui.theme.BorderLight
+import com.example.explanationtable.ui.theme.FeatherGreen
 
 /**
- * Rounded rectangle (R=18.dp) + bottom-centered triangle (base=20.dp, height=10.dp) as one unified shape,
- * with a 2.dp border and a slot for content inside the rectangle body.
- *
- * Sizing:
- * - Rectangle body (excluding triangle) respects aspect ratio 129.25 : 45 (W:H).
- * - Triangle height is added below the rectangle.
- *
- * Colors:
- * - isDarkTheme -> fill = BackgroundDark, stroke = BorderDark
- * - else        -> fill = BackgroundLight, stroke = BorderLight
- *
- * Content:
- * - The content slot is clipped to the rectangle body (not including the triangle).
- * - Use [contentPadding] to keep text comfortably inside the rounded rect.
+ * Rounded rectangle + bottom pointer as one unified shape
+ * that WRAPS its content plus per-side padding (no fixed aspect).
  */
 @Composable
 fun CalloutBubble(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = 18.dp,
-    triangleBase: Dp = 20.dp,
+    // ---- NEW: per-side padding & 10.dp radius defaults ----
+    contentPaddingHorizontal: Dp = 16.dp,
+    contentPaddingVertical: Dp = 12.dp,
+    cornerRadius: Dp = 10.dp,
+    triangleBase: Dp = 12.dp,      // narrower base → pointer reaches center even near edges
     triangleHeight: Dp = 10.dp,
     borderWidth: Dp = 2.dp,
-    rectAspectRatio: Float = 129.25f / 45f,
-    BackgroundDark: Color = Color(0xFF121212),
-    BackgroundLight: Color = Color(0xFFFFFFFF),
-    BorderDark: Color = Color(0xFF2A2A2A),
-    BorderLight: Color = Color(0xFFE0E0E0),
-    contentPadding: Dp = 12.dp,
-    contentColorOnDark: Color = Color(0xFFFFFFFF),
-    contentColorOnLight: Color = Color(0xDE000000),
+    // shift the triangle horizontally relative to rect center (useful when bubble is clamped near screen edges)
+    triangleCenterBias: Dp = 0.dp,
     content: @Composable () -> Unit = {}
 ) {
     val fillColor = if (isDarkTheme) BackgroundDark else BackgroundLight
     val strokeColor = if (isDarkTheme) BorderDark else BorderLight
-    val contentColor = if (isDarkTheme) contentColorOnDark else contentColorOnLight
+    val contentColor = FeatherGreen
 
     androidx.compose.ui.layout.SubcomposeLayout(modifier = modifier) { constraints ->
-        val defaultWidthPx = 200.dp.roundToPx()
-        val hasBoundedWidth = constraints.maxWidth < androidx.compose.ui.unit.Constraints.Infinity
-        val widthPx = if (hasBoundedWidth) constraints.maxWidth else kotlin.math.max(constraints.minWidth, defaultWidthPx)
+        val padHX = contentPaddingHorizontal.roundToPx()
+        val padVY = contentPaddingVertical.roundToPx()
+        val triHeightPx = triangleHeight.roundToPx()
 
-        val rectHeightPx = (widthPx / rectAspectRatio).toInt()
-        val totalHeightPx = rectHeightPx + triangleHeight.roundToPx()
-        val widthConstraints = androidx.compose.ui.unit.Constraints.fixed(widthPx, totalHeightPx)
+        // 1) Measure the slot content first with relaxed constraints.
+        val contentPlaceables = subcompose("content-measure") {
+            CompositionLocalProvider(LocalContentColor provides contentColor) {
+                ProvideTextStyle(value = MaterialTheme.typography.bodyMedium) {
+                    Box(Modifier.wrapContentSize()) { content() }
+                }
+            }
+        }.map {
+            it.measure(
+                Constraints(
+                    minWidth = 0,
+                    minHeight = 0,
+                    maxWidth = (constraints.maxWidth - padHX * 2).coerceAtLeast(0),
+                    maxHeight = (constraints.maxHeight - triHeightPx - padVY * 2).coerceAtLeast(0)
+                )
+            )
+        }
 
-        val rectHeightDp = rectHeightPx.toDp()
+        val contentWidth = contentPlaceables.maxOfOrNull { it.width } ?: 0
+        val contentHeight = contentPlaceables.maxOfOrNull { it.height } ?: 0
 
-        val placeables = subcompose("bubble") {
-            Box(Modifier.fillMaxSize()) {
+        // Rectangle exactly fits content + padding.
+        val rectWidthPx = (contentWidth + 2 * padHX)
+            .coerceAtLeast(constraints.minWidth)
+            .coerceAtMost(constraints.maxWidth)
+        val rectHeightPx = (contentHeight + 2 * padVY)
+            .coerceAtLeast(constraints.minHeight)
+            .coerceAtMost((constraints.maxHeight - triHeightPx).coerceAtLeast(0))
+
+        val totalWidthPx = rectWidthPx
+        val totalHeightPx = rectHeightPx + triHeightPx
+
+        // 2) Draw the bubble and place the (re-measured) content.
+        val bubblePlaceables = subcompose("bubble") {
+            Box(Modifier.size(width = rectWidthPx.toDp(), height = totalHeightPx.toDp())) {
                 // === SHAPE LAYER ===
                 Canvas(modifier = Modifier.matchParentSize()) {
                     val bw = borderWidth.toPx()
                     val halfBw = bw / 2f
 
                     val r = cornerRadius.toPx()
-                    val triBasePx = triangleBase.toPx()
-                    val triHeightPx = triangleHeight.toPx()
+                    val triBaseHalfWanted = triangleBase.toPx() / 2f
+                    val triHeight = triangleHeight.toPx()
+                    val biasPx = triangleCenterBias.toPx()
 
                     val w = size.width
                     val h = size.height
-
-                    val rectBottomY = h - triHeightPx
+                    val rectBottomY = h - triHeight
 
                     val left = halfBw
                     val top = halfBw
@@ -90,9 +108,17 @@ fun CalloutBubble(
 
                     val cappedR = kotlin.math.min(r, kotlin.math.min((right - left) / 2f, (bottomRect - top) / 2f))
 
-                    val centerX = (left + right) / 2f
-                    val maxHalfBase = ((right - left) / 2f) - cappedR
-                    val halfBase = kotlin.math.min(triBasePx / 2f, maxHalfBase.coerceAtLeast(0f))
+                    // Desired triangle center (biased), then clamp to rect bottom span
+                    val desiredCenter = (left + right) / 2f + biasPx
+                    val centerX = desiredCenter.coerceIn(left + cappedR, right - cappedR)
+
+                    // Allow the base to SHRINK near edges so the tip can still align at centerX.
+                    val halfBaseLimitByEdges = kotlin.math.min(
+                        centerX - (left + cappedR),
+                        (right - cappedR) - centerX
+                    ).coerceAtLeast(0f)
+                    val halfBase = kotlin.math.min(triBaseHalfWanted, halfBaseLimitByEdges)
+
                     val baseStartX = centerX - halfBase
                     val baseEndX = centerX + halfBase
 
@@ -119,7 +145,7 @@ fun CalloutBubble(
                         // Bottom edge to triangle
                         lineTo(baseEndX, bottomRect)
                         // Triangle
-                        lineTo(centerX, bottomRect + triHeightPx)
+                        lineTo(centerX, bottomRect + triHeight)
                         lineTo(baseStartX, bottomRect)
                         // Bottom edge to left corner
                         lineTo(left + cappedR, bottomRect)
@@ -160,23 +186,23 @@ fun CalloutBubble(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .fillMaxWidth()
-                        .height(rectHeightDp)
-                        .padding(contentPadding)
+                        .size(width = rectWidthPx.toDp(), height = rectHeightPx.toDp())
+                        .padding(horizontal = contentPaddingHorizontal, vertical = contentPaddingVertical)
                         .clip(RoundedCornerShape(cornerRadius)),
                     contentAlignment = Alignment.Center
                 ) {
+                    // Recompose & remeasure content to fit the exact inner box
                     CompositionLocalProvider(LocalContentColor provides contentColor) {
-                        ProvideTextStyle(value = androidx.compose.material3.MaterialTheme.typography.bodyMedium) {
+                        ProvideTextStyle(value = MaterialTheme.typography.bodyMedium) {
                             content()
                         }
                     }
                 }
             }
-        }.map { it.measure(widthConstraints) }
+        }.map { it.measure(Constraints.fixed(totalWidthPx, totalHeightPx)) }
 
-        layout(widthPx, totalHeightPx) {
-            placeables.forEach { it.place(0, 0) }
+        layout(totalWidthPx, totalHeightPx) {
+            bubblePlaceables.forEach { it.place(0, 0) }
         }
     }
 }
@@ -187,17 +213,17 @@ fun CalloutBubblePreviewLight() {
     Column(Modifier.fillMaxWidth().padding(16.dp)) {
         CalloutBubble(
             isDarkTheme = false,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("This is a light callout with a bottom pointer.\nIt centers content inside the rounded rectangle.")
-        }
-        Spacer(Modifier.height(16.dp))
+            contentPaddingHorizontal = 16.dp,
+            contentPaddingVertical = 12.dp,
+            cornerRadius = 10.dp
+        ) { Text("شروع") }
+        Spacer(Modifier.height(12.dp))
         CalloutBubble(
             isDarkTheme = false,
-            modifier = Modifier.width(280.dp) // fixed width to visualize aspect
-        ) {
-            Text("Fixed-width example (280.dp).")
-        }
+            contentPaddingHorizontal = 16.dp,
+            contentPaddingVertical = 12.dp,
+            cornerRadius = 10.dp
+        ) { Text("Wraps the text with 16x12 padding.") }
     }
 }
 
@@ -207,9 +233,9 @@ fun CalloutBubblePreviewDark() {
     Column(Modifier.fillMaxWidth().padding(16.dp)) {
         CalloutBubble(
             isDarkTheme = true,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Dark theme callout, same geometry.")
-        }
+            contentPaddingHorizontal = 16.dp,
+            contentPaddingVertical = 12.dp,
+            cornerRadius = 10.dp
+        ) { Text("Dark, snug fit.") }
     }
 }
