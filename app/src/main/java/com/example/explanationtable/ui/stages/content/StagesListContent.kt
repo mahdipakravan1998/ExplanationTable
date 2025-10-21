@@ -1,8 +1,7 @@
 package com.example.explanationtable.ui.stages.content
 
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.core.EaseInOutCubic
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -28,7 +27,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,7 +40,9 @@ import com.example.explanationtable.ui.stages.util.computeCenterOffset
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
 import kotlin.math.abs
-import kotlin.math.roundToInt
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sqrt
 
 /**
  * Layout constants for the stages list (700x700 sources; xxxhdpi pixel-perfect at ~175dp).
@@ -69,6 +69,12 @@ object StageListDefaults {
 
     // Extra inward inset ONLY for gold chests (tweak to taste)
     val ChestSideInset = 24.dp
+
+    // Bob amplitude for the callout bubble (downward travel distance from topmost point)
+    val CalloutBounceAmplitude = 7.dp
+
+    // Duration for one half-cycle (top->bottom or bottom->top) → 2000 total
+    const val CalloutHalfCycleMillis = 1000
 }
 
 /** Zig-zag; extreme lanes exactly at ±80.dp. */
@@ -217,6 +223,91 @@ private fun globalOffsetsFor(
     return Counts(beeOffset, pencilOffset)
 }
 
+/* ---------- Symmetric smooth bob easing ---------- */
+private val EaseInOutSine: Easing = Easing { x ->
+    0.5f - 0.5f * cos((Math.PI * x).toFloat())
+}
+
+/* ---------- A tiny leaf that owns the bob animation ---------- */
+@Composable
+private fun FloatingCalloutBubble(
+    isDarkTheme: Boolean,
+    anchorInWindow: Offset?,        // top of the button’s front ellipse (global coords)
+    rootTopLeftInWindow: Offset,    // top-left of the root overlay box (global coords)
+    viewportHeightPx: Int
+) {
+    if (anchorInWindow == null || viewportHeightPx <= 0) return
+
+    val density = LocalDensity.current
+
+    // Local (root-relative) anchor
+    val localAnchor = remember(anchorInWindow, rootTopLeftInWindow) {
+        Offset(
+            x = anchorInWindow.x - rootTopLeftInWindow.x,
+            y = anchorInWindow.y - rootTopLeftInWindow.y
+        )
+    }
+
+    // Bubble size for centering; measured once and only written if changed
+    var bubbleW by remember { mutableStateOf(0) }
+    var bubbleH by remember { mutableStateOf(0) }
+
+    // Exact geometric compensation for the rounded triangular tip (matches CalloutBubble)
+    val tipCompensationPx by remember(density) {
+        mutableStateOf(run {
+            val triBasePx = with(density) { 15.dp.toPx() } // triangleBase from CalloutBubble
+            val triHPx    = with(density) { 10.dp.toPx() } // triangleHeight from CalloutBubble
+            val cornerPx  = with(density) { 10.dp.toPx() } // cornerRadius from CalloutBubble
+
+            val halfBase = triBasePx / 2f
+            val triRound = min(min(cornerPx * 0.8f, triHPx * 0.7f), halfBase * 0.95f)
+            val lenR = sqrt(halfBase * halfBase + triHPx * triHPx)
+            val uy = triHPx / lenR
+            (uy * triRound) / 2f
+        })
+    }
+
+    // Same spec: 1000ms half-cycle, reverse, sine ease
+    val infinite = rememberInfiniteTransition(label = "callout-bob-leaf")
+    val bobPhase by infinite.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = StageListDefaults.CalloutHalfCycleMillis,
+                easing = EaseInOutSine
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bob-phase"
+    )
+    val bobAmplitudePx = with(density) { StageListDefaults.CalloutBounceAmplitude.toPx() }
+    val bobOffsetYpx = bobPhase * bobAmplitudePx
+
+    // Center horizontally on anchor; align visible tip to anchor at the *topmost* point
+    val leftPx = (localAnchor.x - (if (bubbleW == 0) 1 else bubbleW) / 2f)
+    val topAtRestPx = localAnchor.y - (if (bubbleH == 0) 1 else bubbleH) + tipCompensationPx
+    val animatedTopPx = topAtRestPx + bobOffsetYpx
+
+    Box(
+        modifier = Modifier
+            .graphicsLayer {
+                // GPU translations only; no layout changes → minimal recompositions
+                translationX = leftPx
+                translationY = animatedTopPx
+            }
+            .zIndex(5f)
+            .onGloballyPositioned { coords ->
+                val nw = coords.size.width
+                val nh = coords.size.height
+                if (nw != bubbleW) bubbleW = nw
+                if (nh != bubbleH) bubbleH = nh
+            }
+    ) {
+        CalloutBubble(isDarkTheme = isDarkTheme, text = "شروع")
+    }
+}
+
 /* ---------- UI ---------- */
 
 @Composable
@@ -316,33 +407,20 @@ fun StagesListContent(
             )
             targetOffsetPx = scrollTarget
             onTargetOffsetChanged(scrollTarget)
-            scrollState.animateScrollTo(scrollTarget, animationSpec = tween(600, easing = EaseInOutCubic))
+            scrollState.animateScrollTo(
+                scrollTarget,
+                animationSpec = tween(600, easing = EaseInOutSine) // same feel as before
+            )
         }
     }
 
-    // Front ellipse visible-top inset: container 77dp, ellipse ~63dp → inset = 7dp
-    val visibleTopInsetDp = remember { (StageListDefaults.ButtonContainerHeight - 70.dp * 0.9f) / 2f }
-    val visibleTopInsetPx = with(density) { visibleTopInsetDp.toPx() }
+    // ---------- Geometry derived directly from your button & bubble code ----------
+    // Button: front ellipse height is 0.9f * 70.dp.
+    val frontEllipseHeightPx = with(density) { (70.dp * 0.9f).toPx() }
 
     // Root overlay state (for the floating bubble)
     var rootTopLeftInWindow by remember { mutableStateOf(Offset.Zero) }
     var stageAnchorInWindow by remember { mutableStateOf<Offset?>(null) }
-    var bubbleWidthPx by remember { mutableStateOf(0) }
-    var bubbleHeightPx by remember { mutableStateOf(0) }
-
-    // Bob animation
-    val infinite = rememberInfiniteTransition(label = "callout-bob")
-    val bobPhase by infinite.animateFloat(
-        initialValue = -1f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1100, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "bob-phase"
-    )
-    val bobAmplitudePx = with(density) { 6.dp.toPx() } // A
-    val bobOffsetYpx = bobPhase * bobAmplitudePx       // [-A, +A]
 
     Box(
         modifier = Modifier
@@ -365,7 +443,8 @@ fun StagesListContent(
                 .padding(vertical = StageListDefaults.ListVerticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            stepOffsets.forEachIndexed { index, offset ->
+            val stepOffsetsLocal = stepOffsets
+            stepOffsetsLocal.forEachIndexed { index, offset ->
                 val stageNumber = index + 1
                 val isExtreme = (offset == 80.dp || offset == (-80).dp)
 
@@ -471,13 +550,16 @@ fun StagesListContent(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .offset(x = offset)
-                            // Report anchor: (centerX, TOP of the visible front ellipse) in window coords.
+                            // Anchor: exact top of the *front* ellipse drawn inside the 77.dp box.
                             .then(
                                 if (stageNumber == unlockedStage)
                                     Modifier.onGloballyPositioned { coords ->
                                         val b = coords.boundsInWindow()
-                                        val adjTopPx = b.top + visibleTopInsetPx
-                                        stageAnchorInWindow = Offset(b.center.x, adjTopPx)
+                                        val buttonTop = b.top
+                                        val buttonH = b.height
+                                        // visible top of front ellipse = buttonTop + (boxH - 0.9*70dp)/2
+                                        val anchorTop = buttonTop + (buttonH - frontEllipseHeightPx) / 2f
+                                        stageAnchorInWindow = Offset(b.center.x, anchorTop)
                                     }
                                 else Modifier
                             )
@@ -497,37 +579,12 @@ fun StagesListContent(
             Spacer(Modifier.height(StageListDefaults.ButtonVerticalPadding))
         }
 
-        // ---------- Floating CalloutBubble overlay ----------
-        val localAnchor = stageAnchorInWindow?.let {
-            Offset(it.x - rootTopLeftInWindow.x, it.y - rootTopLeftInWindow.y)
-        }
-        if (localAnchor != null && viewportHeightPx > 0) {
-            val wPx = if (bubbleWidthPx == 0) 1 else bubbleWidthPx
-            val hPx = if (bubbleHeightPx == 0) 1 else bubbleHeightPx
-
-            // Center horizontally on the stage center (no clamping)
-            val placedLeftPx = localAnchor.x - wPx / 2f
-
-            // Vertically: make the tip touch the button top at bob’s highest point
-            val topAtRestPx = localAnchor.y - hPx + bobAmplitudePx
-            val animatedTopPx = topAtRestPx + bobOffsetYpx
-
-            Box(
-                modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            x = placedLeftPx.roundToInt(),
-                            y = animatedTopPx.roundToInt()
-                        )
-                    }
-                    .zIndex(5f)
-                    .onGloballyPositioned { coords ->
-                        bubbleWidthPx = coords.size.width
-                        bubbleHeightPx = coords.size.height
-                    }
-            ) {
-                CalloutBubble(isDarkTheme = isDarkTheme, text = "شروع")
-            }
-        }
+        // ---------- Floating CalloutBubble overlay (isolated animation) ----------
+        FloatingCalloutBubble(
+            isDarkTheme = isDarkTheme,
+            anchorInWindow = stageAnchorInWindow,
+            rootTopLeftInWindow = rootTopLeftInWindow,
+            viewportHeightPx = viewportHeightPx
+        )
     }
 }

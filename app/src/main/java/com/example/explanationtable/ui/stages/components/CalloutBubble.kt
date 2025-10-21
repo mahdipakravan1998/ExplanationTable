@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -18,18 +21,25 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
 import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
 import com.example.explanationtable.ui.theme.FeatherGreen
+import kotlin.math.hypot
+import kotlin.math.min
+import kotlin.math.max
 
 /**
- * Rounded rectangle + bottom pointer as one unified shape
- * that WRAPS its text plus fixed per-side padding (no aspect lock).
+ * Single, unified shape:
+ *   Rounded rectangle + bottom pointer with *smooth outward* blends at the two base junctions
+ *   (not inward-rounded corners). The same triangle-roundness is used at both junctions and the tip.
  *
- * API intentionally minimal: only [isDarkTheme] and [text].
- * Geometry (padding, radius, triangle, border) is encapsulated here.
+ * The bubble wraps its text with fixed padding and draws a 2.dp border.
  */
 @Composable
 fun CalloutBubble(
@@ -39,24 +49,25 @@ fun CalloutBubble(
     // Encapsulated styling
     val contentPaddingHorizontal: Dp = 16.dp
     val contentPaddingVertical: Dp = 12.dp
-    val cornerRadius: Dp = 10.dp
-    val triangleBase: Dp = 12.dp
-    val triangleHeight: Dp = 10.dp
+    val cornerRadius: Dp = 10.dp          // rectangle corner radius
+    val triangleBase: Dp = 15.dp          // base width projected on the rectangle bottom
+    val triangleHeight: Dp = 10.dp        // pointer height
     val borderWidth: Dp = 2.dp
 
     val fillColor = if (isDarkTheme) BackgroundDark else BackgroundLight
     val strokeColor = if (isDarkTheme) BorderDark else BorderLight
     val contentColor = FeatherGreen
 
-    androidx.compose.ui.layout.SubcomposeLayout { constraints ->
+    SubcomposeLayout { constraints ->
         val padHX = contentPaddingHorizontal.roundToPx()
         val padVY = contentPaddingVertical.roundToPx()
         val triHeightPx = triangleHeight.roundToPx()
 
-        // 1) Measure TEXT first with relaxed constraints.
+        // 1) Measure TEXT first.
         val contentPlaceables = subcompose("content-measure") {
             CompositionLocalProvider(LocalContentColor provides contentColor) {
-                ProvideTextStyle(value = MaterialTheme.typography.bodyMedium) {
+                ProvideTextStyle(value = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black,
+                    fontSize = 18.sp)) {
                     Text(text)
                 }
             }
@@ -85,39 +96,88 @@ fun CalloutBubble(
         val totalWidthPx = rectWidthPx
         val totalHeightPx = rectHeightPx + triHeightPx
 
-        // 2) Draw bubble & place content.
         val bubblePlaceables = subcompose("bubble") {
-            Box(Modifier.size(width = rectWidthPx.toDp(), height = totalHeightPx.toDp())) {
+            val density = LocalDensity.current
+            val totalWidthDp = with(density) { totalWidthPx.toDp() }
+            val totalHeightDp = with(density) { totalHeightPx.toDp() }
+            val rectWidthDp = with(density) { rectWidthPx.toDp() }
+            val rectHeightDp = with(density) { rectHeightPx.toDp() }
+
+            Box(Modifier.size(width = rectWidthDp, height = totalHeightDp)) {
                 // === SHAPE LAYER ===
                 Canvas(modifier = Modifier.matchParentSize()) {
                     val bw = borderWidth.toPx()
                     val halfBw = bw / 2f
 
-                    val r = cornerRadius.toPx()
+                    val rRect = cornerRadius.toPx()
                     val triBaseHalfWanted = triangleBase.toPx() / 2f
-                    val triHeight = triangleHeight.toPx()
+                    val triH = triangleHeight.toPx()
 
                     val w = size.width
                     val h = size.height
-                    val rectBottomY = h - triHeight
+                    val rectBottomY = h - triH
 
                     val left = halfBw
                     val top = halfBw
                     val right = w - halfBw
                     val bottomRect = rectBottomY - halfBw
 
-                    val cappedR = kotlin.math.min(r, kotlin.math.min((right - left) / 2f, (bottomRect - top) / 2f))
+                    // Clamp rectangle radius
+                    val cappedR = min(rRect, min((right - left) / 2f, (bottomRect - top) / 2f))
 
-                    // Triangle centered under the rectangle. Allow base to shrink near rounded corners.
+                    // Centered triangle base, limited by rounded corners.
                     val centerX = (left + right) / 2f
-                    val halfBaseLimitByEdges = kotlin.math.min(
+                    val halfBaseLimitByEdges = min(
                         centerX - (left + cappedR),
                         (right - cappedR) - centerX
                     ).coerceAtLeast(0f)
-                    val halfBase = kotlin.math.min(triBaseHalfWanted, halfBaseLimitByEdges)
+                    val halfBase = min(triBaseHalfWanted, halfBaseLimitByEdges)
 
                     val baseStartX = centerX - halfBase
                     val baseEndX = centerX + halfBase
+                    val apexX = centerX
+                    val apexY = bottomRect + triH
+
+                    // A single triangle-roundness that controls:
+                    //  - the outward blends at both base junctions,
+                    //  - the tip rounding.
+                    val triRound = run {
+                        val linkToRect = cappedR * 0.8f
+                        val maxByHeight = triH * 0.7f
+                        val maxByHalfBase = halfBase * 0.95f
+                        min(linkToRect, min(maxByHeight, maxByHalfBase))
+                    }.coerceAtLeast(0.5f)
+
+                    // Where the bottom edge departs to start the OUTWARD blend
+                    val blendRightStartX = min(right - cappedR, baseEndX + triRound)
+                    val blendLeftStartX  = max(left + cappedR, baseStartX - triRound)
+
+                    // Slanted edge unit directions (base -> apex)
+                    val vxR = apexX - baseEndX
+                    val vyR = apexY - bottomRect
+                    val lenR = hypot(vxR, vyR).coerceAtLeast(1e-3f)
+                    val uxR = vxR / lenR
+                    val uyR = vyR / lenR
+
+                    val vxL = apexX - baseStartX
+                    val vyL = apexY - bottomRect
+                    val lenL = hypot(vxL, vyL).coerceAtLeast(1e-3f)
+                    val uxL = vxL / lenL
+                    val uyL = vyL / lenL
+
+                    // Points on slants where the blends end (still outside the rectangle)
+                    val blendRightEndX = baseEndX + uxR * triRound
+                    val blendRightEndY = bottomRect + uyR * triRound
+
+                    val blendLeftEndX = baseStartX + uxL * triRound
+                    val blendLeftEndY = bottomRect + uyL * triRound
+
+                    // Tip rounding extent measured along each slant
+                    val tipLen = triRound
+                    val rightTipStartX = apexX - uxR * tipLen
+                    val rightTipStartY = apexY - uyR * tipLen
+                    val leftTipStartX  = apexX - uxL * tipLen
+                    val leftTipStartY  = apexY - uyL * tipLen
 
                     val path = Path().apply {
                         // Top edge
@@ -139,13 +199,52 @@ fun CalloutBubble(
                             sweepAngleDegrees = 90f,
                             forceMoveTo = false
                         )
-                        // Bottom edge to triangle
-                        lineTo(baseEndX, bottomRect)
-                        // Triangle
-                        lineTo(centerX, bottomRect + triHeight)
-                        lineTo(baseStartX, bottomRect)
-                        // Bottom edge to left corner
+
+                        // ---- Bottom edge until OUTWARD blend begins (to the right of baseEndX)
+                        lineTo(blendRightStartX, bottomRect)
+
+                        // ---- OUTWARD smooth blend from bottom edge into RIGHT slanted edge
+                        // Start tangent == horizontal (bottom edge), end tangent == slant.
+                        // Control points chosen to keep the curve outside (below) the bottom edge,
+                        // avoiding any inward rounding at the base corner itself.
+                        val c1RightX = blendRightStartX - triRound
+                        val c1RightY = bottomRect
+                        val c2RightX = blendRightEndX - uxR * triRound
+                        val c2RightY = blendRightEndY - uyR * triRound
+
+                        cubicTo(
+                            c1RightX, c1RightY,
+                            c2RightX, c2RightY,
+                            blendRightEndX, blendRightEndY
+                        )
+
+                        // ---- Along RIGHT slanted edge to near the tip
+                        lineTo(rightTipStartX, rightTipStartY)
+
+                        // ---- Rounded TIP (same roundness)
+                        quadraticBezierTo(
+                            apexX, apexY,
+                            leftTipStartX, leftTipStartY
+                        )
+
+                        // ---- Along LEFT slanted edge away from tip
+                        lineTo(blendLeftEndX, blendLeftEndY)
+
+                        // ---- OUTWARD smooth blend from LEFT slanted edge back to bottom edge
+                        val c1LeftX = blendLeftEndX - uxL * triRound
+                        val c1LeftY = blendLeftEndY - uyL * triRound
+                        val c2LeftX = blendLeftStartX + triRound
+                        val c2LeftY = bottomRect
+
+                        cubicTo(
+                            c1LeftX, c1LeftY,
+                            c2LeftX, c2LeftY,
+                            blendLeftStartX, bottomRect
+                        )
+
+                        // ---- Continue bottom edge to bottom-left corner
                         lineTo(left + cappedR, bottomRect)
+
                         // Bottom-left corner arc
                         arcTo(
                             Rect(left, bottomRect - 2 * cappedR, left + 2 * cappedR, bottomRect),
@@ -165,31 +264,31 @@ fun CalloutBubble(
                         close()
                     }
 
-                    // Fill and border
+                    // Single unified fill + one border (no per-part borders).
                     drawPath(path = path, color = fillColor)
                     drawPath(
                         path = path,
                         color = strokeColor,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(
+                        style = Stroke(
                             width = bw,
-                            miter = 4f,
-                            cap = androidx.compose.ui.graphics.StrokeCap.Butt,
-                            join = androidx.compose.ui.graphics.StrokeJoin.Miter
+                            cap = StrokeCap.Butt,
+                            join = StrokeJoin.Round
                         )
                     )
                 }
 
-                // === CONTENT LAYER (clipped to rectangle only) ===
+                // === CONTENT LAYER (clipped to rectangle body only) ===
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .size(width = rectWidthPx.toDp(), height = rectHeightPx.toDp())
+                        .size(width = rectWidthDp, height = rectHeightDp)
                         .padding(horizontal = contentPaddingHorizontal, vertical = contentPaddingVertical)
                         .clip(RoundedCornerShape(cornerRadius)),
                     contentAlignment = Alignment.Center
                 ) {
                     CompositionLocalProvider(LocalContentColor provides contentColor) {
-                        ProvideTextStyle(value = MaterialTheme.typography.bodyMedium) {
+                        ProvideTextStyle(value = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black,
+                            fontSize = 18.sp)) {
                             Text(text)
                         }
                     }
@@ -209,7 +308,7 @@ fun CalloutBubblePreviewLight() {
     Column(Modifier.fillMaxWidth().padding(16.dp)) {
         CalloutBubble(isDarkTheme = false, text = "شروع")
         Spacer(Modifier.height(12.dp))
-        CalloutBubble(isDarkTheme = false, text = "Wraps the text with 16×12 padding.")
+        CalloutBubble(isDarkTheme = false, text = "Smooth outward blends into the pointer.")
     }
 }
 
@@ -217,6 +316,6 @@ fun CalloutBubblePreviewLight() {
 @Composable
 fun CalloutBubblePreviewDark() {
     Column(Modifier.fillMaxWidth().padding(16.dp)) {
-        CalloutBubble(isDarkTheme = true, text = "Dark, snug fit.")
+        CalloutBubble(isDarkTheme = true, text = "Dark, unified shape.")
     }
 }
