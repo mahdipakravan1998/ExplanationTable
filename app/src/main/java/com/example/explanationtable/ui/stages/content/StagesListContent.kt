@@ -10,13 +10,31 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.*
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -26,13 +44,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.explanationtable.R
@@ -43,6 +61,10 @@ import com.example.explanationtable.ui.stages.components.LockedStepButton
 import com.example.explanationtable.ui.stages.util.computeCenterOffset
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.min
@@ -184,7 +206,7 @@ private fun permutationParams(poolSize: Int, tag: String): Pair<Int, Int> {
     return start to step
 }
 
-private inline fun permutedIndex(start: Int, step: Int, poolSize: Int, ordinal1: Int): Int {
+private fun permutedIndex(start: Int, step: Int, poolSize: Int, ordinal1: Int): Int {
     val k = ordinal1 - 1
     val idx = (start + (k.toLong() * step.toLong())).mod(poolSize.toLong())
     return idx.toInt()
@@ -232,13 +254,14 @@ private fun globalOffsetsFor(
 /* ---------- Symmetric smooth bob easing ---------- */
 private val EaseInOutSine: Easing = Easing { x -> 0.5f - 0.5f * cos((Math.PI * x).toFloat()) }
 
-/* ---------- A tiny leaf that owns the bob animation (gated by lifecycle & visibility) ---------- */
+/* ---------- A tiny leaf that owns the bob animation (gated by lifecycle, visibility, and movement) ---------- */
 @Composable
 private fun FloatingCalloutBubble(
     isDarkTheme: Boolean,
     anchorInWindow: Offset?,        // top of the button’s front ellipse (global coords)
     rootTopLeftInWindow: Offset,    // top-left of the root overlay box (global coords)
-    viewportHeightPx: Int
+    viewportHeightPx: Int,
+    isContentMoving: Boolean        // finger drag, fling, or programmatic scroll/settling
 ) {
     if (anchorInWindow == null || viewportHeightPx <= 0) return
 
@@ -291,7 +314,7 @@ private fun FloatingCalloutBubble(
 
     // Same spec: 1000ms half-cycle, reverse, sine ease
     val bobAmplitudePx = with(density) { StageListDefaults.CalloutBounceAmplitude.toPx() }
-    val shouldAnimate = isResumed && estimatedVisible
+    val shouldAnimate = isResumed && estimatedVisible && !isContentMoving
 
     val bobOffsetYpx = if (shouldAnimate) {
         val infinite = rememberInfiniteTransition(label = "callout-bob-leaf")
@@ -315,8 +338,8 @@ private fun FloatingCalloutBubble(
     val topAtRestPx = localAnchor.y - (if (bubbleH == 0) 1 else bubbleH) + tipCompensationPx
     val animatedTopPx = topAtRestPx + bobOffsetYpx
 
-    // If completely off-screen and not animating, skip composing the bubble entirely
-    if (!estimatedVisible && !shouldAnimate) return
+    // If completely off-screen, skip composing the bubble entirely
+    if (!estimatedVisible) return
 
     Box(
         modifier = Modifier
@@ -423,6 +446,7 @@ fun StagesListContent(
 
     var viewportHeightPx by remember { mutableStateOf(0) }
     var targetOffsetPx by remember { mutableIntStateOf(0) }
+    var requestCalibration by remember { mutableStateOf(false) } // 🔧 trigger a one-shot calibration after initial scroll
 
     LaunchedEffect(unlockedStage, totalSteps, viewportHeightPx) {
         if (totalSteps > 0 && viewportHeightPx > 0) {
@@ -436,28 +460,69 @@ fun StagesListContent(
             )
             targetOffsetPx = scrollTarget
             onTargetOffsetChanged(scrollTarget)
+
+            // Programmatic centering of the unlocked stage
             scrollState.animateScrollTo(
                 scrollTarget,
-                animationSpec = tween(600, easing = EaseInOutSine) // same feel as before
+                animationSpec = tween(600, easing = EaseInOutSine)
             )
+
+            // Ask for calibration right after the programmatic scroll settles
+            requestCalibration = true
         }
     }
 
     // ---------- Geometry derived directly from your button & bubble code ----------
-    // Button: front ellipse height is 0.9f * 70.dp.
     val frontEllipseHeightPx = with(density) { (70.dp * 0.9f).toPx() }
 
-    // Root overlay state (for the floating bubble)
+    // Root overlay state (for the floating bubble) + size for math anchoring
     var rootTopLeftInWindow by remember { mutableStateOf(Offset.Zero) }
+    var rootWidthPx by remember { mutableStateOf(0) }
+    // Anchor (global) computed via math + calibration
     var stageAnchorInWindow by remember { mutableStateOf<Offset?>(null) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .clipToBounds() // keep bubble under the TopBar
             .onGloballyPositioned { coords ->
                 rootTopLeftInWindow = coords.boundsInWindow().topLeft
+                rootWidthPx = coords.size.width
             }
     ) {
+        // ===== math constants used by both scroll-driven anchor and one-shot calibration =====
+        val listPadTopPx = with(density) { StageListDefaults.ListVerticalPadding.toPx() }
+        val buttonContainerH = with(density) { StageListDefaults.ButtonContainerHeight.toPx() }
+        val buttonPadV = with(density) { StageListDefaults.ButtonVerticalPadding.toPx() }
+        val rowHeightPx = buttonContainerH + 2f * buttonPadV
+        val unlockedIndex = unlockedStage - 1
+        val offsetXPx = with(density) { if (unlockedIndex in stepOffsets.indices) stepOffsets[unlockedIndex].toPx() else 0f }
+
+        // Calibration: constant correction added to math so the bubble is exactly tangent.
+        var anchorXCorrectionPx by remember(unlockedStage, rootWidthPx, frontEllipseHeightPx) { mutableStateOf(0f) }
+        var anchorYCorrectionPx by remember(unlockedStage, rootWidthPx, frontEllipseHeightPx) { mutableStateOf(0f) }
+        var needCalibrate by remember(unlockedStage, rootWidthPx, viewportHeightPx, stepOffsets) { mutableStateOf(true) }
+
+        // Track any motion (drag, fling, programmatic) using a small settle timer (no FlowPreview).
+        var isListMoving by remember { mutableStateOf(false) }
+        LaunchedEffect(scrollState) {
+            var settleJob: Job? = null
+            snapshotFlow { scrollState.value }
+                .collect {
+                    if (!isListMoving) isListMoving = true
+                    settleJob?.cancel()
+                    settleJob = launch {
+                        // ~3 frames @ 60Hz; adjust 32–64ms if needed
+                        delay(48)
+                        isListMoving = false
+                    }
+                }
+        }
+
+        // Still handy to know if finger is down; movement is the source of truth.
+        val isUserScrolling by remember { derivedStateOf { scrollState.isScrollInProgress } }
+        val isContentMoving = isUserScrolling || isListMoving
+
         // ---------- Scrollable list ----------
         Column(
             modifier = Modifier
@@ -479,7 +544,7 @@ fun StagesListContent(
 
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .heightIn(min = StageListDefaults.ButtonContainerHeight)
                         .padding(vertical = StageListDefaults.ButtonVerticalPadding)
                 ) {
@@ -579,18 +644,43 @@ fun StagesListContent(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .offset(x = offset)
-                            // Anchor: exact top of the *front* ellipse drawn inside the 77.dp box.
+                            // One-shot calibration hook (only on the unlocked row, only when idle)
                             .then(
-                                if (stageNumber == unlockedStage)
+                                if (stageNumber == unlockedStage &&
+                                    (needCalibrate || requestCalibration) &&
+                                    !isContentMoving &&
+                                    rootWidthPx > 0
+                                ) {
                                     Modifier.onGloballyPositioned { coords ->
+                                        // Measured (ground truth) position
                                         val b = coords.boundsInWindow()
-                                        val buttonTop = b.top
-                                        val buttonH = b.height
-                                        // visible top of front ellipse = buttonTop + (boxH - 0.9*70dp)/2
-                                        val anchorTop = buttonTop + (buttonH - frontEllipseHeightPx) / 2f
-                                        stageAnchorInWindow = Offset(b.center.x, anchorTop)
+                                        val measuredAnchorTop = b.top + (b.height - frontEllipseHeightPx) / 2f
+                                        val measuredAnchorX = b.center.x
+
+                                        // Math anchor at this exact scroll
+                                        val scrollY = scrollState.value
+                                        val rowTopLocal =
+                                            listPadTopPx + (unlockedIndex * rowHeightPx) - scrollY
+                                        val anchorTopLocal =
+                                            rowTopLocal + buttonPadV + (buttonContainerH - frontEllipseHeightPx) / 2f
+                                        val anchorXLocal = (rootWidthPx / 2f) + offsetXPx
+                                        val mathAnchorTop = rootTopLeftInWindow.y + anchorTopLocal
+                                        val mathAnchorX = rootTopLeftInWindow.x + anchorXLocal
+
+                                        // Compute & store constant correction
+                                        anchorXCorrectionPx = measuredAnchorX - mathAnchorX
+                                        anchorYCorrectionPx = measuredAnchorTop - mathAnchorTop
+
+                                        // Apply immediately so it takes effect even without another scroll tick
+                                        stageAnchorInWindow = Offset(
+                                            x = mathAnchorX + anchorXCorrectionPx,
+                                            y = mathAnchorTop + anchorYCorrectionPx
+                                        )
+
+                                        needCalibrate = false
+                                        requestCalibration = false
                                     }
-                                else Modifier
+                                } else Modifier
                             )
                     ) {
                         if (stageNumber <= unlockedStage) {
@@ -608,12 +698,33 @@ fun StagesListContent(
             Spacer(Modifier.height(StageListDefaults.ButtonVerticalPadding))
         }
 
+        // --- Scroll-driven math anchor (fast) + constant calibration (exact) ---
+        LaunchedEffect(
+            unlockedStage, stepOffsets, rootWidthPx, viewportHeightPx, frontEllipseHeightPx
+        ) {
+            if (rootWidthPx == 0 || unlockedStage <= 0 || unlockedStage > stepOffsets.size) return@LaunchedEffect
+
+            snapshotFlow { scrollState.value }
+                .distinctUntilChanged()
+                .collect { scrollY ->
+                    val rowTopLocal = listPadTopPx + (unlockedIndex * rowHeightPx) - scrollY
+                    val anchorTopLocal = rowTopLocal + buttonPadV + (buttonContainerH - frontEllipseHeightPx) / 2f
+                    val anchorXLocal = (rootWidthPx / 2f) + offsetXPx
+
+                    stageAnchorInWindow = Offset(
+                        x = rootTopLeftInWindow.x + anchorXLocal + anchorXCorrectionPx,
+                        y = rootTopLeftInWindow.y + anchorTopLocal + anchorYCorrectionPx
+                    )
+                }
+        }
+
         // ---------- Floating CalloutBubble overlay (isolated & gated animation) ----------
         FloatingCalloutBubble(
             isDarkTheme = isDarkTheme,
             anchorInWindow = stageAnchorInWindow,
             rootTopLeftInWindow = rootTopLeftInWindow,
-            viewportHeightPx = viewportHeightPx
+            viewportHeightPx = viewportHeightPx,
+            isContentMoving = isContentMoving
         )
     }
 }
