@@ -1,3 +1,4 @@
+// FILE: app/src/main/java/com/example/explanationtable/ui/stages/content/StagesListContent.kt
 package com.example.explanationtable.ui.stages.content
 
 import androidx.annotation.DrawableRes
@@ -71,59 +72,70 @@ import kotlin.math.min
 import kotlin.math.sqrt
 
 /**
- * Layout constants for the stages list (700x700 sources; xxxhdpi pixel-perfect at ~175dp).
+ * Layout constants for the stages list (700x700 assets; pixel-perfect near ~175dp base).
+ * Public and stable; values are referenced by geometry computations and side-art scaling.
  */
 object StageListDefaults {
     val ButtonContainerHeight = 77.dp
     val ButtonVerticalPadding = 8.dp
     val ListVerticalPadding = 16.dp
 
-    // Uniform visual height for ALL side art
+    // Uniform visual height for all side art (before per-art overrides)
     val SideImageDesiredHeight = 136.dp
 
-    // Make both chests slightly smaller
+    // Both chests appear slightly smaller for balanced composition
     const val ChestScaleFactor: Float = 0.60f
 
-    // Row baseline height so scaling won't affect spacing
+    // Row baseline height so scaling won’t affect spacing
     val SideImageBaseHeight = ButtonContainerHeight
 
-    // Optional width cap (usually unnecessary with square 700x700 canvases)
+    // Optional width cap (usually unused with square 700x700 canvases)
     val SideImageMaxWidth: Dp = Dp.Unspecified
 
-    // Existing generic edge padding used by all side art
+    // Generic edge padding used by all side art
     val SideImageEdgePadding = 32.dp
 
     // Extra inward inset ONLY for gold chests (tweak to taste)
     val ChestSideInset = 24.dp
 
-    // Bob amplitude for the callout bubble (downward travel distance from topmost point)
+    // Callout bob amplitude (downward travel from topmost rest point)
     val CalloutBounceAmplitude = 7.dp
 
     // Duration for one half-cycle (top->bottom or bottom->top) → 2000 total
     const val CalloutHalfCycleMillis = 1000
 }
 
-/** Zig-zag; extreme lanes exactly at ±80.dp. */
+/** Default zig-zag; extreme lanes exactly at ±80.dp. */
 private val DefaultOffsetPattern: List<Dp> = listOf(
     0.dp, 40.dp, 80.dp, 40.dp, 0.dp,
     (-40).dp, (-80).dp, (-40).dp, 0.dp
 )
 
+/**
+ * Returns per-stage horizontal offsets for [totalSteps] by cycling a base pattern.
+ * Keeps the exact shape you authored, including extreme lanes at ±80.dp.
+ */
 fun generateStepOffsets(totalSteps: Int, basePattern: List<Dp> = DefaultOffsetPattern): List<Dp> =
     buildList {
         if (totalSteps <= basePattern.size) {
             addAll(basePattern.take(totalSteps)); return@buildList
         }
         addAll(basePattern)
-        val cycle = basePattern.drop(1)
+        val cycle = basePattern.drop(1) // avoid repeating the first value twice
         repeat(totalSteps - basePattern.size) { i -> add(cycle[i % cycle.size]) }
     }
+
+/** True if an offset is one of the two extreme lanes (±80.dp). */
+private fun isExtremeOffset(offset: Dp): Boolean = offset == 80.dp || offset == (-80).dp
 
 /* ---------- Sequence & assets ---------- */
 
 private enum class Slot { BEE, PENCIL, CHEST }
 
-/** Your exact extreme-slot sequences (by extreme ordinal, 1-based). */
+/**
+ * Extreme-lane slot sequence per difficulty. Kept identical to your authored sequences.
+ * The sequence is consumed cyclically across all extreme stages for the given difficulty.
+ */
 private fun extremeSequenceFor(difficulty: Difficulty): List<Slot> = when (difficulty) {
     Difficulty.EASY -> listOf(
         // Easy (12) — P at 2,7,11
@@ -178,18 +190,23 @@ private val PerArtScaleOverrides: Map<Int, Float> = mapOf(
 
 /** Extreme stage numbers (1-based) for ±80.dp lanes. */
 private fun extremeStageIndices(offsets: List<Dp>): List<Int> =
-    offsets.mapIndexedNotNull { idx, off -> if (off == 80.dp || off == (-80).dp) idx + 1 else null }
+    offsets.mapIndexedNotNull { idx, off -> if (isExtremeOffset(off)) idx + 1 else null }
 
 /* ---------- Cross-device deterministic, non-repeating variant selection ---------- */
 
 private const val ART_SEED = "ART_GLOBAL_V1"
 
+/** Euclid’s algorithm — gcd used to ensure step and pool size are coprime. */
 private tailrec fun gcd(a0: Int, b0: Int): Int {
     var a = if (a0 < 0) -a0 else a0
     var b = if (b0 < 0) -b0 else b0
     return if (b == 0) a else gcd(b, a % b)
 }
 
+/**
+ * Computes a deterministic permutation (start, step) for selecting items from a pool of [poolSize],
+ * keyed by [tag] and a private seed. Ensures full-period traversal by forcing `gcd(step, poolSize)=1`.
+ */
 private fun permutationParams(poolSize: Int, tag: String): Pair<Int, Int> {
     require(poolSize > 0)
     val h = abs("$tag|$ART_SEED".hashCode())
@@ -206,6 +223,7 @@ private fun permutationParams(poolSize: Int, tag: String): Pair<Int, Int> {
     return start to step
 }
 
+/** Returns the index into a pool for the 1-based [ordinal1] step along the permutation. */
 private fun permutedIndex(start: Int, step: Int, poolSize: Int, ordinal1: Int): Int {
     val k = ordinal1 - 1
     val idx = (start + (k.toLong() * step.toLong())).mod(poolSize.toLong())
@@ -219,6 +237,9 @@ private val DifficultyOrder = listOf(Difficulty.EASY, Difficulty.MEDIUM, Difficu
 @Immutable
 private data class Counts(val bees: Int, val pencils: Int)
 
+/**
+ * Fast counts of used BEE and PENCIL slots in the prefix of a repeating [seq] up to [len] extremes.
+ */
 private fun countInRepeatedPrefix(seq: List<Slot>, len: Int): Counts {
     if (len <= 0 || seq.isEmpty()) return Counts(0, 0)
     val beesPer = seq.count { it == Slot.BEE }
@@ -230,9 +251,14 @@ private fun countInRepeatedPrefix(seq: List<Slot>, len: Int): Counts {
     return Counts(bees, pencils)
 }
 
+/** Number of extreme lanes within [totalSteps] using the current offset generator. */
 private fun extremeCountFor(totalSteps: Int): Int =
-    generateStepOffsets(totalSteps).count { it == 80.dp || it == (-80).dp }
+    generateStepOffsets(totalSteps).count { isExtremeOffset(it) }
 
+/**
+ * Computes global offsets of used BEE/PENCIL slots for all difficulties prior to [current],
+ * so the art permutations are globally non-repeating across difficulties.
+ */
 private fun globalOffsetsFor(
     current: Difficulty,
     allStageCounts: Map<Difficulty, Int>
@@ -254,7 +280,10 @@ private fun globalOffsetsFor(
 /* ---------- Symmetric smooth bob easing ---------- */
 private val EaseInOutSine: Easing = Easing { x -> 0.5f - 0.5f * cos((Math.PI * x).toFloat()) }
 
-/* ---------- A tiny leaf that owns the bob animation (gated by lifecycle, visibility, and movement) ---------- */
+/**
+ * A tiny leaf that owns the floating callout bubble’s bob animation.
+ * Animation runs only when: lifecycle is RESUMED, anchor is on-screen, and content is not moving.
+ */
 @Composable
 private fun FloatingCalloutBubble(
     isDarkTheme: Boolean,
@@ -356,12 +385,17 @@ private fun FloatingCalloutBubble(
                 if (nh != bubbleH) bubbleH = nh
             }
     ) {
+        // Note: visible text is Persian "Start" per original. Externalize if needed for i18n.
         CalloutBubble(isDarkTheme = isDarkTheme, text = "شروع")
     }
 }
 
 /* ---------- UI ---------- */
 
+/**
+ * Stages list screen with side-art, chest interaction, and a floating callout over the unlocked stage.
+ * Behavior and visuals are preserved exactly; internal math and semantics are clarified and memoized.
+ */
 @Composable
 fun StagesListContent(
     navController: NavController,
@@ -373,6 +407,7 @@ fun StagesListContent(
     stageViewModel: StageViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     progressViewModel: StageProgressViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    // Stage counts and global maps are driven by VMs (no IO in UI).
     LaunchedEffect(difficulty) { stageViewModel.fetchStagesCount(difficulty) }
     LaunchedEffect(Unit) { stageViewModel.fetchAllStageCounts() }
 
@@ -386,12 +421,15 @@ fun StagesListContent(
         .claimedChests(difficulty)
         .collectAsStateWithLifecycle(initialValue = emptySet())
 
+    // Tracks chests opened in-session for optimistic UI of "opened" art
     val justOpenedRemember = remember { mutableStateListOf<Int>() }
 
+    // Offsets + extreme stages for the current total count
     val stepOffsets = remember(totalSteps) { generateStepOffsets(totalSteps) }
     val extremeStages = remember(stepOffsets) { extremeStageIndices(stepOffsets) }
     val extremeSeq = remember(difficulty) { extremeSequenceFor(difficulty) }
 
+    // Map extreme stage number → slot (bee/pencil/chest) by cycling the sequence
     val extremeSlotMap: Map<Int, Slot> = remember(extremeStages, extremeSeq) {
         buildMap {
             extremeStages.forEachIndexed { ordZero, stageNum ->
@@ -401,10 +439,12 @@ fun StagesListContent(
         }
     }
 
+    // Global offsets across difficulties ensure non-repeating art order
     val offsets = remember(difficulty, allCounts) { globalOffsetsFor(difficulty, allCounts) }
     val (beeStart, beeStep) = remember { permutationParams(BeeImages.size, "BEE|GLOBAL") }
     val (pencilStart, pencilStep) = remember { permutationParams(PencilImages.size, "PENCIL|GLOBAL") }
 
+    // Resolve extreme art assignment Map<stageNumber, drawableId?>; null → chest or none
     val extremeArtAssignment: Map<Int, Int?> = remember(
         difficulty, extremeSlotMap, offsets, beeStart, beeStep, pencilStart, pencilStep
     ) {
@@ -431,6 +471,7 @@ fun StagesListContent(
         }
     }
 
+    // Density-derived scaling
     val density = LocalDensity.current
     val basePx = with(density) { StageListDefaults.SideImageBaseHeight.toPx() }
     val uniformScale = remember(density) {
@@ -439,18 +480,21 @@ fun StagesListContent(
     }
     val chestScale = remember(uniformScale) { uniformScale * StageListDefaults.ChestScaleFactor }
 
+    // Grayscale filter reused for locked side-art
     val grayscaleFilter = remember {
         val m = ColorMatrix().apply { setToSaturation(0f) }
         ColorFilter.colorMatrix(m)
     }
 
+    // Viewport + scroll targeting
     var viewportHeightPx by remember { mutableStateOf(0) }
     var targetOffsetPx by remember { mutableIntStateOf(0) }
     var requestCalibration by remember { mutableStateOf(false) } // trigger a one-shot calibration after initial scroll
 
-    // Track our own programmatic scroll so gating also applies during animateScrollTo
+    // Track our programmatic scroll so gating also applies during animateScrollTo
     var isProgrammaticScroll by remember { mutableStateOf(false) }
 
+    // Center on the unlocked stage whenever inputs change
     LaunchedEffect(unlockedStage, totalSteps, viewportHeightPx) {
         if (totalSteps > 0 && viewportHeightPx > 0) {
             val scrollTarget = computeCenterOffset(
@@ -480,7 +524,7 @@ fun StagesListContent(
         }
     }
 
-    // ---------- Geometry derived directly from your button & bubble code ----------
+    // Geometry derived from the button & bubble code. 70.dp baseline ellipse → ~0.9 height factor.
     val frontEllipseHeightPx = with(density) { (70.dp * 0.9f).toPx() }
 
     // Root overlay state (for the floating bubble) + size for math anchoring
@@ -529,10 +573,10 @@ fun StagesListContent(
                 .padding(vertical = StageListDefaults.ListVerticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val stepOffsetsLocal = stepOffsets
+            val stepOffsetsLocal = stepOffsets // avoid capturing a mutable snapshot inside the loop
             stepOffsetsLocal.forEachIndexed { index, offset ->
                 val stageNumber = index + 1
-                val isExtreme = (offset == 80.dp || offset == (-80).dp)
+                val isExtreme = isExtremeOffset(offset)
 
                 Box(
                     modifier = Modifier
@@ -575,6 +619,20 @@ fun StagesListContent(
                                 slot == Slot.CHEST &&
                                         stageNumber <= unlockedStage &&
                                         !claimedChests.contains(stageNumber)
+
+                            // Local vals to avoid capturing mutable states repeatedly in the lambda
+                            val onChestClick = remember(
+                                stageNumber, difficulty, isChestClickable, justOpenedRemember.size
+                            ) {
+                                {
+                                    if (isChestClickable) {
+                                        if (!justOpenedRemember.contains(stageNumber)) {
+                                            justOpenedRemember.add(stageNumber)
+                                        }
+                                        stageViewModel.claimChest(difficulty, stageNumber)
+                                    }
+                                }
+                            }
 
                             Image(
                                 painter = painterResource(id = resolvedArtId),
@@ -619,12 +677,7 @@ fun StagesListContent(
                                     }
                                     .then(
                                         if (isChestClickable) {
-                                            Modifier.clickable {
-                                                if (!justOpenedRemember.contains(stageNumber)) {
-                                                    justOpenedRemember.add(stageNumber)
-                                                }
-                                                stageViewModel.claimChest(difficulty, stageNumber)
-                                            }
+                                            Modifier.clickable(onClick = onChestClick)
                                         } else Modifier
                                     )
                             )
@@ -676,10 +729,13 @@ fun StagesListContent(
                             )
                     ) {
                         if (stageNumber <= unlockedStage) {
+                            val onStageClick = remember(stageNumber, difficulty) {
+                                { navController.navigate("GAMEPLAY/$stageNumber/${difficulty.name}") }
+                            }
                             DifficultyStepButton(
                                 difficulty = difficulty,
                                 stepNumber = stageNumber,
-                                onClick = { navController.navigate("GAMEPLAY/$stageNumber/${difficulty.name}") }
+                                onClick = onStageClick
                             )
                         } else {
                             LockedStepButton(isDarkTheme = isDarkTheme, stepNumber = stageNumber)
