@@ -1,4 +1,3 @@
-// FILE: app/src/main/java/com/example/explanationtable/ui/stages/content/StagesListContent.kt
 package com.example.explanationtable.ui.stages.content
 
 import androidx.annotation.DrawableRes

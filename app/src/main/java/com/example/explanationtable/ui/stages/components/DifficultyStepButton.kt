@@ -1,4 +1,3 @@
-// FILE: app/src/main/java/com/example/explanationtable/ui/stages/components/DifficultyStepButton.kt
 package com.example.explanationtable.ui.stages.components
 
 import androidx.compose.animation.core.animateFloatAsState
