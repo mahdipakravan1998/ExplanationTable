@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.explanationtable.R
+import com.example.explanationtable.data.DataStoreManager
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.Routes
@@ -34,7 +35,9 @@ import com.example.explanationtable.ui.stages.content.StageListDefaults.ButtonCo
 import com.example.explanationtable.ui.stages.content.StageListDefaults.ButtonVerticalPadding
 import com.example.explanationtable.ui.stages.content.StageListDefaults.ListVerticalPadding
 import com.example.explanationtable.ui.stages.viewmodel.*
-import kotlinx.coroutines.flow.debounce
+import com.example.explanationtable.repository.StageRepositoryImpl
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -52,7 +55,17 @@ fun StagesListPage(
     val mainViewModel: MainViewModel = viewModel()
     val diamonds by mainViewModel.diamonds.collectAsStateWithLifecycle(initialValue = 0)
 
-    val stageViewModel: StageViewModel = viewModel()
+    // Build repository & VM via manual factory (no DI)
+    val context = LocalContext.current
+    val stageRepository = remember(context) {
+        StageRepositoryImpl(
+            dataStore = DataStoreManager(context.applicationContext)
+        )
+    }
+    val stageViewModel: StageViewModel = viewModel(
+        factory = StageViewModelFactory(stageRepository)
+    )
+
     val progressViewModel: StageProgressViewModel = viewModel()
     val unlockedMap by progressViewModel.lastUnlocked.collectAsStateWithLifecycle(initialValue = emptyMap())
     val unlockedStage = unlockedMap[difficulty] ?: 1
@@ -69,7 +82,6 @@ fun StagesListPage(
 
     //---- UI State ----
     var showSettingsDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val activity = context as? Activity
 
     //---- Scroll & Layout Metrics ----
@@ -91,23 +103,29 @@ fun StagesListPage(
         stageViewModel.fetchStagesCount(difficulty)
     }
 
-    // Feed scroll position, viewport size, and unlocked stage into visibility logic
-    LaunchedEffect(scrollState, viewportHeight, unlockedStage) {
-        snapshotFlow { Triple(scrollState.value, viewportHeight, unlockedStage) }
-            .debounce(16) // avoid thrash; ~1 frame at 60Hz
-            .distinctUntilChanged()
-            .collect { (offset, height, stage) ->
-                val itemPx = with(density) {
-                    (ButtonContainerHeight + ButtonVerticalPadding * 2).toPx()
-                }.toInt()
-                val paddingPx = with(density) { (ListVerticalPadding * 2).toPx() }.toInt()
+    // Precompute constants once (no per-frame work)
+    val itemPx = remember(density) {
+        with(density) { (ButtonContainerHeight + ButtonVerticalPadding * 2).toPx() }.toInt()
+    }
+    val paddingPx = remember(density) {
+        with(density) { (ListVerticalPadding * 2).toPx() }.toInt()
+    }
 
+    // Feed scroll position, viewport size, and unlocked stage into visibility logic
+    // Use conflate + withFrameNanos: at most one update per frame, no preview APIs, no timers.
+    LaunchedEffect(scrollState, viewportHeight, unlockedStage, itemPx, paddingPx) {
+        snapshotFlow { scrollState.value }
+            .distinctUntilChanged()
+            .conflate() // drop intermediate scroll values while we’re processing
+            .collectLatest { offset ->
+                // Align update to the choreographer frame to avoid jitter
+                withFrameNanos { /* just sync to frame */ }
                 visibilityViewModel.updateParams(
                     scrollOffset = offset,
-                    viewportHeight = height,
+                    viewportHeight = viewportHeight,
                     itemHeight = itemPx,
                     totalTopPadding = paddingPx,
-                    unlockedStage = stage
+                    unlockedStage = unlockedStage
                 )
             }
     }

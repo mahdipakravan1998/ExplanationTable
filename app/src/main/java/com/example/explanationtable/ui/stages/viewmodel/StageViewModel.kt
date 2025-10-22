@@ -1,41 +1,43 @@
 package com.example.explanationtable.ui.stages.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.explanationtable.data.DataStoreManager
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.repository.StageRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the stages-list screen.
+ * ViewModel for the stages-list screen (interface-driven).
  *
  * Exposes:
  * - stageCount (current difficulty)
- * - allStageCounts (all difficulties) → used to compute global Bee/Pencil ordinals.
+ * - allStageCounts (all difficulties)
  * - claimedChests(difficulty): Flow<Set<Int>>
  * - claimChest(difficulty, stageNumber)
  */
-class StageViewModel(application: Application) : AndroidViewModel(application) {
+class StageViewModel(
+    private val stageRepository: StageRepository
+) : ViewModel() {
 
-    private val stageRepository = StageRepository(
-        dataStore = DataStoreManager(application)
-    )
-
-    // Current difficulty count (legacy use)
+    // Current difficulty count
     private val _stageCount = MutableStateFlow(0)
     val stageCount: StateFlow<Int> = _stageCount
 
+    private var stageCountJob: Job? = null
+
     fun fetchStagesCount(difficulty: Difficulty) {
-        viewModelScope.launch {
-            stageRepository.getStagesCount(difficulty).collect { count ->
-                _stageCount.value = count
-            }
+        stageCountJob?.cancel()
+        stageCountJob = viewModelScope.launch {
+            stageRepository
+                .getStagesCount(difficulty)
+                .catch { /* swallow or log; keep UI alive */ }
+                .collect { count -> _stageCount.value = count }
         }
     }
 
@@ -45,14 +47,17 @@ class StageViewModel(application: Application) : AndroidViewModel(application) {
     )
     val allStageCounts: StateFlow<Map<Difficulty, Int>> = _allStageCounts
 
+    private var allCountsJob: Job? = null
+
     fun fetchAllStageCounts() {
-        viewModelScope.launch {
+        allCountsJob?.cancel()
+        allCountsJob = viewModelScope.launch {
             val flows = Difficulty.entries.map { d ->
                 stageRepository.getStagesCount(d).map { c -> d to c }
             }
-            combine(flows) { it.toMap() }.collect { map ->
-                _allStageCounts.value = map
-            }
+            combine(flows) { it.toMap() }
+                .catch { /* swallow or log */ }
+                .collect { map -> _allStageCounts.value = map }
         }
     }
 
@@ -63,7 +68,10 @@ class StageViewModel(application: Application) : AndroidViewModel(application) {
     /** Attempt to claim a chest (one-time). No-op if already claimed or locked. */
     fun claimChest(difficulty: Difficulty, stageNumber: Int) {
         viewModelScope.launch {
-            stageRepository.claimChestIfEligible(difficulty, stageNumber)
+            runCatching {
+                stageRepository.claimChestIfEligible(difficulty, stageNumber)
+            }
+            // Errors are intentionally swallowed; UI remains responsive.
         }
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -61,10 +62,9 @@ import com.example.explanationtable.ui.stages.components.LockedStepButton
 import com.example.explanationtable.ui.stages.util.computeCenterOffset
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.min
@@ -446,7 +446,10 @@ fun StagesListContent(
 
     var viewportHeightPx by remember { mutableStateOf(0) }
     var targetOffsetPx by remember { mutableIntStateOf(0) }
-    var requestCalibration by remember { mutableStateOf(false) } // 🔧 trigger a one-shot calibration after initial scroll
+    var requestCalibration by remember { mutableStateOf(false) } // trigger a one-shot calibration after initial scroll
+
+    // Track our own programmatic scroll so gating also applies during animateScrollTo
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
 
     LaunchedEffect(unlockedStage, totalSteps, viewportHeightPx) {
         if (totalSteps > 0 && viewportHeightPx > 0) {
@@ -462,10 +465,15 @@ fun StagesListContent(
             onTargetOffsetChanged(scrollTarget)
 
             // Programmatic centering of the unlocked stage
-            scrollState.animateScrollTo(
-                scrollTarget,
-                animationSpec = tween(600, easing = EaseInOutSine)
-            )
+            isProgrammaticScroll = true
+            try {
+                scrollState.animateScrollTo(
+                    scrollTarget,
+                    animationSpec = tween(600, easing = EaseInOutSine)
+                )
+            } finally {
+                isProgrammaticScroll = false
+            }
 
             // Ask for calibration right after the programmatic scroll settles
             requestCalibration = true
@@ -503,25 +511,9 @@ fun StagesListContent(
         var anchorYCorrectionPx by remember(unlockedStage, rootWidthPx, frontEllipseHeightPx) { mutableStateOf(0f) }
         var needCalibrate by remember(unlockedStage, rootWidthPx, viewportHeightPx, stepOffsets) { mutableStateOf(true) }
 
-        // Track any motion (drag, fling, programmatic) using a small settle timer (no FlowPreview).
-        var isListMoving by remember { mutableStateOf(false) }
-        LaunchedEffect(scrollState) {
-            var settleJob: Job? = null
-            snapshotFlow { scrollState.value }
-                .collect {
-                    if (!isListMoving) isListMoving = true
-                    settleJob?.cancel()
-                    settleJob = launch {
-                        // ~3 frames @ 60Hz; adjust 32–64ms if needed
-                        delay(48)
-                        isListMoving = false
-                    }
-                }
-        }
-
-        // Still handy to know if finger is down; movement is the source of truth.
+        // Motion gating: true during drag/fling and during our programmatic scroll
         val isUserScrolling by remember { derivedStateOf { scrollState.isScrollInProgress } }
-        val isContentMoving = isUserScrolling || isListMoving
+        val isContentMoving = isUserScrolling || isProgrammaticScroll
 
         // ---------- Scrollable list ----------
         Column(
@@ -663,7 +655,7 @@ fun StagesListContent(
                                             listPadTopPx + (unlockedIndex * rowHeightPx) - scrollY
                                         val anchorTopLocal =
                                             rowTopLocal + buttonPadV + (buttonContainerH - frontEllipseHeightPx) / 2f
-                                        val anchorXLocal = (rootWidthPx / 2f) + offsetXPx
+                                        val anchorXLocal = (rootWidthPx.toFloat() / 2f) + offsetXPx
                                         val mathAnchorTop = rootTopLeftInWindow.y + anchorTopLocal
                                         val mathAnchorX = rootTopLeftInWindow.x + anchorXLocal
 
@@ -706,10 +698,14 @@ fun StagesListContent(
 
             snapshotFlow { scrollState.value }
                 .distinctUntilChanged()
-                .collect { scrollY ->
+                .conflate() // drop intermediate deltas while we're updating
+                .collectLatest { scrollY ->
+                    // Sync with the choreographer frame to avoid jitter
+                    withFrameNanos { /* frame boundary */ }
+
                     val rowTopLocal = listPadTopPx + (unlockedIndex * rowHeightPx) - scrollY
                     val anchorTopLocal = rowTopLocal + buttonPadV + (buttonContainerH - frontEllipseHeightPx) / 2f
-                    val anchorXLocal = (rootWidthPx / 2f) + offsetXPx
+                    val anchorXLocal = (rootWidthPx.toFloat() / 2f) + offsetXPx
 
                     stageAnchorInWindow = Offset(
                         x = rootTopLeftInWindow.x + anchorXLocal + anchorXCorrectionPx,
