@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,11 +26,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
@@ -189,6 +193,8 @@ private inline fun permutedIndex(start: Int, step: Int, poolSize: Int, ordinal1:
 /* ---------- Global B/P ordinals across difficulties ---------- */
 
 private val DifficultyOrder = listOf(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD)
+
+@Immutable
 private data class Counts(val bees: Int, val pencils: Int)
 
 private fun countInRepeatedPrefix(seq: List<Slot>, len: Int): Counts {
@@ -224,11 +230,9 @@ private fun globalOffsetsFor(
 }
 
 /* ---------- Symmetric smooth bob easing ---------- */
-private val EaseInOutSine: Easing = Easing { x ->
-    0.5f - 0.5f * cos((Math.PI * x).toFloat())
-}
+private val EaseInOutSine: Easing = Easing { x -> 0.5f - 0.5f * cos((Math.PI * x).toFloat()) }
 
-/* ---------- A tiny leaf that owns the bob animation ---------- */
+/* ---------- A tiny leaf that owns the bob animation (gated by lifecycle & visibility) ---------- */
 @Composable
 private fun FloatingCalloutBubble(
     isDarkTheme: Boolean,
@@ -237,6 +241,20 @@ private fun FloatingCalloutBubble(
     viewportHeightPx: Int
 ) {
     if (anchorInWindow == null || viewportHeightPx <= 0) return
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var isResumed by remember { mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
+    DisposableEffect(lifecycleOwner) {
+        val obs = LifecycleEventObserver { _, event ->
+            isResumed = when (event) {
+                Lifecycle.Event.ON_RESUME -> true
+                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> false
+                else -> isResumed
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(obs)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
+    }
 
     val density = LocalDensity.current
 
@@ -252,13 +270,12 @@ private fun FloatingCalloutBubble(
     var bubbleW by remember { mutableStateOf(0) }
     var bubbleH by remember { mutableStateOf(0) }
 
-    // Exact geometric compensation for the rounded triangular tip (matches CalloutBubble)
+    // Exact geometric compensation for the triangular tip (must match CalloutBubble)
     val tipCompensationPx by remember(density) {
         mutableStateOf(run {
-            val triBasePx = with(density) { 15.dp.toPx() } // triangleBase from CalloutBubble
-            val triHPx    = with(density) { 10.dp.toPx() } // triangleHeight from CalloutBubble
-            val cornerPx  = with(density) { 10.dp.toPx() } // cornerRadius from CalloutBubble
-
+            val triBasePx = with(density) { 15.dp.toPx() }
+            val triHPx    = with(density) { 10.dp.toPx() }
+            val cornerPx  = with(density) { 10.dp.toPx() }
             val halfBase = triBasePx / 2f
             val triRound = min(min(cornerPx * 0.8f, triHPx * 0.7f), halfBase * 0.95f)
             val lenR = sqrt(halfBase * halfBase + triHPx * triHPx)
@@ -267,27 +284,39 @@ private fun FloatingCalloutBubble(
         })
     }
 
+    // Visibility estimate (don’t animate off-screen). Give a small margin to avoid thrash.
+    val marginPx = with(density) { 48.dp.toPx() }
+    val anchorY = localAnchor.y
+    val estimatedVisible = anchorY > -marginPx && anchorY < viewportHeightPx + marginPx
+
     // Same spec: 1000ms half-cycle, reverse, sine ease
-    val infinite = rememberInfiniteTransition(label = "callout-bob-leaf")
-    val bobPhase by infinite.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = StageListDefaults.CalloutHalfCycleMillis,
-                easing = EaseInOutSine
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "bob-phase"
-    )
     val bobAmplitudePx = with(density) { StageListDefaults.CalloutBounceAmplitude.toPx() }
-    val bobOffsetYpx = bobPhase * bobAmplitudePx
+    val shouldAnimate = isResumed && estimatedVisible
+
+    val bobOffsetYpx = if (shouldAnimate) {
+        val infinite = rememberInfiniteTransition(label = "callout-bob-leaf")
+        val bobPhase by infinite.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = StageListDefaults.CalloutHalfCycleMillis,
+                    easing = EaseInOutSine
+                ),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "bob-phase"
+        )
+        bobPhase * bobAmplitudePx
+    } else 0f
 
     // Center horizontally on anchor; align visible tip to anchor at the *topmost* point
     val leftPx = (localAnchor.x - (if (bubbleW == 0) 1 else bubbleW) / 2f)
     val topAtRestPx = localAnchor.y - (if (bubbleH == 0) 1 else bubbleH) + tipCompensationPx
     val animatedTopPx = topAtRestPx + bobOffsetYpx
+
+    // If completely off-screen and not animating, skip composing the bubble entirely
+    if (!estimatedVisible && !shouldAnimate) return
 
     Box(
         modifier = Modifier
@@ -318,21 +347,21 @@ fun StagesListContent(
     scrollState: ScrollState,
     onTargetOffsetChanged: (Int) -> Unit = {},
     onViewportHeightChanged: (Int) -> Unit = {},
-    stageViewModel: StageViewModel = viewModel(),
-    progressViewModel: StageProgressViewModel = viewModel()
+    stageViewModel: StageViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    progressViewModel: StageProgressViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     LaunchedEffect(difficulty) { stageViewModel.fetchStagesCount(difficulty) }
     LaunchedEffect(Unit) { stageViewModel.fetchAllStageCounts() }
 
-    val totalSteps by stageViewModel.stageCount.collectAsState(initial = 0)
-    val allCounts by stageViewModel.allStageCounts.collectAsState()
+    val totalSteps by stageViewModel.stageCount.collectAsStateWithLifecycle(initialValue = 0)
+    val allCounts by stageViewModel.allStageCounts.collectAsStateWithLifecycle(initialValue = emptyMap())
 
-    val unlockedMap by progressViewModel.lastUnlocked.collectAsState(initial = emptyMap())
+    val unlockedMap by progressViewModel.lastUnlocked.collectAsStateWithLifecycle(initialValue = emptyMap())
     val unlockedStage = unlockedMap[difficulty] ?: 1
 
     val claimedChests: Set<Int> by stageViewModel
         .claimedChests(difficulty)
-        .collectAsState(initial = emptySet())
+        .collectAsStateWithLifecycle(initialValue = emptySet())
 
     val justOpenedRemember = remember { mutableStateListOf<Int>() }
 
@@ -579,7 +608,7 @@ fun StagesListContent(
             Spacer(Modifier.height(StageListDefaults.ButtonVerticalPadding))
         }
 
-        // ---------- Floating CalloutBubble overlay (isolated animation) ----------
+        // ---------- Floating CalloutBubble overlay (isolated & gated animation) ----------
         FloatingCalloutBubble(
             isDarkTheme = isDarkTheme,
             anchorInWindow = stageAnchorInWindow,

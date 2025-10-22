@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.explanationtable.R
@@ -33,13 +34,13 @@ import com.example.explanationtable.ui.stages.content.StageListDefaults.ButtonCo
 import com.example.explanationtable.ui.stages.content.StageListDefaults.ButtonVerticalPadding
 import com.example.explanationtable.ui.stages.content.StageListDefaults.ListVerticalPadding
 import com.example.explanationtable.ui.stages.viewmodel.*
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
  * Screen showing a scrollable list of stages for a given [difficulty].
- * Displays a floating “scroll to unlocked stage” anchor and a settings dialog.
- * (CalloutBubble is now fully handled inside StagesListContent.)
+ * CalloutBubble is owned & gated inside StagesListContent.
  */
 @Composable
 fun StagesListPage(
@@ -49,16 +50,16 @@ fun StagesListPage(
 ) {
     //---- Shared ViewModels & State ----
     val mainViewModel: MainViewModel = viewModel()
-    val diamonds by mainViewModel.diamonds.collectAsState()
+    val diamonds by mainViewModel.diamonds.collectAsStateWithLifecycle(initialValue = 0)
 
     val stageViewModel: StageViewModel = viewModel()
     val progressViewModel: StageProgressViewModel = viewModel()
-    val unlockedMap by progressViewModel.lastUnlocked.collectAsState()
+    val unlockedMap by progressViewModel.lastUnlocked.collectAsStateWithLifecycle(initialValue = emptyMap())
     val unlockedStage = unlockedMap[difficulty] ?: 1
 
     val visibilityViewModel: ScrollAnchorVisibilityViewModel = viewModel()
-    val showScrollAnchor by visibilityViewModel.showScrollAnchor.collectAsState()
-    val isStageAbove by visibilityViewModel.isStageAbove.collectAsState()
+    val showScrollAnchor by visibilityViewModel.showScrollAnchor.collectAsStateWithLifecycle(initialValue = false)
+    val isStageAbove by visibilityViewModel.isStageAbove.collectAsStateWithLifecycle(initialValue = false)
 
     // Remembered flip flag so the arrow orientation “freezes” during exit animation
     val anchorFlip = remember { mutableStateOf(false) }
@@ -93,6 +94,7 @@ fun StagesListPage(
     // Feed scroll position, viewport size, and unlocked stage into visibility logic
     LaunchedEffect(scrollState, viewportHeight, unlockedStage) {
         snapshotFlow { Triple(scrollState.value, viewportHeight, unlockedStage) }
+            .debounce(16) // avoid thrash; ~1 frame at 60Hz
             .distinctUntilChanged()
             .collect { (offset, height, stage) ->
                 val itemPx = with(density) {
@@ -114,7 +116,6 @@ fun StagesListPage(
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Top bar with title, gem count, difficulty selector, and settings icon
                 AppTopBar(
                     isHomePage = false,
                     isDarkTheme = isDarkTheme,
@@ -137,7 +138,6 @@ fun StagesListPage(
                     progressViewModel = progressViewModel
                 )
 
-                // Settings pop-up dialog
                 SettingsDialog(
                     showDialog = showSettingsDialog,
                     onDismiss = { showSettingsDialog = false },
