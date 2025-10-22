@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -300,22 +299,4 @@ private class BubbleGeometry(
     }
 
     class Geo(val path: Path)
-}
-
-@Preview(name = "Callout (Light)", showBackground = true, backgroundColor = 0xFFF4F4F4)
-@Composable
-fun CalloutBubblePreviewLight() {
-    Column(Modifier.fillMaxWidth().padding(16.dp)) {
-        CalloutBubble(isDarkTheme = false, text = "شروع")
-        Spacer(Modifier.height(12.dp))
-        CalloutBubble(isDarkTheme = false, text = "Smooth outward blends into the pointer.")
-    }
-}
-
-@Preview(name = "Callout (Dark)", showBackground = true, backgroundColor = 0xFF121212)
-@Composable
-fun CalloutBubblePreviewDark() {
-    Column(Modifier.fillMaxWidth().padding(16.dp)) {
-        CalloutBubble(isDarkTheme = true, text = "Dark, unified shape.")
-    }
 }
