@@ -1,4 +1,3 @@
-// FILE: app/src/main/java/com/example/explanationtable/ui/stages/pages/StagesListPage.kt
 package com.example.explanationtable.ui.stages.pages
 
 import android.app.Activity
