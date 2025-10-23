@@ -132,9 +132,12 @@ fun StagesListPage(
             (StageListDefaults.ButtonContainerHeight + StageListDefaults.ButtonVerticalPadding * 2).toPx()
         }.toInt()
     }
-    val paddingPx = remember(density) {
-        with(density) { (StageListDefaults.ListVerticalPadding * 2).toPx() }.toInt()
-    }
+
+    // ---- LOCAL, SCREEN-ONLY LIST PADDING (top depends on unlockedStage; bottom fixed 16dp) ----
+    val topPaddingDp =
+        StageListDefaults.ListVerticalPadding + if (unlockedStage == 1) 36.dp else 0.dp // 52 or 16
+    val bottomPaddingDp = StageListDefaults.ListVerticalPadding // always 16
+    val totalListPaddingPx = with(density) { (topPaddingDp + bottomPaddingDp).toPx() }.toInt() // 68 or 32 in px
 
     // ---- Animation specs (explicit Float generics to avoid inference as Int) ----
     val anchorEnterSpec: FiniteAnimationSpec<Float> = remember {
@@ -149,7 +152,7 @@ fun StagesListPage(
     }
 
     // Feed scroll position into visibility logic (at most one update per frame).
-    LaunchedEffect(scrollState, viewportHeight, unlockedStage, itemPx, paddingPx) {
+    LaunchedEffect(scrollState, viewportHeight, unlockedStage, itemPx, totalListPaddingPx) {
         snapshotFlow { scrollState.value }
             .distinctUntilChanged()
             .conflate() // drop intermediate values while processing
@@ -160,19 +163,19 @@ fun StagesListPage(
                     scrollOffset = offset,
                     viewportHeight = viewportHeight,
                     itemHeight = itemPx,
-                    totalTopPadding = paddingPx,
+                    totalTopPadding = totalListPaddingPx,
                     unlockedStage = unlockedStage
                 )
             }
     }
 
     // Also push a refresh when *non-scroll* params change while the user isn't scrolling.
-    LaunchedEffect(viewportHeight, unlockedStage, itemPx, paddingPx) {
+    LaunchedEffect(viewportHeight, unlockedStage, itemPx, totalListPaddingPx) {
         visibilityViewModel.updateParams(
             scrollOffset = scrollState.value,
             viewportHeight = viewportHeight,
             itemHeight = itemPx,
-            totalTopPadding = paddingPx,
+            totalTopPadding = totalListPaddingPx,
             unlockedStage = unlockedStage
         )
     }

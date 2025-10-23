@@ -416,6 +416,9 @@ fun StagesListContent(
     val unlockedMap by progressViewModel.lastUnlocked.collectAsStateWithLifecycle(initialValue = emptyMap())
     val unlockedStage = unlockedMap[difficulty] ?: 1
 
+    // ---- LOCAL, SCREEN-ONLY TOP PADDING (52dp when first step unlocked; else 16dp) ----
+    val topPaddingDp = StageListDefaults.ListVerticalPadding + if (unlockedStage == 1) 36.dp else 0.dp
+
     val claimedChests: Set<Int> by stageViewModel
         .claimedChests(difficulty)
         .collectAsStateWithLifecycle(initialValue = emptySet())
@@ -494,7 +497,7 @@ fun StagesListContent(
     var isProgrammaticScroll by remember { mutableStateOf(false) }
 
     // Center on the unlocked stage whenever inputs change
-    LaunchedEffect(unlockedStage, totalSteps, viewportHeightPx) {
+    LaunchedEffect(unlockedStage, totalSteps, viewportHeightPx, topPaddingDp) {
         if (totalSteps > 0 && viewportHeightPx > 0) {
             val scrollTarget = computeCenterOffset(
                 unlockedStage = unlockedStage,
@@ -502,7 +505,7 @@ fun StagesListContent(
                 density = density,
                 buttonHeightDp = StageListDefaults.ButtonContainerHeight,
                 buttonPaddingDp = StageListDefaults.ButtonVerticalPadding,
-                listPaddingDp = StageListDefaults.ListVerticalPadding
+                listPaddingDp = topPaddingDp
             )
             targetOffsetPx = scrollTarget
             onTargetOffsetChanged(scrollTarget)
@@ -542,7 +545,7 @@ fun StagesListContent(
             }
     ) {
         // ===== math constants used by both scroll-driven anchor and one-shot calibration =====
-        val listPadTopPx = with(density) { StageListDefaults.ListVerticalPadding.toPx() }
+        val listPadTopPx = with(density) { topPaddingDp.toPx() }
         val buttonContainerH = with(density) { StageListDefaults.ButtonContainerHeight.toPx() }
         val buttonPadV = with(density) { StageListDefaults.ButtonVerticalPadding.toPx() }
         val rowHeightPx = buttonContainerH + 2f * buttonPadV
@@ -569,7 +572,7 @@ fun StagesListContent(
                         onViewportHeightChanged(viewportHeightPx)
                     }
                 }
-                .padding(vertical = StageListDefaults.ListVerticalPadding),
+                .padding(top = topPaddingDp, bottom = StageListDefaults.ListVerticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val stepOffsetsLocal = stepOffsets // avoid capturing a mutable snapshot inside the loop
@@ -747,7 +750,7 @@ fun StagesListContent(
 
         // --- Scroll-driven math anchor (fast) + constant calibration (exact) ---
         LaunchedEffect(
-            unlockedStage, stepOffsets, rootWidthPx, viewportHeightPx, frontEllipseHeightPx
+            unlockedStage, stepOffsets, rootWidthPx, viewportHeightPx, frontEllipseHeightPx, topPaddingDp
         ) {
             if (rootWidthPx == 0 || unlockedStage <= 0 || unlockedStage > stepOffsets.size) return@LaunchedEffect
 
