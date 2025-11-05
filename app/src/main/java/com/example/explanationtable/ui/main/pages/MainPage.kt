@@ -1,19 +1,18 @@
 package com.example.explanationtable.ui.main.pages
 
 import android.app.Activity
-import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,13 +32,9 @@ import com.example.explanationtable.R
 
 /**
  * MainPage composable sets up the primary UI structure including the top bar,
- * main content area, and associated dialogs for difficulty selection and settings.
- *
- * @param navController The navigation controller for handling navigation actions.
- * @param viewModel The ViewModel managing UI-related data and state.
- * @param isDarkTheme Flag indicating whether the dark theme is enabled.
+ * main content area, and dialogs. Immersive mode is now applied **app-wide**
+ * from the root, so this screen only focuses on UI.
  */
-@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainPage(
@@ -47,27 +42,22 @@ fun MainPage(
     viewModel: MainViewModel = viewModel(),
     isDarkTheme: Boolean
 ) {
-    // Local state variables to control dialog visibility and store selected option
+    // Local state
     var showDifficultyDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf<String?>(null) }
 
-    // Safely obtain the Activity context to perform activity-specific actions (e.g., exiting)
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // BackHandler for handling the back button press to show the exit confirmation
-    BackHandler {
-        showExitConfirmation = true
-    }
+    // Back exits (with confirm dialog)
+    BackHandler { showExitConfirmation = true }
 
-    // Wrap the entire UI in a custom background component styled for the home page.
+    // Home background + UI
     Background(isHomePage = true, isDarkTheme = isDarkTheme) {
-        // Scaffold provides a basic layout structure including a top bar and content area.
         Scaffold(
             topBar = {
-                // AppTopBar displays the top bar with a settings icon.
                 AppTopBar(
                     isHomePage = true,
                     isDarkTheme = isDarkTheme,
@@ -76,15 +66,15 @@ fun MainPage(
                 )
             },
             containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets(0), // keep zero; safe with app-wide insets consumption
             content = { paddingValues ->
-                // Column arranges the main content vertically, applying the Scaffold's padding.
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // MainContent provides the primary interactive elements.
                     MainContent(
+                        isDarkTheme = isDarkTheme,
                         onListClicked = { showDifficultyDialog = true },
                         onStartGameClicked = {
                             // TODO: Implement navigation to StartGame screen
@@ -92,26 +82,22 @@ fun MainPage(
                     )
                 }
 
-                // Display the DifficultyDialog when the corresponding flag is true.
                 DifficultyDialog(
                     showDialog = showDifficultyDialog,
                     onDismiss = { showDifficultyDialog = false },
                     onOptionSelected = { option ->
-                        // Update the selected option, dismiss the dialog, and navigate accordingly.
                         selectedOption = option
                         showDifficultyDialog = false
                         navController.navigate("${Routes.STAGES_LIST}/$option")
                     }
                 )
 
-                // Display the SettingsDialog when the corresponding flag is true.
                 SettingsDialog(
                     showDialog = showSettingsDialog,
                     onDismiss  = { showSettingsDialog = false },
                     onExit     = { activity?.finishAndRemoveTask() }
                 )
 
-                // Exit Confirmation Dialog
                 ConfirmationDialog(
                     showDialog = showExitConfirmation,
                     titleResId = R.string.confirm_exit_title,
@@ -120,9 +106,7 @@ fun MainPage(
                         showExitConfirmation = false
                         activity?.finishAndRemoveTask()
                     },
-                    onDismiss = {
-                        showExitConfirmation = false
-                    }
+                    onDismiss = { showExitConfirmation = false }
                 )
             }
         )

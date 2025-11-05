@@ -11,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.Routes
+import com.example.explanationtable.ui.components.BackAnchor
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.gameplay.components.PrizeBox
 import com.example.explanationtable.ui.review.pages.StageReviewTable
@@ -175,6 +177,22 @@ fun GameplayPage(
                         }
                         navController.navigate(route)
                     }
+                )
+            }
+
+            // BackAnchor — bottom-start, hidden during StageReviewTable (result.over == true)
+            if (!result.over) {
+                BackAnchor(
+                    isDarkTheme = isDarkTheme,
+                    onClick = {
+                        navController.navigate("stages_list/${difficulty.name}") {
+                            popUpTo(Routes.MAIN) { inclusive = true }
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 16.dp)
+                        .zIndex(4f)
                 )
             }
 

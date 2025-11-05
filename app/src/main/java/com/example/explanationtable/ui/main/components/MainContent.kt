@@ -4,56 +4,67 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.components.PrimaryButton
+import com.example.explanationtable.ui.components.SecondaryButton
 
 /**
- * Displays the primary action buttons ("List of Steps" and "Start Game") centered on the screen.
- *
- * @param onListClicked Callback invoked when the "List of Steps" button is clicked.
- * @param onStartGameClicked Callback invoked when the "Start Game" button is clicked.
- * @param modifier Modifier to be applied to the overall layout.
+ * Bottom-anchored actions without scrim.
+ * Secondary (“Stages list”) sits above Primary (“Start game”).
+ * Tuned to clear the floor band while staying thumb-reachable.
  */
 @Composable
 fun MainContent(
+    isDarkTheme: Boolean,
     onListClicked: () -> Unit,
     onStartGameClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Use a Column to arrange content vertically in the full available space.
-    Column(
+    // Spacing
+    val sidePadding = 24.dp
+    val betweenButtons = 12.dp
+    val baseBottom = 12.dp // plus safe area (applied below)
+
+    // Small, screen-aware lift so buttons aren't on the very edge.
+    val h = LocalConfiguration.current.screenHeightDp
+    val liftDp = when {
+        h <= 640 -> 40.dp
+        h <= 760 -> 48.dp
+        h <= 880 -> 56.dp
+        else     -> 60.dp
+    }
+
+    val startLabel = stringResource(id = R.string.start_game)
+    val stagesLabel = stringResource(id = R.string.stages_list)
+
+    Box(
         modifier = modifier
-            .fillMaxSize()        // Occupies the full size of its parent.
-            .padding(bottom = 48.dp), // Adds bottom padding for spacing.
-        horizontalAlignment = Alignment.CenterHorizontally, // Centers children horizontally.
-        verticalArrangement = Arrangement.Center          // Centers children vertically.
+            .fillMaxSize()
+            .padding(horizontal = sidePadding)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
     ) {
-        // Top spacer to create balanced spacing above the button row.
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Row containing the two primary buttons with a fixed space between them.
-        Row(
-            modifier = Modifier.fillMaxWidth(0.8f), // Restricts the row to 80% of the parent's width.
-            horizontalArrangement = Arrangement.spacedBy(24.dp), // Sets 24.dp spacing between buttons.
-            verticalAlignment = Alignment.CenterVertically        // Aligns buttons vertically centered.
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = baseBottom + liftDp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(betweenButtons)
         ) {
-            // Button for displaying the list of steps.
-            MainButton(
-                iconId = R.drawable.ic_stages_list,
-                label = stringResource(id = R.string.stages_list),
-                onClick = onListClicked // Callback to open the list dialog.
+            SecondaryButton(
+                isDarkTheme = isDarkTheme,
+                onClick = onListClicked,
+                text = stagesLabel,
+                modifier = Modifier.fillMaxWidth()
             )
-
-            // Button for starting the game.
-            MainButton(
-                iconId = R.drawable.ic_start_game,
-                label = stringResource(id = R.string.start_game),
-                onClick = onStartGameClicked // Callback to navigate to the game screen.
+            PrimaryButton(
+                isDarkTheme = isDarkTheme,
+                onClick = onStartGameClicked,
+                text = startLabel,
+                modifier = Modifier.fillMaxWidth()
             )
         }
-
-        // Bottom spacer to create balanced spacing below the button row.
-        Spacer(modifier = Modifier.weight(1f))
     }
 }

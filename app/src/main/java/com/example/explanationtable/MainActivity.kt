@@ -12,6 +12,7 @@ import com.example.explanationtable.ui.theme.ExplanationTableTheme
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.runtime.CompositionLocalProvider
+import com.example.explanationtable.ui.system.AppImmersiveSystemBars
 
 /**
  * MainActivity serves as the entry point of the ExplanationTable application.
@@ -24,6 +25,10 @@ class MainActivity : ComponentActivity() {
 
         // Set the content of the activity using Jetpack Compose.
         setContent {
+
+            // App-wide: hide status & nav bars, consume insets everywhere
+            AppImmersiveSystemBars()
+
             // Retrieve the MainViewModel instance to observe the user's theme preference.
             val mainViewModel: MainViewModel = viewModel()
 

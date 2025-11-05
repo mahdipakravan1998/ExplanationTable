@@ -4,7 +4,7 @@
     <string name="settings">Settings</string>
 
     <!-- Stage-related strings (in Persian) -->
-    <string name="stages_list">لیست مراحل</string>
+    <string name="stages_list">انتخاب مرحله</string>
     <string name="start_game">شروع بازی</string>
 
     <!-- Options for the difficulty level in the popup -->

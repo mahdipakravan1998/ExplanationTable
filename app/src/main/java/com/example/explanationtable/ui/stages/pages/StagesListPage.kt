@@ -42,6 +42,7 @@ import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.repository.StageRepositoryImpl
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.Routes
+import com.example.explanationtable.ui.components.BackAnchor
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
@@ -213,7 +214,7 @@ fun StagesListPage(
                 )
             }
 
-            // Floating scroll–to–stage anchor with scale animation
+            // Floating scroll–to–stage anchor with scale animation (RIGHT) — conditional
             AnimatedVisibility(
                 visible = showScrollAnchor,
                 enter = scaleIn(initialScale = 0f, animationSpec = anchorEnterSpec),
@@ -237,6 +238,20 @@ fun StagesListPage(
                     }
                 )
             }
+
+            // Floating BACK anchor (LEFT) — always visible (no AnimatedVisibility)
+            BackAnchor(
+                isDarkTheme = isDarkTheme,
+                onClick = {
+                    navController.navigate(Routes.MAIN) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 16.dp)
+                    .zIndex(4f)
+            )
         }
     }
 }
