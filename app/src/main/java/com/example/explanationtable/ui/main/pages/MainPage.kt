@@ -10,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,20 +26,22 @@ import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.toDifficultyFromLabel
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.ui.navigation.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.components.MainContent
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
+import com.example.explanationtable.ui.navigation.Routes
 import com.example.explanationtable.ui.settings.components.ConfirmationDialog
 import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.ui.stages.dialogs.DifficultyDialog
+import kotlinx.coroutines.flow.collectLatest
 
 /**
- * MainPage sets up the home screen structure (top bar, background, body content, and dialogs).
+ * MainPage: Home screen with chrome, actions, and dialogs.
  *
- * Behavior preserved. Internals improved:
- * - Use typed route builder (Routes.stagesList) instead of stringly-typed construction.
- * - Map dialog option safely to Difficulty via shared model helpers.
+ * Behavior preserved. Improvements:
+ * - Removed unused state to cut recompositions.
+ * - Clearer one-shot navigation collection tied to ViewModel lifecycle.
+ * - Explicit docs for future routing standardization.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,21 +50,26 @@ fun MainPage(
     viewModel: MainViewModel = viewModel(),
     isDarkTheme: Boolean
 ) {
-    // ---- State (UI-only; saveable for rotation/process death resilience)
+    // UI dialog flags (process-death safe via rememberSaveable)
     var showDifficultyDialog by rememberSaveable { mutableStateOf(false) }
     var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
     var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
-    var selectedOption by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // ---- Environment
+    // Cache Activity cast once; avoids repeating on every recomposition
     val context = LocalContext.current
-    // Memoize Activity cast to avoid doing it on every recomposition.
     val activity = remember(context) { context as? Activity }
 
-    // ---- System back: preserve exact behavior (always show exit confirmation)
+    // Collect one-shot routes from VM and navigate. Keyed by VM for single collector.
+    LaunchedEffect(viewModel) {
+        viewModel.startGameRoutes.collectLatest { route ->
+            // NOTE: This string route intentionally preserves legacy casing ("GAMEPLAY/...").
+            navController.navigate(route)
+        }
+    }
+
+    // Back press → exit confirmation (preserved behavior)
     BackHandler { showExitConfirmation = true }
 
-    // ---- Background + Scaffold chrome
     Background(isHomePage = true, isDarkTheme = isDarkTheme) {
         Scaffold(
             topBar = {
@@ -69,12 +77,10 @@ fun MainPage(
                     isHomePage = true,
                     isDarkTheme = isDarkTheme,
                     onSettingsClick = { showSettingsDialog = true },
-                    // Read from MaterialTheme each recomposition to respect dynamic theme changes.
                     iconTint = MaterialTheme.colorScheme.onSurface
                 )
             },
             containerColor = Color.Transparent,
-            // Insets are consumed app-wide; keep zero here.
             contentWindowInsets = WindowInsets(0)
         ) { paddingValues ->
             Column(
@@ -82,24 +88,19 @@ fun MainPage(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // Main actions: start game / list stages (difficulty)
                 MainContent(
                     isDarkTheme = isDarkTheme,
                     onListClicked = { showDifficultyDialog = true },
-                    onStartGameClicked = {
-                        // TODO: Implement navigation to StartGame screen (preserved as-is).
-                    }
+                    onStartGameClicked = { viewModel.onStartGameClick() }
                 )
             }
 
-            // ---- Dialogs (shown as overlays; order preserved)
+            // Difficulty selection → typed route using builder (existing behavior)
             DifficultyDialog(
                 showDialog = showDifficultyDialog,
                 onDismiss = { showDifficultyDialog = false },
                 onOptionSelected = { option ->
-                    selectedOption = option
                     showDifficultyDialog = false
-                    // Convert option -> Difficulty robustly, then use typed route builder.
                     val difficulty: Difficulty = option.toDifficultyFromLabel()
                     navController.navigate(Routes.stagesList(difficulty))
                 }

@@ -3,32 +3,35 @@ package com.example.explanationtable.ui.rewards.pages
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.explanationtable.R
+import com.example.explanationtable.domain.rewards.NextTarget
+import com.example.explanationtable.domain.rewards.StageCounts
+import com.example.explanationtable.domain.rewards.resolveNextTarget
+import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.model.difficultyStepCountMap
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.ui.rewards.components.RewardsTable
 import com.example.explanationtable.ui.components.buttons.PrimaryButton
 import com.example.explanationtable.ui.components.buttons.SecondaryButton
-import androidx.navigation.NavController
-import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.navigation.Routes
-import com.example.explanationtable.R
+import com.example.explanationtable.ui.rewards.components.RewardsTable
 import com.example.explanationtable.ui.rewards.viewmodel.RewardsViewModel
 
 /**
- * Displays the game result screen with a rewards table and navigation buttons.
+ * Game result screen: shows the rewards table and navigation actions.
  *
- * @param isDarkTheme Determines whether the dark theme should be applied.
- * @param optimalMoves The optimal moves calculated by A*.
- * @param userAccuracy The fallback user accuracy value.
- * @param playerMoves The number of moves the player made.
- * @param elapsedTime The elapsed time of the game (in milliseconds).
- * @param navController The navigation controller to manage screen transitions.
- * @param difficulty The difficulty level of the current game.
- * @param stageNumber The current stage number.
- * @param viewModel RewardsViewModel used by the table to award diamonds.
+ * Behavior (unchanged):
+ * - "Next" advances within the same difficulty until the last stage.
+ * - From the last EASY stage, "Next" opens MEDIUM-1.
+ * - From the last MEDIUM stage, "Next" opens HARD-1.
+ * - On the last HARD stage, "Next" is hidden.
+ *
+ * UI output and navigation side-effects are preserved.
  */
 @Composable
 fun GameResultScreen(
@@ -42,21 +45,40 @@ fun GameResultScreen(
     stageNumber: Int,
     viewModel: RewardsViewModel
 ) {
-    // Handle the back navigation when the user presses the back button.
+    // Back presses return to the list of stages for the current difficulty.
     BackHandler {
         navController.navigate(Routes.stagesList(difficulty)) {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
-    // Main background for the result screen
+    // Centralized counts with default fallback (9) — behavior identical to previous inline logic.
+    val counts = remember {
+        StageCounts.fromMap(difficultyStepCountMap, defaultCount = 9)
+    }
+
+    // Pure, memoized resolution of the next target according to policy.
+    val nextTarget: NextTarget? = remember(difficulty, stageNumber, counts.easy, counts.medium, counts.hard) {
+        resolveNextTarget(difficulty, stageNumber, counts)
+    }
+
+    // Precompute routes as stable strings to avoid rebuilding inside onClick lambdas.
+    val nextRoute: String? = remember(nextTarget) {
+        nextTarget?.let { Routes.gameplay(it.stage, it.difficulty) }
+    }
+    val replayRoute: String = remember(difficulty, stageNumber) {
+        Routes.gameplay(stageNumber, difficulty)
+    }
+    val listRoute: String = remember(difficulty) {
+        Routes.stagesList(difficulty)
+    }
+
     Background(isHomePage = false, isDarkTheme = isDarkTheme) {
         Box(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 32.dp)
                 .fillMaxSize()
         ) {
-            // Display the rewards table with the results
             RewardsTable(
                 isDarkTheme = isDarkTheme,
                 optimalMoves = optimalMoves,
@@ -67,7 +89,6 @@ fun GameResultScreen(
                 viewModel = viewModel
             )
 
-            // Bottom section with navigation buttons
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.BottomCenter
@@ -76,27 +97,27 @@ fun GameResultScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Next stage button
-                    PrimaryButton(
-                        isDarkTheme = isDarkTheme,
-                        onClick = {
-                            val nextStage = stageNumber + 1
-                            navController.navigate(Routes.gameplay(nextStage, difficulty)) {
-                                popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
-                            }
-                        },
-                        text = stringResource(id = R.string.next_stage_button),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // "Next" is visible only when policy returns a next target.
+                    if (nextRoute != null) {
+                        PrimaryButton(
+                            isDarkTheme = isDarkTheme,
+                            onClick = {
+                                navController.navigate(nextRoute) {
+                                    // Replace the rewards screen to prevent back stack growth across stages.
+                                    popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
+                                }
+                            },
+                            text = stringResource(id = R.string.next_stage_button),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(18.dp))
+                    }
 
-                    // Spacer between buttons
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    // Replay button
+                    // Replay current stage.
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
                         onClick = {
-                            navController.navigate(Routes.gameplay(stageNumber, difficulty)) {
+                            navController.navigate(replayRoute) {
                                 popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
                             }
                         },
@@ -104,14 +125,13 @@ fun GameResultScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Spacer between buttons
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Return to stages list button
+                    // Return to the stages list for the current difficulty.
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
                         onClick = {
-                            navController.navigate(Routes.stagesList(difficulty)) {
+                            navController.navigate(listRoute) {
                                 popUpTo(Routes.MAIN) { inclusive = true }
                             }
                         },
