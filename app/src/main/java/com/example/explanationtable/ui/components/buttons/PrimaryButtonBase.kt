@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui.components
+package com.example.explanationtable.ui.components.buttons
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -19,16 +19,23 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 import com.example.explanationtable.ui.theme.IconCircleDark
@@ -40,21 +47,45 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * A button with an animated press effect used for claiming a prize.
+ * Base pressable primary CTA with shared behavior.
  *
- * @param onClick Callback invoked when the button is clicked.
- * @param text The text displayed on the button.
- * @param isDarkTheme Boolean indicating if the dark theme is active.
- * @param modifier Modifier to be applied to the button container.
+ * Visual contracts preserved:
+ * - Colors are unchanged and selected by isDarkTheme exactly as before.
+ * - Press animation duration is EXACTLY 30ms.
+ * - A 50ms post-up delay before invoking onClick is preserved.
+ *
+ * Enhancements:
+ * - Accessibility semantics (role=Button, screen-reader click).
+ * - `@Immutable` style for recomposition efficiency.
+ * - `rememberUpdatedState` for the onClick lambda to avoid stale captures.
  */
+@Immutable
+data class PrimaryButtonStyle(
+    val height: Dp,
+    val cornerRadius: Dp,
+    val horizontalPadding: Dp,
+    val shadowOffset: Dp,
+    val fontSize: TextUnit
+)
+
+// === original animation duration preserved ===
+private const val PRIMARY_BUTTON_ANIMATION_DURATION_MS: Int = 30
+
+// Behavior parity: keep the tiny click delay
+private const val CLICK_DELAY_MS: Long = 50
+
 @Composable
-fun PrimaryButton(
+fun PrimaryButtonBase(
     isDarkTheme: Boolean,
     onClick: () -> Unit,
     text: String,
+    style: PrimaryButtonStyle,
     modifier: Modifier = Modifier
 ) {
-    // Define your button colors internally based on the current theme.
+    // Stable, up-to-date reference to onClick for gesture/semantics blocks.
+    val onClickState = rememberUpdatedState(onClick)
+
+    // === DO NOT CHANGE: original color logic preserved ===
     val buttonBackgroundColor =
         if (isDarkTheme) PrizeButtonBackgroundDark else PrizeButtonBackgroundLight
     val buttonShadowColor =
@@ -62,74 +93,72 @@ fun PrimaryButton(
     val buttonTextColor =
         if (isDarkTheme) BackgroundDark else DialogBackgroundLight
 
-    // Constants used in the button layout and animation.
-    val shadowOffset = 4.dp       // Offset to simulate depth for shadow.
-    val buttonHeight = 56.dp      // Fixed height for the button.
-    val cornerRadius = 18.dp      // Corner radius for rounded card shape.
-    val horizontalPadding = 16.dp // Horizontal padding inside the button.
-    val animationDuration = 30    // Duration of the press animation in milliseconds.
-
-    // State to track whether the button is pressed.
     var isPressed by remember { mutableStateOf(false) }
 
-    // Animate the vertical offset based on the press state to create a press effect.
     val pressOffsetY by animateDpAsState(
-        targetValue = if (isPressed) shadowOffset else 0.dp,
-        animationSpec = tween(durationMillis = animationDuration), label = ""
+        targetValue = if (isPressed) style.shadowOffset else 0.dp,
+        animationSpec = tween(durationMillis = PRIMARY_BUTTON_ANIMATION_DURATION_MS),
+        label = "PrimaryButtonPressOffset"
     )
 
-    // Gesture detector to handle press interactions.
+    // Pointer input replicates original press behavior without ripple.
     val gestureModifier = Modifier.pointerInput(Unit) {
         coroutineScope {
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false)
                 isPressed = true
-
-                val upEvent = waitForUpOrCancellation()
+                val up = waitForUpOrCancellation()
                 isPressed = false
-
-                if (upEvent != null) {
+                if (up != null) {
+                    // Preserve original subtle delay before click
                     launch {
-                        delay(50) // Delay to allow animation to complete
-                        onClick()
+                        delay(CLICK_DELAY_MS)
+                        onClickState.value.invoke()
                     }
                 }
             }
         }
     }
 
-    // Main container for the button, combining the shadow and the animated foreground.
+    // Accessibility semantics without changing visuals.
+    val semanticsModifier = Modifier.semantics(mergeDescendants = true) {
+        role = Role.Button
+        onClick(label = text) {
+            onClickState.value.invoke()
+            true
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(buttonHeight)
+            .height(style.height)
             .then(gestureModifier)
+            .then(semanticsModifier)
     ) {
-        // Shadow layer: a Card offset downward to simulate depth.
+        // Shadow layer
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(y = shadowOffset),
-            shape = RoundedCornerShape(cornerRadius),
+                .offset(y = style.shadowOffset),
+            shape = RoundedCornerShape(style.cornerRadius),
             colors = CardDefaults.cardColors(containerColor = buttonShadowColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            // No inner content required for the shadow.
-        }
-        // Foreground layer: the main button that animates vertically on press.
+        ) { /* Decorative shadow card */ }
+
+        // Foreground layer
         Card(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(y = pressOffsetY),
-            shape = RoundedCornerShape(cornerRadius),
+            shape = RoundedCornerShape(style.cornerRadius),
             colors = CardDefaults.cardColors(containerColor = buttonBackgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            // Centered text label within the button.
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = horizontalPadding),
+                    .padding(horizontal = style.horizontalPadding),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -137,7 +166,7 @@ fun PrimaryButton(
                     text = text,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Black,
-                        fontSize = 16.sp
+                        fontSize = style.fontSize
                     ),
                     color = buttonTextColor
                 )

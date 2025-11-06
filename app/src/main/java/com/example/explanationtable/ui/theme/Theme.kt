@@ -79,14 +79,11 @@ private val LightColors = lightColorScheme(
 )
 
 /**
- * Applies the ExplanationTable theme to the provided [content].
+ * Applies the ExplanationTable theme to [content].
  *
- * This composable sets up the MaterialTheme with an appropriate color scheme (optionally using dynamic colors),
- * typography, and custom colors, which are provided throughout the composable hierarchy via [LocalCustomColors].
- *
- * @param darkTheme Flag indicating whether to use the dark theme. Defaults to the system setting.
- * @param dynamicColor Flag to enable dynamic colors (supported on Android S and above). Disabled by default.
- * @param content The composable content that will be themed.
+ * - Keeps your existing light/dark schemes (or dynamic on S+ if enabled).
+ * - Also provides a small custom color palette via [LocalCustomColors].
+ * - No visual changes from your current setup.
  */
 @Composable
 fun ExplanationTableTheme(
@@ -94,19 +91,15 @@ fun ExplanationTableTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    // Determine the appropriate color scheme:
-    // Use dynamic colors if enabled and the device runs on Android S (API 31) or later.
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        // Use pre-defined dark/light color schemes based on the darkTheme flag.
         darkTheme -> DarkColors
         else -> LightColors
     }
 
-    // Define custom colors based on the current theme.
     val customColors = if (darkTheme) {
         CustomColors(
             success = SuccessDark,
@@ -123,8 +116,6 @@ fun ExplanationTableTheme(
         )
     }
 
-    // Apply MaterialTheme with the selected color scheme and typography,
-    // and provide the custom colors to the composable hierarchy.
     MaterialTheme(
         colorScheme = colorScheme,
         typography = AppTypography // Ensure AppTypography is defined elsewhere.

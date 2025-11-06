@@ -46,7 +46,7 @@ fun GameplayPage(
 
     // Handle Android back button: navigate back to stages list
     BackHandler {
-        navController.navigate("stages_list/${difficulty.name}") {
+        navController.navigate(Routes.stagesList(difficulty)) {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
@@ -165,16 +165,15 @@ fun GameplayPage(
                 PrizeBox(
                     isDarkTheme = isDarkTheme,
                     onPrizeButtonClick = {
-                        // Build and navigate to rewards route with parameters
-                        val route = buildString {
-                            append("game_rewards/")
-                            append("${result.optimalMoves}/")
-                            append("${result.accuracy}/")
-                            append("${result.playerMoves}/")
-                            append("${result.elapsedMs}/")
-                            append("${difficulty.name}/")
-                            append(stageNumber)
-                        }
+                        // Navigate to rewards using the typed builder (removes stringly-typed route)
+                        val route = Routes.gameRewards(
+                            optimalMoves = result.optimalMoves,
+                            userAccuracy = result.accuracy,
+                            playerMoves = result.playerMoves,
+                            elapsedTime = result.elapsedMs,
+                            difficulty = difficulty,
+                            stageNumber = stageNumber
+                        )
                         navController.navigate(route)
                     }
                 )
@@ -185,7 +184,7 @@ fun GameplayPage(
                 BackAnchor(
                     isDarkTheme = isDarkTheme,
                     onClick = {
-                        navController.navigate("stages_list/${difficulty.name}") {
+                        navController.navigate(Routes.stagesList(difficulty)) {
                             popUpTo(Routes.MAIN) { inclusive = true }
                         }
                     },

@@ -1,6 +1,5 @@
 package com.example.explanationtable.ui.settings.dialogs
 
-import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,13 +22,17 @@ import com.example.explanationtable.R
 import com.example.explanationtable.ui.settings.components.ConfirmationDialog
 import com.example.explanationtable.ui.settings.options.SettingsOptions
 import com.example.explanationtable.ui.settings.viewmodel.SettingsViewModel
+import com.example.explanationtable.ui.system.ImmersiveForDialog
 import com.example.explanationtable.ui.theme.DialogBackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 import com.example.explanationtable.ui.theme.TextDarkMode
 import com.example.explanationtable.ui.theme.Eel
 
 /**
- * Settings dialog now backed by SettingsViewModel.
+ * Settings dialog backed by SettingsViewModel.
+ *
+ * Immersive behavior is applied to the dialog window via [ImmersiveForDialog],
+ * preventing system-bar flicker and any content reflow underneath.
  *
  * @param showDialog Controls whether to display the settings dialog.
  * @param onDismiss To hide the settings dialog.
@@ -42,22 +45,21 @@ fun SettingsDialog(
     onExit: () -> Unit,
     viewModel: SettingsViewModel = viewModel()
 ) {
-    // Local state for the exit‐confirmation overlay
     var showExitConfirmation by remember { mutableStateOf(false) }
 
     if (!showDialog) return
 
-    // Collect flows from our ViewModel
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     val isMuted     by viewModel.isMuted.collectAsState()
 
-    // Choose text color based on theme
     val textColor = if (isDarkTheme) TextDarkMode else Eel
 
-    // Main settings AlertDialog
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
+            // Bind immersive behavior to this dialog's Window.
+            ImmersiveForDialog()
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,21 +87,21 @@ fun SettingsDialog(
             SettingsOptions(
                 onDismiss      = onDismiss,
                 isDarkTheme    = isDarkTheme,
-                onToggleTheme = { viewModel.toggleTheme() },
+                onToggleTheme  = { viewModel.toggleTheme() },
                 isMuted        = isMuted,
                 onToggleMute   = { viewModel.toggleMute() },
                 onExit         = { showExitConfirmation = true }
             )
         },
-        confirmButton    = { /* none */ },
-        containerColor   = if (isDarkTheme) DialogBackgroundDark else DialogBackgroundLight,
+        confirmButton     = { /* none */ },
+        containerColor    = if (isDarkTheme) DialogBackgroundDark else DialogBackgroundLight,
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor  = MaterialTheme.colorScheme.onSurface,
-        shape            = MaterialTheme.shapes.medium,
-        tonalElevation   = 0.dp
+        shape             = MaterialTheme.shapes.medium,
+        tonalElevation    = 0.dp
     )
 
-    // Exit confirmation
+    // Exit confirmation (likely another AlertDialog). Ensure it also uses ImmersiveForDialog inside.
     ConfirmationDialog(
         showDialog     = showExitConfirmation,
         titleResId     = R.string.confirm_exit_title,

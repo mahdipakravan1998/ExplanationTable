@@ -1,3 +1,4 @@
+// FILE: app/src/main/java/com/example/explanationtable/ui/components/ActionTile.kt
 package com.example.explanationtable.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
@@ -5,15 +6,28 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
@@ -23,69 +37,76 @@ import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
 
 /**
- * One reusable, elevated icon button used by all anchors.
- * - Preserves your layered look (shadow/border/content)
- * - Includes the same press animation
- * - The icon is provided via the [icon] slot
+ * A reusable elevated tile-style icon button with a custom "press down" animation.
  *
- * Keep all styling consistent in one place.
+ * Visuals/behavior unchanged. Accessibility is provided by merging child semantics (icon label)
+ * and setting button role and onClick here.
  */
 @Composable
 fun ActionTile(
     isDarkTheme: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     icon: @Composable BoxScope.() -> Unit
 ) {
-    // -----------------------------------------------------------------------------------------
-    // Press state and animation
-    // -----------------------------------------------------------------------------------------
+    // Press state & animation
     var isPressed by remember { mutableStateOf(false) }
-    val animationSpec = tween<Dp>(durationMillis = 50)
     val defaultOffset = 2.dp
     val pressOffset: Dp by animateDpAsState(
         targetValue = if (isPressed) defaultOffset else 0.dp,
-        animationSpec = animationSpec,
+        animationSpec = tween(durationMillis = 50),
         label = "pressOffset"
     )
+    val latestOnClick by rememberUpdatedState(onClick)
 
-    // -----------------------------------------------------------------------------------------
-    // Constants: sizes, shapes, and colors
-    // -----------------------------------------------------------------------------------------
+    // Sizes, shapes, colors
     val cellSize = 52.dp
     val innerSize = 47.dp
     val outerHeight = 54.dp
-
-    val outerShape = RoundedCornerShape(16.dp)
-    val innerShape = RoundedCornerShape(13.dp)
-
+    val outerShape = remember { RoundedCornerShape(16.dp) }
+    val innerShape = remember { RoundedCornerShape(13.dp) }
     val borderColor = if (isDarkTheme) BorderDark else BorderLight
     val backgroundColor = if (isDarkTheme) BackgroundDark else BackgroundLight
 
-    // -----------------------------------------------------------------------------------------
-    // Handle tap gestures, updating press state and firing onClick
-    // -----------------------------------------------------------------------------------------
-    val gestureModifier = Modifier.pointerInput(Unit) {
-        detectTapGestures(
-            onPress = {
-                isPressed = true
-                val released = tryAwaitRelease()
-                isPressed = false
-                if (released) onClick()
+    // Gestures (only when enabled)
+    val gestureModifier =
+        if (enabled) {
+            Modifier.pointerInput(enabled) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        val released = tryAwaitRelease()
+                        isPressed = false
+                        if (released) latestOnClick()
+                    }
+                )
             }
-        )
+        } else {
+            Modifier
+        }
+
+    // Semantics: merge child descriptions (icon), add button role and onClick
+    val semanticsModifier = Modifier.semantics(mergeDescendants = true) {
+        role = Role.Button
+        if (!enabled) disabled()
+        if (enabled) {
+            onClick(action = {
+                latestOnClick()
+                true
+            })
+        }
     }
 
-    // -----------------------------------------------------------------------------------------
-    // Layout: three stacked boxes to create depth & press effect
-    // -----------------------------------------------------------------------------------------
+    // Layout: layered boxes for depth & press effect
     Box(
         modifier = modifier
             .size(width = cellSize, height = outerHeight)
-            .then(gestureModifier),
+            .then(gestureModifier)
+            .then(semanticsModifier),
         contentAlignment = Alignment.TopCenter
     ) {
-        // 1) Shadow layer: static, offset by defaultOffset
+        // 1) Shadow layer: static
         Box(
             Modifier
                 .align(Alignment.Center)
@@ -95,7 +116,7 @@ fun ActionTile(
                 .background(borderColor)
         )
 
-        // 2) Border layer: moves down when pressed
+        // 2) Border layer: moves when pressed
         Box(
             Modifier
                 .align(Alignment.Center)
@@ -105,7 +126,7 @@ fun ActionTile(
                 .background(borderColor)
         )
 
-        // 3) Front/content layer: holds the icon
+        // 3) Front/content: holds the icon
         Box(
             Modifier
                 .align(Alignment.Center)
@@ -132,20 +153,20 @@ private fun ArrowDirection.rotationZ(): Float = when (this) {
 }
 
 /**
- * Small helper used by wrappers to draw the arrow with the given [direction].
- * If your `ic_arrow` points a different way, adjust [rotationZ] mapping above.
+ * Helper to draw the arrow with the given [direction].
  */
 @Composable
 fun ArrowIcon(
     direction: ArrowDirection,
     contentDescription: String,
     size: Dp = 20.dp,
+    modifier: Modifier = Modifier
 ) {
     Image(
         painter = painterResource(id = R.drawable.ic_arrow),
         contentDescription = contentDescription,
-        modifier = Modifier
+        modifier = modifier
             .size(size)
-            .graphicsLayer { rotationZ = direction.rotationZ() }
+            .rotate(direction.rotationZ())
     )
 }

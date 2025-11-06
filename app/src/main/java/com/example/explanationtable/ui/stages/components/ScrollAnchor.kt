@@ -1,6 +1,8 @@
+// FILE: app/src/main/java/com/example/explanationtable/ui/stages/components/ScrollAnchor.kt
 package com.example.explanationtable.ui.stages.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.example.explanationtable.ui.components.ActionTile
 import com.example.explanationtable.ui.components.ArrowDirection
 import com.example.explanationtable.ui.components.ArrowIcon
@@ -17,7 +19,7 @@ fun ScrollAnchor(
     isDarkTheme: Boolean,
     flipVertical: Boolean = false,
     onClick: () -> Unit,
-    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier
+    modifier: Modifier = Modifier
 ) {
     val direction = if (flipVertical) ArrowDirection.Down else ArrowDirection.Up
     ActionTile(

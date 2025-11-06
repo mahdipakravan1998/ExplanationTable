@@ -9,8 +9,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.rewards.components.RewardsTable
-import com.example.explanationtable.ui.components.PrimaryButton
-import com.example.explanationtable.ui.components.SecondaryButton
+import com.example.explanationtable.ui.components.buttons.PrimaryButton
+import com.example.explanationtable.ui.components.buttons.SecondaryButton
 import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.ui.Routes
@@ -28,6 +28,7 @@ import com.example.explanationtable.ui.rewards.viewmodel.RewardsViewModel
  * @param navController The navigation controller to manage screen transitions.
  * @param difficulty The difficulty level of the current game.
  * @param stageNumber The current stage number.
+ * @param viewModel RewardsViewModel used by the table to award diamonds.
  */
 @Composable
 fun GameResultScreen(
@@ -39,11 +40,11 @@ fun GameResultScreen(
     navController: NavController,
     difficulty: Difficulty,
     stageNumber: Int,
-    viewModel: RewardsViewModel // Pass the viewModel here
+    viewModel: RewardsViewModel
 ) {
     // Handle the back navigation when the user presses the back button.
     BackHandler {
-        navController.navigate("stages_list/${difficulty.name}") {
+        navController.navigate(Routes.stagesList(difficulty)) {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
@@ -63,7 +64,7 @@ fun GameResultScreen(
                 playerMoves = playerMoves,
                 elapsedTime = elapsedTime,
                 modifier = Modifier.fillMaxSize(),
-                viewModel = viewModel // Pass the viewModel
+                viewModel = viewModel
             )
 
             // Bottom section with navigation buttons
@@ -80,11 +81,11 @@ fun GameResultScreen(
                         isDarkTheme = isDarkTheme,
                         onClick = {
                             val nextStage = stageNumber + 1
-                            navController.navigate("gameplay/$nextStage/${difficulty.name}") {
+                            navController.navigate(Routes.gameplay(nextStage, difficulty)) {
                                 popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
                             }
                         },
-                        text = stringResource(id = R.string.next_stage_button),  // Text for next stage button
+                        text = stringResource(id = R.string.next_stage_button),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -95,11 +96,11 @@ fun GameResultScreen(
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
                         onClick = {
-                            navController.navigate("gameplay/$stageNumber/${difficulty.name}") {
+                            navController.navigate(Routes.gameplay(stageNumber, difficulty)) {
                                 popUpTo(Routes.GAME_REWARDS_WITH_ARGS) { inclusive = true }
                             }
                         },
-                        text = stringResource(id = R.string.replay_button),  // Text for replay button
+                        text = stringResource(id = R.string.replay_button),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -110,11 +111,11 @@ fun GameResultScreen(
                     SecondaryButton(
                         isDarkTheme = isDarkTheme,
                         onClick = {
-                            navController.navigate("stages_list/${difficulty.name}") {
+                            navController.navigate(Routes.stagesList(difficulty)) {
                                 popUpTo(Routes.MAIN) { inclusive = true }
                             }
                         },
-                        text = stringResource(id = R.string.return_button),  // Text for return button
+                        text = stringResource(id = R.string.return_button),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

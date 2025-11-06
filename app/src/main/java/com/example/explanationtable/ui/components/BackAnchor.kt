@@ -1,10 +1,13 @@
+// FILE: app/src/main/java/com/example/explanationtable/ui/components/BackAnchor.kt
 package com.example.explanationtable.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 /**
- * Same shape & behavior as ScrollAnchor, but with a LEFT arrow for "back/return".
+ * A left-arrow "back" anchor that reuses [ActionTile] visuals/behavior.
+ *
+ * Visual output is identical; this is a thin wrapper for clarity and reuse.
  */
 @Composable
 fun BackAnchor(

@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.R
-import com.example.explanationtable.ui.components.PrimaryButton
+import com.example.explanationtable.ui.components.buttons.PrimaryButton
 import com.example.explanationtable.ui.theme.CheckColorDark
 import com.example.explanationtable.ui.theme.DarkGreenBackground
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
