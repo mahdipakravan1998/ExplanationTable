@@ -41,7 +41,7 @@ import com.example.explanationtable.data.DataStoreManager
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.repository.StageRepositoryImpl
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.ui.Routes
+import com.example.explanationtable.ui.navigation.Routes
 import com.example.explanationtable.ui.components.BackAnchor
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel

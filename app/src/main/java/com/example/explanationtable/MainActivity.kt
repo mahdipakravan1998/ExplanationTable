@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.explanationtable.ui.AppNavHost
+import com.example.explanationtable.ui.navigation.AppNavHost
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
 import com.example.explanationtable.ui.system.AppImmersiveSystemBars
 import com.example.explanationtable.ui.theme.ExplanationTableTheme

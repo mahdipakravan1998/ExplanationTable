@@ -1,4 +1,4 @@
-package com.example.explanationtable.ui
+package com.example.explanationtable.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -12,7 +12,6 @@ import com.example.explanationtable.model.toDifficultyFromRoute
 import com.example.explanationtable.ui.gameplay.pages.GameplayPage
 import com.example.explanationtable.ui.main.pages.MainPage
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
-import com.example.explanationtable.ui.navigation.NavTransitions
 import com.example.explanationtable.ui.rewards.pages.GameResultScreen
 import com.example.explanationtable.ui.rewards.viewmodel.RewardsViewModel
 import com.example.explanationtable.ui.stages.pages.StagesListPage

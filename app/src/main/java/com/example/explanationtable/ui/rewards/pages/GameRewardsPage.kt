@@ -13,7 +13,7 @@ import com.example.explanationtable.ui.components.buttons.PrimaryButton
 import com.example.explanationtable.ui.components.buttons.SecondaryButton
 import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
-import com.example.explanationtable.ui.Routes
+import com.example.explanationtable.ui.navigation.Routes
 import com.example.explanationtable.R
 import com.example.explanationtable.ui.rewards.viewmodel.RewardsViewModel
 

@@ -25,7 +25,7 @@ import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.toDifficultyFromLabel
 import com.example.explanationtable.ui.Background
-import com.example.explanationtable.ui.Routes
+import com.example.explanationtable.ui.navigation.Routes
 import com.example.explanationtable.ui.components.topBar.AppTopBar
 import com.example.explanationtable.ui.main.components.MainContent
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
