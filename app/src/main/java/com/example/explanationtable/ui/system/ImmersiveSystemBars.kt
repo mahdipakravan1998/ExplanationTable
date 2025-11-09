@@ -2,6 +2,7 @@ package com.example.explanationtable.ui.system
 
 import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
 import android.view.View
 import android.view.ViewParent
 import android.view.ViewTreeObserver
@@ -17,46 +18,50 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 
 /**
- * App-wide immersive-mode effect.
+ * App-wide edge-to-edge system bar effect.
  *
- * Apply this ONCE near the top of your app (e.g., in MainActivity's setContent {}).
+ * Apply this ONCE near the top of your app (e.g., in MainActivity's setContent {}),
+ * *after* you know the current theme so icons can be set for contrast.
  *
- * Behavior (unchanged):
- * - Hides status & navigation bars and allows transient reveal by swipe.
+ * New behavior:
+ * - Status & navigation bars remain VISIBLE.
+ * - Their backgrounds are FULLY TRANSPARENT so the app background shows through.
+ * - Content receives real system-bar insets (not consumed), so it can offset/pad safely.
  * - Draws into the display cutout.
- * - Consumes system-bar insets (including ignoring-visibility) so no layout gaps are reserved.
- * - Re-applies immersive on ON_RESUME and on window focus gain.
+ * - Re-applies on ON_RESUME and window focus gain.
  * - Restores defaults when leaving composition (activity root case).
  *
  * This is a side-effect only; it renders no UI.
  */
 @Composable
-fun AppImmersiveSystemBars() {
+fun AppEdgeToEdgeSystemBars(isDarkTheme: Boolean) {
     val context = LocalContext.current
     val activity = context.findActivity()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // If there's no Activity (e.g., preview), do nothing safely.
     if (activity == null) return
 
-    DisposableEffect(activity, lifecycleOwner) {
+    DisposableEffect(activity, lifecycleOwner, isDarkTheme) {
         val window: Window = activity.window
 
-        fun apply() = ImmersiveUtils.applyImmersiveToWindow(window)
-        fun clear() = ImmersiveUtils.clearImmersiveFromWindow(window)
+        fun apply() = ImmersiveUtils.applyEdgeToEdgeToWindow(
+            window = window,
+            isDarkTheme = isDarkTheme
+        )
+        fun clear() = ImmersiveUtils.clearEdgeToEdgeFromWindow(window)
 
-        // Re-apply immersive when the window regains focus (e.g., after system UI transient show).
+        // Initial application.
+        apply()
+
+        // Re-apply when the window regains focus (defensive).
         val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
             if (hasFocus) apply()
         }
 
-        // Re-apply immersive on resume. Do not clear on pause to avoid visual gaps/flicker.
+        // Re-apply on resume. Do not clear on pause to avoid flicker.
         val lifecycleObserver = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) apply()
         }
-
-        // Initial application.
-        apply()
 
         val decorView = window.decorView
         val vto = decorView.viewTreeObserver
@@ -74,37 +79,45 @@ fun AppImmersiveSystemBars() {
 }
 
 /**
- * Apply the same immersive behavior to a Compose Dialog/AlertDialog window.
+ * Apply the same edge-to-edge (transparent bars, visible) behavior to a Compose Dialog/AlertDialog window.
  *
  * Usage:
  * ```
  * AlertDialog(
  *   onDismissRequest = onDismiss,
  *   title = {
- *     ImmersiveForDialog() // place first inside any slot to ensure early application
+ *     ImmersiveForDialog() // place early inside any slot to ensure early application
  *     Text("Title")
  *   },
  * )
  * ```
  *
- * What it does (unchanged behavior):
+ * Notes:
  * - Finds the dialog Window via [DialogWindowProvider].
- * - Applies immersive settings immediately and re-applies on dialog window focus gain.
- * - On dispose: removes listeners and clears only the insets listener we attached
- *   (does NOT force-show bars to avoid flicker on dismiss).
+ * - Applies edge-to-edge with icon contrast based on the current system night mode.
+ * - On dispose: removes listeners and clears only our insets listener.
  */
 @Composable
 fun ImmersiveForDialog() {
     val localView = LocalView.current
+    val context = LocalContext.current
 
-    DisposableEffect(localView) {
+    // Infer dark theme for icon contrast from system night mode (good compromise for dialogs).
+    val isDarkTheme =
+        (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
+
+    DisposableEffect(localView, isDarkTheme) {
         // Robustly discover the Dialog's Window by walking up the view-parent chain.
         val dialogWindow = findDialogWindowFromView(localView)
             ?: return@DisposableEffect onDispose { /* no-op for non-dialog hosts (e.g., preview) */ }
 
-        fun apply() = ImmersiveUtils.applyImmersiveToWindow(dialogWindow)
+        fun apply() = ImmersiveUtils.applyEdgeToEdgeToWindow(
+            window = dialogWindow,
+            isDarkTheme = isDarkTheme
+        )
 
-        // Apply immediately so the dialog appears immersive from first frame.
+        // Apply immediately so the dialog appears edge-to-edge from first frame.
         apply()
 
         // Re-apply when the dialog window regains focus.
@@ -117,7 +130,7 @@ fun ImmersiveForDialog() {
 
         onDispose {
             vto.removeOnWindowFocusChangeListener(focusListener)
-            // Clear only our insets listener to prevent leaks without forcing bars to show.
+            // Clear only our insets listener to prevent leaks.
             ViewCompat.setOnApplyWindowInsetsListener(decorView, null)
         }
     }
@@ -138,10 +151,8 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
  * This is more robust than assuming the immediate parent is a [DialogWindowProvider].
  */
 private fun findDialogWindowFromView(root: View): Window? {
-    // Handle the immediate parent fast-path.
     (root.parent as? DialogWindowProvider)?.let { return it.window }
 
-    // Fallback: walk the parent chain defensively.
     var current: ViewParent? = root.parent
     while (current != null) {
         if (current is DialogWindowProvider) return current.window

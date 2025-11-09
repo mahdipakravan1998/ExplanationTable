@@ -1,45 +1,34 @@
 package com.example.explanationtable.ui.system
 
+import android.graphics.Color
 import android.os.Build
 import android.view.Window
 import android.view.WindowManager
-import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
 /**
- * Reusable immersive-mode utilities for both Activity and Dialog windows.
+ * System bar utilities (edge-to-edge).
  *
- * Use [applyImmersiveToWindow] to:
+ * Use [applyEdgeToEdgeToWindow] to:
+ * - Keep status/navigation bars VISIBLE with FULLY TRANSPARENT backgrounds.
  * - Draw content edge-to-edge (including display cutout).
- * - Hide status & navigation bars with transient reveal by swipe.
- * - **Consume** system-bar insets (including ignoring-visibility) so no layout space is reserved.
- * - Leave IME insets intact so keyboards continue to work properly.
+ * - Do NOT consume system-bar insets (content can pad/offset using insets).
+ * - Set icon contrast (light/dark) based on theme.
  *
- * Use [clearImmersiveFromWindow] when tearing down an Activity root window to restore defaults.
- * (For dialogs, simply dismissing the dialog is enough; do not force-show bars.)
+ * Use [clearEdgeToEdgeFromWindow] when tearing down an Activity root window to restore defaults.
  */
 object ImmersiveUtils {
 
-    // Precompute constants to avoid per-dispatch allocations in the insets listener.
-    private val ZERO_INSETS: Insets = Insets.of(0, 0, 0, 0)
-    private val BARS_TYPES: Int by lazy {
-        WindowInsetsCompat.Type.statusBars() or
-                WindowInsetsCompat.Type.navigationBars() or
-                WindowInsetsCompat.Type.displayCutout()
-    }
-
     /**
-     * Apply immersive behavior to [window].
+     * Apply edge-to-edge (transparent, visible bars) to [window].
      *
-     * Notes:
-     * - Only status/navigation/cutout insets are consumed (set to zero). IME remains intact.
-     * - Transient bars can still be revealed by user swipe; content will not reflow.
+     * @param isDarkTheme If true, we render light system icons; if false, dark icons.
      */
-    fun applyImmersiveToWindow(window: Window) {
-        // Edge-to-edge.
+    fun applyEdgeToEdgeToWindow(window: Window, isDarkTheme: Boolean) {
+        // Let our content draw behind the system bars.
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         // Allow content under the notch / cutout.
@@ -50,37 +39,47 @@ object ImmersiveUtils {
             }
         }
 
-        // Hide status & nav bars; allow transient reveal.
-        val controller = WindowInsetsControllerCompat(window, window.decorView)
-        controller.systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        controller.hide(WindowInsetsCompat.Type.systemBars())
+        // Make system bars fully transparent so the app background shows through.
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
 
-        // Consume ONLY system bars + cutout; IME remains untouched.
-        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
-            WindowInsetsCompat.Builder(insets)
-                .setInsets(BARS_TYPES, ZERO_INSETS)
-                .setInsetsIgnoringVisibility(BARS_TYPES, ZERO_INSETS)
-                .build()
+        // Disable the gray contrast scrim on some devices/versions for transparent nav bar.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
         }
 
-        // Dispatch immediately so changes take effect without extra frames.
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+
+        // Ensure bars are visible (we are not hiding them anymore).
+        controller.show(WindowInsetsCompat.Type.systemBars())
+
+        // Icon contrast: dark icons for light theme, light icons for dark theme.
+        // (Appearance "light" means dark icons on light background.)
+        controller.isAppearanceLightStatusBars = !isDarkTheme
+        controller.isAppearanceLightNavigationBars = !isDarkTheme
+
+        // We no longer intercept/consume insets at the window level; let them flow to Compose.
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView, null)
+
+        // Dispatch immediately.
         window.decorView.requestApplyInsets()
     }
 
     /**
-     * Restore default inset dispatch & visible bars on [window].
+     * Restore default inset dispatch & a non edge-to-edge layout on [window].
      *
      * Intended for Activity windows when leaving composition or finishing.
-     * Avoid calling this for dialog windows (just dismiss the dialog instead).
      */
-    fun clearImmersiveFromWindow(window: Window) {
-        // Remove our insets interception.
+    fun clearEdgeToEdgeFromWindow(window: Window) {
+        // Remove any insets interception we might have attached.
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView, null)
 
-        // Show system bars and return to default layout.
+        // Return to default layout behavior.
         val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.isAppearanceLightStatusBars = false
+        controller.isAppearanceLightNavigationBars = false
         controller.show(WindowInsetsCompat.Type.systemBars())
+
         WindowCompat.setDecorFitsSystemWindows(window, true)
 
         window.decorView.requestApplyInsets()

@@ -24,9 +24,10 @@ import com.example.explanationtable.ui.review.viewmodel.StageReviewViewModel
 import com.example.explanationtable.ui.theme.*
 
 /**
- * Renders a two-column review table for a given [difficulty] and [stageNumber].
+ * Renders a two-column review table.
  *
- * Triggers data load on mount and whenever the inputs change.
+ * IMPORTANT: Removed navigation-bar insets padding so it doesn't create a band under PrizeBox.
+ * The bottom system area color is now controlled by GameplayPage's scaffold (to match PrizeBox).
  */
 @Composable
 fun StageReviewTable(
@@ -35,15 +36,12 @@ fun StageReviewTable(
     isDarkTheme: Boolean,
     viewModel: StageReviewViewModel = viewModel()
 ) {
-    // Load or reload data when parameters change
     LaunchedEffect(difficulty, stageNumber) {
         viewModel.loadStageData(difficulty, stageNumber)
     }
 
-    // Collect UI state from ViewModel
     val uiState by viewModel.uiState.collectAsState()
 
-    // Show error if present
     uiState.errorMessage?.let { error ->
         Text(
             text = error,
@@ -53,13 +51,8 @@ fun StageReviewTable(
         return
     }
 
-    // Nothing to show while loading or when there's no data
-    if (uiState.isLoading || uiState.rows.isEmpty()) {
-        // Optionally show a loading spinner
-        return
-    }
+    if (uiState.isLoading || uiState.rows.isEmpty()) return
 
-    // Common dimensions and colors
     val borderWidth = 2.dp
     val headerHeight = 48.dp
     val cornerRadius = 16.dp
@@ -68,17 +61,14 @@ fun StageReviewTable(
     val borderClr = if (isDarkTheme) BorderColorDark else BorderColorLight
     val textClr   = if (isDarkTheme) TextColorDark else TextColorLight
 
-    // Text styles
     val headerTextStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp)
     val cellTextStyle   = MaterialTheme.typography.bodyLarge
 
-    // Reusable border between columns
     val columnDivider = Modifier
         .width(borderWidth)
         .fillMaxHeight()
         .background(borderClr)
 
-    // Container for the entire table
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -86,7 +76,6 @@ fun StageReviewTable(
             .clip(RoundedCornerShape(cornerRadius))
             .border(borderWidth, borderClr, RoundedCornerShape(cornerRadius))
     ) {
-        // --- Header Row ---
         TableHeader(
             leftText      = uiState.headerLeft,
             rightText     = uiState.headerRight,
@@ -99,7 +88,6 @@ fun StageReviewTable(
 
         HorizontalDivider(color = borderClr, thickness = borderWidth)
 
-        // --- Data Rows ---
         uiState.rows.forEachIndexed { index, row ->
             TableRow(
                 leftText    = row.leftText,
@@ -108,7 +96,6 @@ fun StageReviewTable(
                 textStyle   = cellTextStyle,
                 textColor   = textClr
             )
-            // Divider between rows, but not after the last row
             if (index < uiState.rows.lastIndex) {
                 HorizontalDivider(color = borderClr, thickness = borderWidth)
             }
@@ -116,9 +103,6 @@ fun StageReviewTable(
     }
 }
 
-/**
- * Renders the table header with two centered titles.
- */
 @Composable
 private fun TableHeader(
     leftText: String,
@@ -136,19 +120,21 @@ private fun TableHeader(
             .height(height),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left header cell
         Text(
             text      = leftText,
-            modifier  = Modifier.weight(1f).padding(horizontal = 4.dp),
+            modifier  = Modifier
+                .weight(1f)
+                .padding(horizontal = 4.dp),
             style     = textStyle,
             textAlign = TextAlign.Center,
             color     = textColor
         )
         Box(modifier = divider)
-        // Right header cell
         Text(
             text      = rightText,
-            modifier  = Modifier.weight(1f).padding(horizontal = 4.dp),
+            modifier  = Modifier
+                .weight(1f)
+                .padding(horizontal = 4.dp),
             style     = textStyle,
             textAlign = TextAlign.Center,
             color     = textColor
@@ -156,9 +142,6 @@ private fun TableHeader(
     }
 }
 
-/**
- * Renders a single data row with two centered cells.
- */
 @Composable
 private fun TableRow(
     leftText: String,
@@ -170,24 +153,24 @@ private fun TableRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Max),  // Ensures divider matches row height
+            .height(IntrinsicSize.Max),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left cell
         Text(
             text      = leftText,
-            modifier  = Modifier.weight(1f).padding(8.dp),
+            modifier  = Modifier
+                .weight(1f)
+                .padding(8.dp),
             style     = textStyle,
             textAlign = TextAlign.Center,
             color     = textColor
         )
-
         Box(modifier = divider)
-
-        // Right cell
         Text(
             text      = rightText,
-            modifier  = Modifier.weight(1f).padding(8.dp),
+            modifier  = Modifier
+                .weight(1f)
+                .padding(8.dp),
             style     = textStyle,
             textAlign = TextAlign.Center,
             color     = textColor
