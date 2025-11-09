@@ -9,6 +9,8 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
@@ -21,46 +23,56 @@ import androidx.lifecycle.LifecycleEventObserver
  * App-wide edge-to-edge system bar effect.
  *
  * Apply this ONCE near the top of your app (e.g., in MainActivity's setContent {}),
- * *after* you know the current theme so icons can be set for contrast.
+ * after you know the current theme so icons can be set for contrast.
  *
- * New behavior:
+ * Behavior:
  * - Status & navigation bars remain VISIBLE.
  * - Their backgrounds are FULLY TRANSPARENT so the app background shows through.
- * - Content receives real system-bar insets (not consumed), so it can offset/pad safely.
+ * - Content receives real system-bar insets (not consumed).
  * - Draws into the display cutout.
  * - Re-applies on ON_RESUME and window focus gain.
  * - Restores defaults when leaving composition (activity root case).
  *
  * This is a side-effect only; it renders no UI.
+ *
+ * Implementation notes:
+ * - Listeners are registered once and kept stable (DisposableEffect on activity/lifecycleOwner).
+ * - Theme flips are handled by LaunchedEffect + rememberUpdatedState to avoid listener churn.
  */
 @Composable
 fun AppEdgeToEdgeSystemBars(isDarkTheme: Boolean) {
     val context = LocalContext.current
-    val activity = context.findActivity()
+    val activity = context.findActivity() ?: return
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    if (activity == null) return
+    // Keep the latest theme value without re-registering listeners.
+    val latestIsDarkTheme = rememberUpdatedState(isDarkTheme)
+    val window: Window = activity.window
 
-    DisposableEffect(activity, lifecycleOwner, isDarkTheme) {
-        val window: Window = activity.window
-
-        fun apply() = ImmersiveUtils.applyEdgeToEdgeToWindow(
+    // Apply immediately and whenever the theme changes, without re-attaching listeners.
+    LaunchedEffect(window, latestIsDarkTheme.value) {
+        ImmersiveUtils.applyEdgeToEdgeToWindow(
             window = window,
-            isDarkTheme = isDarkTheme
+            isDarkTheme = latestIsDarkTheme.value
         )
-        fun clear() = ImmersiveUtils.clearEdgeToEdgeFromWindow(window)
+    }
 
-        // Initial application.
-        apply()
+    // Register listeners once per window/lifecycleOwner; they always read latestIsDarkTheme.
+    DisposableEffect(window, lifecycleOwner) {
+        fun applyLatest() = ImmersiveUtils.applyEdgeToEdgeToWindow(
+            window = window,
+            isDarkTheme = latestIsDarkTheme.value
+        )
 
-        // Re-apply when the window regains focus (defensive).
+        // Initial application (defensive: ensure first frame is correct even if LaunchedEffect is delayed).
+        applyLatest()
+
         val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
-            if (hasFocus) apply()
+            if (hasFocus) applyLatest()
         }
 
-        // Re-apply on resume. Do not clear on pause to avoid flicker.
         val lifecycleObserver = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) apply()
+            if (event == Lifecycle.Event.ON_RESUME) applyLatest()
         }
 
         val decorView = window.decorView
@@ -70,10 +82,11 @@ fun AppEdgeToEdgeSystemBars(isDarkTheme: Boolean) {
 
         onDispose {
             // Remove hooks first to avoid late calls during teardown.
-            decorView.viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
+            vto.removeOnWindowFocusChangeListener(focusListener)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+
             // Restore defaults as we're leaving the Activity's composition.
-            clear()
+            ImmersiveUtils.clearEdgeToEdgeFromWindow(window)
         }
     }
 }
@@ -96,6 +109,7 @@ fun AppEdgeToEdgeSystemBars(isDarkTheme: Boolean) {
  * - Finds the dialog Window via [DialogWindowProvider].
  * - Applies edge-to-edge with icon contrast based on the current system night mode.
  * - On dispose: removes listeners and clears only our insets listener.
+ * - Listeners remain stable; theme flips re-apply visual state without re-registering.
  */
 @Composable
 fun ImmersiveForDialog() {
@@ -103,26 +117,37 @@ fun ImmersiveForDialog() {
     val context = LocalContext.current
 
     // Infer dark theme for icon contrast from system night mode (good compromise for dialogs).
-    val isDarkTheme =
+    val derivedIsDarkTheme =
         (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
                 Configuration.UI_MODE_NIGHT_YES
+    val latestIsDarkTheme = rememberUpdatedState(derivedIsDarkTheme)
 
-    DisposableEffect(localView, isDarkTheme) {
-        // Robustly discover the Dialog's Window by walking up the view-parent chain.
+    // Re-apply when theme changes (window may appear slightly after composition, so we re-find it).
+    LaunchedEffect(localView, latestIsDarkTheme.value) {
+        findDialogWindowFromView(localView)?.let { dlgWindow ->
+            ImmersiveUtils.applyEdgeToEdgeToWindow(
+                window = dlgWindow,
+                isDarkTheme = latestIsDarkTheme.value
+            )
+        }
+    }
+
+    DisposableEffect(localView) {
+        // Discover the Dialog's Window by walking up the view-parent chain.
         val dialogWindow = findDialogWindowFromView(localView)
-            ?: return@DisposableEffect onDispose { /* no-op for non-dialog hosts (e.g., preview) */ }
+            ?: return@DisposableEffect onDispose { /* preview/non-dialog host: no-op */ }
 
-        fun apply() = ImmersiveUtils.applyEdgeToEdgeToWindow(
+        fun applyLatest() = ImmersiveUtils.applyEdgeToEdgeToWindow(
             window = dialogWindow,
-            isDarkTheme = isDarkTheme
+            isDarkTheme = latestIsDarkTheme.value
         )
 
         // Apply immediately so the dialog appears edge-to-edge from first frame.
-        apply()
+        applyLatest()
 
         // Re-apply when the dialog window regains focus.
         val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
-            if (hasFocus) apply()
+            if (hasFocus) applyLatest()
         }
         val decorView = dialogWindow.decorView
         val vto = decorView.viewTreeObserver
