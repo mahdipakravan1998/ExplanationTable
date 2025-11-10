@@ -19,6 +19,7 @@ import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.HintOption
 import com.example.explanationtable.ui.hint.component.HintOptionItem
+import com.example.explanationtable.ui.system.ImmersiveForDialog
 import com.example.explanationtable.ui.theme.DialogBackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 import com.example.explanationtable.ui.theme.Eel
@@ -33,6 +34,9 @@ private val DialogElevation = 0.dp
 
 /**
  * A modal dialog displaying a list of hint options.
+ *
+ * Immersive behavior is applied via [ImmersiveForDialog] to ensure
+ * robust edge-to-edge appearance, even on window focus changes.
  *
  * @param showDialog       Controls whether the dialog is visible.
  * @param onDismiss        Callback invoked when the user dismisses the dialog.
@@ -72,6 +76,9 @@ fun HintDialog(
 
         // Dialog title with centered text and a close button in the top-right corner
         title = {
+            // Apply immersive settings to this dialog's window
+            ImmersiveForDialog()
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
