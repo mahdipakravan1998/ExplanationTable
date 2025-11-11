@@ -1,4 +1,3 @@
-// FILE: app/src/main/java/com/example/explanationtable/data/DataStoreManager.kt
 package com.example.explanationtable.data
 
 import android.content.Context

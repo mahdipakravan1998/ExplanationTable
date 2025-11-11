@@ -1,4 +1,3 @@
-// FILE: app/src/main/java/com/example/explanationtable/ui/Routes.kt
 package com.example.explanationtable.ui.navigation
 
 import com.example.explanationtable.model.Difficulty

@@ -1,4 +1,3 @@
-// FILE: app/src/main/java/com/example/explanationtable/ui/stages/components/ScrollAnchor.kt
 package com.example.explanationtable.ui.stages.components
 
 import androidx.compose.runtime.Composable

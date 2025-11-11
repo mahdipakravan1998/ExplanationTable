@@ -1,4 +1,3 @@
-// FILE: app/src/main/java/com/example/explanationtable/ui/components/BackAnchor.kt
 package com.example.explanationtable.ui.components
 
 import androidx.compose.runtime.Composable
