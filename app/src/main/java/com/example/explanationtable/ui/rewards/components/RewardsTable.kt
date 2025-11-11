@@ -15,6 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -444,15 +448,21 @@ fun RewardsTable(
         elapsedSec >= maxTime -> 0f
         else -> 10f * ((maxTime - elapsedSec) / (maxTime - targetTime))
     }
-    val stageScore = (accuracyScore + precisionScore + speedScore) / 3f
+    val stageScore = ((accuracyScore + precisionScore + speedScore) / 3f)
 
-    // Update diamonds based on the score
-    val stageDiamonds = stageScore.roundToInt()
-    LaunchedEffect(stageDiamonds) {
-        viewModel.addDiamonds(stageDiamonds) // Add diamonds when stage is completed
+    // --- Exactly-once award guard (idempotent) ---
+    val awardKey = remember(optimalMoves, userAccuracy, playerMoves, elapsedTime) {
+        "award_${optimalMoves}_${userAccuracy}_${playerMoves}_${elapsedTime}"
+    }
+    var awarded by rememberSaveable(awardKey) { mutableStateOf(false) }
+    LaunchedEffect(awardKey, stageScore) {
+        if (!awarded) {
+            awarded = true
+            viewModel.addDiamonds(stageScore.roundToInt())
+        }
     }
 
-    Column {
+    Column(modifier = modifier) {
         Box(
             modifier = Modifier
                 .border(width = borderWidth, color = tableBorderColor, shape = tableShape)

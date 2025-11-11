@@ -97,7 +97,10 @@ class TableViewModel(
 
         // 4) Compute optimal solution length in background
         viewModelScope.launch {
-            optimalMovesForScramble = repository.solveMinMoves(shuffledValues, movableValues)
+            // Try cached + timeout first (non-blocking and cancel-friendly)
+            val cached = repository.solveMinMovesCached(shuffledValues, movableValues)
+            optimalMovesForScramble = cached
+                ?: repository.solveMinMoves(shuffledValues, movableValues) // fallback to full solve (old behavior)
         }
 
         // 5) Move cells from transitioning → correctlyPlaced after a brief delay
@@ -192,7 +195,6 @@ class TableViewModel(
             isProcessingSwap = isProcessingSwap
         )
     }
-
 
     /** Factory for dependency‐injecting repository, difficulty, size, and callbacks. */
     class Factory(

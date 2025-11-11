@@ -1,3 +1,4 @@
+// FILE: app/src/main/java/com/example/explanationtable/data/DataStoreManager.kt
 package com.example.explanationtable.data
 
 import android.content.Context
@@ -10,11 +11,14 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.explanationtable.model.Difficulty
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 // -----------------------------------------------------------------------------
 // Extension property to lazily initialize a single DataStore instance per Context
@@ -24,21 +28,25 @@ private val Context.dataStore by preferencesDataStore(name = "settings")
 /**
  * Central access point for user/game preferences backed by Preferences DataStore.
  *
- * This class is a **local data source**. It exposes:
- *  - Reactive flows for observing preference values.
- *  - Suspend functions for single-read or atomic updates.
+ * ## Error handling
+ * All read flows are derived from [dataFlow], which catches [IOException] and
+ * emits [emptyPreferences] to provide safe defaults instead of crashing.
  *
- * Public API is kept stable to preserve existing call sites.
+ * ## Performance & recomposition
+ * - Outward-facing flows apply [distinctUntilChanged] to avoid redundant emissions.
+ * - Helpers keep mapping/allocation minimal and consistent.
  *
- * Error handling:
- *  - All read flows are derived from [dataFlow], which catches [IOException] and
- *    emits [emptyPreferences] to provide safe defaults instead of crashing.
+ * ## Threading
+ * - DataStore manages I/O safely, but this class additionally wraps all **suspend**
+ *   one-shot reads and writes in [withContext] using [ioDispatcher] (default: [Dispatchers.IO])
+ *   to guarantee non-blocking behavior for callers (e.g., ViewModels on the main thread).
  *
- * Performance & recomposition:
- *  - Outward-facing flows apply [distinctUntilChanged] to avoid redundant emissions.
- *  - Helpers keep mapping/allocation minimal and consistent.
+ * The public API and behavior remain identical to the original implementation.
  */
-class DataStoreManager(private val context: Context) {
+class DataStoreManager(
+    private val context: Context,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
 
     companion object {
         // Preference Keys
@@ -68,8 +76,8 @@ class DataStoreManager(private val context: Context) {
 
     // -------------------------------------------------------------------------
     // Internal shared data flow with IO-safety.
-    // DataStore performs its own threading; consumers should still avoid heavy
-    // work on Main when calling suspend functions.
+    // DataStore performs its own threading; we still switch context for
+    // suspend one-shot operations to keep call sites main-safe.
     // -------------------------------------------------------------------------
     private val dataFlow: Flow<Preferences> =
         context.dataStore.data
@@ -147,31 +155,32 @@ class DataStoreManager(private val context: Context) {
     // Suspend Functions to Modify / Read Preferences (once)
     // -------------------------------------------------------------------------
 
-    /** Toggles the mute state. */
-    suspend fun toggleMute() {
+    /** Toggles the mute state. Main-safe. */
+    suspend fun toggleMute() = withContext(ioDispatcher) {
         context.dataStore.edit { prefs ->
             val current = prefs[KEY_IS_MUTED] ?: false
             prefs[KEY_IS_MUTED] = !current
         }
     }
 
-    /** Sets the theme preference explicitly. */
-    suspend fun setTheme(isDark: Boolean) {
+    /** Sets the theme preference explicitly. Main-safe. */
+    suspend fun setTheme(isDark: Boolean) = withContext(ioDispatcher) {
         context.dataStore.edit { prefs ->
             prefs[KEY_IS_DARK_THEME] = isDark
         }
     }
 
-    /** Retrieves the current diamond count once. */
-    suspend fun getDiamondCount(): Int =
+    /** Retrieves the current diamond count once. Main-safe. */
+    suspend fun getDiamondCount(): Int = withContext(ioDispatcher) {
         dataFlow.map { prefs -> prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS }.first()
+    }
 
     /**
      * Adds the given [amount] of diamonds.
      * Note: preserves previous behavior (allows negative amounts if callers use it),
-     * but clamps on overflow to [Int.MAX_VALUE].
+     * but clamps on overflow to [Int.MAX_VALUE]. Main-safe.
      */
-    suspend fun addDiamonds(amount: Int) {
+    suspend fun addDiamonds(amount: Int) = withContext(ioDispatcher) {
         context.dataStore.edit { prefs ->
             val current = prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS
             val next = (current.toLong() + amount.toLong())
@@ -181,37 +190,56 @@ class DataStoreManager(private val context: Context) {
         }
     }
 
-    /** Spends the given [amount] of diamonds, never dropping below zero. */
-    suspend fun spendDiamonds(amount: Int) {
+    /**
+     * Atomically spends diamonds if balance is sufficient.
+     * Returns true if spend succeeded, false otherwise (no write performed). Main-safe.
+     */
+    suspend fun trySpendDiamonds(amount: Int): Boolean = withContext(ioDispatcher) {
+        var success = false
+        context.dataStore.edit { prefs ->
+            val current = prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS
+            if (current >= amount) {
+                prefs[KEY_DIAMONDS] = current - amount
+                success = true
+            }
+        }
+        success
+    }
+
+    /** Legacy non-atomic spend (kept only for backward compatibility). Prefer [trySpendDiamonds]. Main-safe. */
+    @Deprecated("Use trySpendDiamonds(amount) for atomic spend with success/failure.")
+    suspend fun spendDiamonds(amount: Int) = withContext(ioDispatcher) {
         context.dataStore.edit { prefs ->
             val current = prefs[KEY_DIAMONDS] ?: DEFAULT_DIAMONDS
             prefs[KEY_DIAMONDS] = (current - amount).coerceAtLeast(0)
         }
     }
 
-    // “Once” getter — unlocked
-    suspend fun getLastUnlockedStageOnce(difficulty: Difficulty): Int =
+    // “Once” getter — unlocked. Main-safe.
+    suspend fun getLastUnlockedStageOnce(difficulty: Difficulty): Int = withContext(ioDispatcher) {
         dataFlow.map { prefs -> prefs[lastUnlockedKeyFor(difficulty)] ?: DEFAULT_LAST_UNLOCKED }
             .first()
+    }
 
-    // Setter — unlocked (clamped to >= 1)
-    suspend fun setLastUnlockedStage(difficulty: Difficulty, stage: Int) {
+    // Setter — unlocked (clamped to >= 1). Main-safe.
+    suspend fun setLastUnlockedStage(difficulty: Difficulty, stage: Int) = withContext(ioDispatcher) {
         val safe = stage.coerceAtLeast(1)
         context.dataStore.edit { prefs ->
             prefs[lastUnlockedKeyFor(difficulty)] = safe
         }
     }
 
-    // “Once” getter — last played (0 = none)
-    suspend fun getLastPlayedStageOnce(difficulty: Difficulty): Int =
+    // “Once” getter — last played (0 = none). Main-safe.
+    suspend fun getLastPlayedStageOnce(difficulty: Difficulty): Int = withContext(ioDispatcher) {
         dataFlow.map { prefs -> prefs[lastPlayedKeyFor(difficulty)] ?: DEFAULT_LAST_PLAYED }
             .first()
+    }
 
     /**
      * Setter — last played (monotonic non-decreasing to avoid regressions).
-     * Negative inputs are clamped to 0; 0 means "none".
+     * Negative inputs are clamped to 0; 0 means "none". Main-safe.
      */
-    suspend fun setLastPlayedStage(difficulty: Difficulty, stage: Int) {
+    suspend fun setLastPlayedStage(difficulty: Difficulty, stage: Int) = withContext(ioDispatcher) {
         val safe = stage.coerceAtLeast(0)
         context.dataStore.edit { prefs ->
             val key = lastPlayedKeyFor(difficulty)
@@ -225,13 +253,13 @@ class DataStoreManager(private val context: Context) {
      * Atomically awards a chest if eligible (not previously claimed and stage is unlocked).
      * Updates both the claimed set and diamond count in a single transaction.
      *
-     * @return true if diamonds were awarded (first claim), false otherwise.
+     * @return true if diamonds were awarded (first claim), false otherwise. Main-safe.
      */
     suspend fun awardChestIfEligible(
         difficulty: Difficulty,
         stageNumber: Int,
         diamondsAward: Int
-    ): Boolean {
+    ): Boolean = withContext(ioDispatcher) {
         var awarded = false
         // Clamp negative / zero inputs defensively; there is no stage 0.
         val safeStage = stageNumber.coerceAtLeast(1)
@@ -259,6 +287,6 @@ class DataStoreManager(private val context: Context) {
                 awarded = true
             }
         }
-        return awarded
+        awarded
     }
 }

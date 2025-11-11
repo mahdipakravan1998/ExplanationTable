@@ -1,27 +1,63 @@
 package com.example.explanationtable.repository
 
 import com.example.explanationtable.data.DataStoreManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 /**
- * Single place for all app-wide settings data.
+ * Centralized access point for app-wide settings.
+ *
+ * Emits stable, de-noised Flows suitable for Compose collection without triggering
+ * unnecessary recompositions. All mutations are dispatched off the Main thread.
+ *
+ * @param dataStore Backing DataStore manager.
+ * @param systemDarkDefault Fallback value for theme when user preference is not set.
  */
 class SettingsRepository(
     private val dataStore: DataStoreManager,
     private val systemDarkDefault: Boolean
 ) {
-    /** Emits the user-chosen theme, or falls back to system default. */
+
+    /**
+     * Emits the user-selected dark theme preference; when unset, falls back to [systemDarkDefault].
+     *
+     * `distinctUntilChanged()` prevents redundant UI updates in Compose layers.
+     */
     val isDarkTheme: Flow<Boolean> = dataStore
         .isDarkTheme
         .map { it ?: systemDarkDefault }
+        .distinctUntilChanged()
 
-    /** Emits whether the app is muted. */
-    val isMuted: Flow<Boolean> = dataStore.isMuted
+    /**
+     * Emits whether global sound is muted.
+     *
+     * Already stabilized via `distinctUntilChanged()` to reduce recompositions.
+     */
+    val isMuted: Flow<Boolean> = dataStore
+        .isMuted
+        .distinctUntilChanged()
 
-    /** Emits the current diamond count. */
-    val diamonds: Flow<Int> = dataStore.diamonds
+    /**
+     * Emits current diamond count, stabilized for UI collection.
+     */
+    val diamonds: Flow<Int> = dataStore
+        .diamonds
+        .distinctUntilChanged()
 
-    suspend fun toggleMute()   = dataStore.toggleMute()
-    suspend fun setTheme(on: Boolean) = dataStore.setTheme(on)
+    /**
+     * Toggles mute state. Executed on IO to avoid blocking the Main thread.
+     */
+    suspend fun toggleMute() = withContext(Dispatchers.IO) {
+        dataStore.toggleMute()
+    }
+
+    /**
+     * Persists theme preference. Executed on IO to avoid blocking the Main thread.
+     */
+    suspend fun setTheme(on: Boolean) = withContext(Dispatchers.IO) {
+        dataStore.setTheme(on)
+    }
 }
