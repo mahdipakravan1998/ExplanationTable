@@ -34,7 +34,10 @@ import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.ui.stages.dialogs.DifficultyDialog
 import com.example.explanationtable.ui.system.AppScreenScaffold
 import com.example.explanationtable.ui.system.BottomBarAppearance
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+
+private const val DIALOG_EXIT_NAV_DELAY_MS: Long = 120L
 
 /**
  * Home screen of the app.
@@ -61,6 +64,9 @@ fun MainPage(
     var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
     var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
 
+    // When a difficulty option is chosen, we dismiss the dialog and stage a route here.
+    var pendingDifficultyRoute by rememberSaveable { mutableStateOf<String?>(null) }
+
     val context = LocalContext.current
     // Resolve Activity safely through potential ContextWrappers (e.g., Material3, Hilt, etc.).
     val activity: Activity? = context.findActivity()
@@ -70,8 +76,20 @@ fun MainPage(
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.startGameRoutes.collectLatest { route ->
+                // Route emitted by the primary CTA.
                 navController.navigate(route)
             }
+        }
+    }
+
+    // If a difficulty was chosen, wait for the dialog to finish its exit animation,
+    // then navigate. This avoids clashing animations.
+    LaunchedEffect(pendingDifficultyRoute, showDifficultyDialog) {
+        val route = pendingDifficultyRoute
+        if (route != null && !showDifficultyDialog) {
+            delay(DIALOG_EXIT_NAV_DELAY_MS)
+            navController.navigate(route)
+            pendingDifficultyRoute = null
         }
     }
 
@@ -125,9 +143,10 @@ fun MainPage(
             showDialog = showDifficultyDialog,
             onDismiss = { showDifficultyDialog = false },
             onOptionSelected = { option ->
+                // Close dialog first; navigate after a tiny motion buffer in LaunchedEffect.
                 showDifficultyDialog = false
                 val difficulty: Difficulty = option.toDifficultyFromLabel()
-                navController.navigate(Routes.stagesList(difficulty))
+                pendingDifficultyRoute = Routes.stagesList(difficulty)
             }
         )
 

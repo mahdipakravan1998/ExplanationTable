@@ -47,7 +47,7 @@ fun SecondaryButton(
     val cornerRadius = 18.dp
     val borderWidth = 2.dp
     val animationDuration = 30 // ms
-    val clickDelayMs = 50 // ms; preserves original behavior
+    val clickDelayMs = 120 // ms
 
     // ---- Colors/Brushes (remembered) ----
     // Gradient colors (same values as original).

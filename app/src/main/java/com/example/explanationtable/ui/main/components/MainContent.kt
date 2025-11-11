@@ -51,8 +51,8 @@ fun MainContent(
     }
 
     // Stable references for click lambdas; prevents unnecessary child recompositions if identities change.
-    val onListClick by rememberUpdatedState(newValue = onListClicked)
-    val onStartClick by rememberUpdatedState(newValue = onStartGameClicked)
+    val onListClick = rememberUpdatedState(newValue = onListClicked)
+    val onStartClick = rememberUpdatedState(newValue = onStartGameClicked)
 
     // Labels via string resources (i18n).
     val startLabel = stringResource(id = R.string.start_game)
@@ -74,13 +74,13 @@ fun MainContent(
         ) {
             SecondaryButtonHome(
                 isDarkTheme = isDarkTheme,
-                onClick = onListClick,
+                onClick = { onListClick.value.invoke() },
                 text = stagesLabel,
                 modifier = Modifier.fillMaxWidth()
             )
             PrimaryButtonHome(
                 isDarkTheme = isDarkTheme,
-                onClick = onStartClick,
+                onClick = { onStartClick.value.invoke() },
                 text = startLabel,
                 modifier = Modifier.fillMaxWidth()
             )

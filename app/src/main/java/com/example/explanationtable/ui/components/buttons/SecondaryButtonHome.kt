@@ -56,7 +56,8 @@ fun SecondaryButtonHome(
     val borderWidth = 2.25.dp
     val overlapInset = 1.75.dp       // bottom skirt tucks slightly under top ring
     val animationDuration = 30
-    val clickDelayMs = 50
+    // Small motion buffer so release anim finishes before onClick.
+    val clickDelayMs = 120
 
     val press = rememberPressGesture(
         shadowOffset = shadowOffset,

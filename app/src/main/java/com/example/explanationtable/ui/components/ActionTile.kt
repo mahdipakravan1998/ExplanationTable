@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +35,8 @@ import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
 import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * A reusable elevated tile-style icon button with a custom "press down" animation.
@@ -49,15 +52,21 @@ fun ActionTile(
     enabled: Boolean = true,
     icon: @Composable BoxScope.() -> Unit
 ) {
+    // Timings: fast press animation + tiny motion buffer before firing action.
+    val pressAnimDurationMs = 50
+    val postReleaseDelayMs = 120L
+
     // Press state & animation
     var isPressed by remember { mutableStateOf(false) }
     val defaultOffset = 2.dp
     val pressOffset: Dp by animateDpAsState(
         targetValue = if (isPressed) defaultOffset else 0.dp,
-        animationSpec = tween(durationMillis = 50),
+        animationSpec = tween(durationMillis = pressAnimDurationMs),
         label = "pressOffset"
     )
+
     val latestOnClick by rememberUpdatedState(onClick)
+    val scope = rememberCoroutineScope()
 
     // Sizes, shapes, colors
     val cellSize = 52.dp
@@ -77,7 +86,13 @@ fun ActionTile(
                         isPressed = true
                         val released = tryAwaitRelease()
                         isPressed = false
-                        if (released) latestOnClick()
+                        if (released) {
+                            // Give the release animation a beat to complete before acting.
+                            scope.launch {
+                                delay(postReleaseDelayMs)
+                                latestOnClick()
+                            }
+                        }
                     }
                 )
             }
@@ -91,7 +106,11 @@ fun ActionTile(
         if (!enabled) disabled()
         if (enabled) {
             onClick(action = {
-                latestOnClick()
+                // Mirror the same tiny buffer for accessibility-initiated clicks.
+                scope.launch {
+                    delay(postReleaseDelayMs)
+                    latestOnClick()
+                }
                 true
             })
         }

@@ -20,6 +20,15 @@ private val HOME_STYLE = PrimaryButtonStyle(
     fontSize = 18.sp
 )
 
+/**
+ * Small motion buffer so the press/release animation completes and
+ * navigation transitions don’t visually “fight” with the button.
+ *
+ * Tuned to feel instant while guaranteeing the 30ms release animation
+ * finishes comfortably.
+ */
+private const val HOME_NAVIGATION_MOTION_BUFFER_MS: Long = 120L
+
 @Composable
 fun PrimaryButtonHome(
     isDarkTheme: Boolean,
@@ -32,6 +41,7 @@ fun PrimaryButtonHome(
         onClick = onClick,
         text = text,
         style = HOME_STYLE,
-        modifier = modifier
+        modifier = modifier,
+        postReleaseDelayMs = HOME_NAVIGATION_MOTION_BUFFER_MS
     )
 }

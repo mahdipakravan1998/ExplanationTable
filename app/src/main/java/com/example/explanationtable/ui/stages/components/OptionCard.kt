@@ -26,6 +26,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private const val PRESS_ANIM_DURATION_MS: Int = 30
+private const val POST_RELEASE_DELAY_MS: Long = 120L  // allow press/release to finish cleanly
+
 /**
  * A customizable option card component with a press animation and shadow effect.
  *
@@ -54,10 +57,11 @@ fun OptionCard(
     // Animate the vertical offset of the card when pressed.
     val pressOffsetY by animateDpAsState(
         targetValue = if (isPressed) shadowOffset else 0.dp,
-        animationSpec = tween(durationMillis = 30) // Duration can be adjusted as needed.
+        animationSpec = tween(durationMillis = PRESS_ANIM_DURATION_MS),
+        label = "OptionCardPressOffset"
     )
 
-    // Modifier that handles pointer input and gesture detection for press animations.
+    // Pointer input with a tiny motion buffer after finger-up so the animation completes.
     val gestureModifier = Modifier.pointerInput(Unit) {
         coroutineScope {
             awaitEachGesture {
@@ -67,7 +71,7 @@ fun OptionCard(
                 isPressed = false
                 if (upEvent != null) {
                     launch {
-                        delay(50) // Delay to allow animation to complete
+                        delay(POST_RELEASE_DELAY_MS)
                         onClick()
                     }
                 }
@@ -80,26 +84,26 @@ fun OptionCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(72.dp)
-            .then(gestureModifier) // Apply custom gesture detection.
+            .then(gestureModifier)
     ) {
         // Background shadow card with a fixed offset.
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(y = shadowOffset), // Apply fixed shadow offset.
+                .offset(y = shadowOffset),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = shadowColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // No elevation.
-        ) { /* Empty content for shadow effect */ }
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) { /* shadow */ }
 
         // Foreground card that animates vertically based on press state.
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(y = pressOffsetY), // Animated offset for press effect.
+                .offset(y = pressOffsetY),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // No elevation.
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             // Layout container for the card content.
             Row(

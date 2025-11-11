@@ -44,7 +44,8 @@ private val BUTTON_BOX_SIZE: Dp = 77.dp          // Canvas box size
 private val MAIN_DIAMETER: Dp = 70.dp            // Main ellipse "diameter" baseline
 private val BEHIND_OFFSET: Dp = 7.dp             // Static parallax offset for the back layer
 private const val PRESS_ANIM_MS: Int = 30        // Press transition duration
-private const val CLICK_DELAY_MS: Long = 50L     // Let the press animation finish before onClick
+// Increased to ensure the release motion completes before navigation starts.
+private const val CLICK_DELAY_MS: Long = 120L    // Post-release motion buffer
 
 @Immutable
 data class StageButtonColors(
@@ -112,7 +113,7 @@ fun DifficultyStepButton(
                 interactionSource = interaction,
                 indication = null // preserve original visuals (no ripple)
             ) {
-                // Preserve original feel: invoke after short delay so the press animation finishes
+                // Small motion buffer so the release animation finishes before navigating.
                 clickScope.launch {
                     delay(CLICK_DELAY_MS)
                     latestOnClick()

@@ -1,6 +1,10 @@
 package com.example.explanationtable.ui.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -9,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.explanationtable.model.toDifficultyFromRoute
+import com.example.explanationtable.ui.Background
 import com.example.explanationtable.ui.gameplay.pages.GameplayPage
 import com.example.explanationtable.ui.main.pages.MainPage
 import com.example.explanationtable.ui.main.viewmodel.MainViewModel
@@ -22,6 +27,11 @@ import com.example.explanationtable.ui.stages.pages.StagesListPage
  * - Behavior & visuals are IDENTICAL to prior version (same routes & 300ms slide animations).
  * - ViewModels are scoped to their NavBackStackEntry for better SavedStateHandle & lifecycle.
  *
+ * Additionally:
+ * - We draw an OPAQUE Surface behind the NavHost to prevent the device wallpaper from showing
+ *   during transition frames where destinations may be transparent.
+ * - Each destination is wrapped in [Background] to ensure it fully paints its bounds.
+ *
  * @param navController external or remembered NavHostController
  * @param isDarkTheme whether the app is currently using the dark theme
  */
@@ -30,110 +40,124 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     isDarkTheme: Boolean
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = Routes.MAIN
+    // Opaque underlay for every frame of every transition.
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        // Main route
-        composable(Routes.MAIN) { backStackEntry ->
-            // Scope VM to the destination's back stack entry
-            val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = backStackEntry)
-            MainPage(
-                navController = navController,
-                viewModel = mainViewModel,
-                isDarkTheme = isDarkTheme
-            )
-        }
+        NavHost(
+            navController = navController,
+            startDestination = Routes.MAIN
+        ) {
+            // Main route
+            composable(Routes.MAIN) { backStackEntry ->
+                // Scope VM to the destination's back stack entry
+                val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = backStackEntry)
+                Background(isHomePage = true, isDarkTheme = isDarkTheme) {
+                    MainPage(
+                        navController = navController,
+                        viewModel = mainViewModel,
+                        isDarkTheme = isDarkTheme
+                    )
+                }
+            }
 
-        // Stages list route
-        composable(
-            route = Routes.STAGES_LIST_WITH_ARG,
-            arguments = listOf(
-                navArgument(Routes.ARG_DIFFICULTY) { type = NavType.StringType }
-            ),
-            enterTransition = { NavTransitions.defaultEnterTransition() },
-            exitTransition = { NavTransitions.defaultExitTransition() },
-            popEnterTransition = { NavTransitions.defaultPopEnterTransition() },
-            popExitTransition = { NavTransitions.defaultPopExitTransition() }
-        ) { backStackEntry ->
-            val difficulty = backStackEntry
-                .arguments
-                ?.getString(Routes.ARG_DIFFICULTY)
-                .toDifficultyFromRoute()
+            // Stages list route
+            composable(
+                route = Routes.STAGES_LIST_WITH_ARG,
+                arguments = listOf(
+                    navArgument(Routes.ARG_DIFFICULTY) { type = NavType.StringType }
+                ),
+                enterTransition = { NavTransitions.defaultEnterTransition() },
+                exitTransition = { NavTransitions.defaultExitTransition() },
+                popEnterTransition = { NavTransitions.defaultPopEnterTransition() },
+                popExitTransition = { NavTransitions.defaultPopExitTransition() }
+            ) { backStackEntry ->
+                val difficulty = backStackEntry
+                    .arguments
+                    ?.getString(Routes.ARG_DIFFICULTY)
+                    .toDifficultyFromRoute()
 
-            StagesListPage(
-                navController = navController,
-                difficulty = difficulty,
-                isDarkTheme = isDarkTheme
-            )
-        }
+                Background(isHomePage = false, isDarkTheme = isDarkTheme) {
+                    StagesListPage(
+                        navController = navController,
+                        difficulty = difficulty,
+                        isDarkTheme = isDarkTheme
+                    )
+                }
+            }
 
-        // Gameplay route
-        composable(
-            route = Routes.GAMEPLAY_WITH_ARGS,
-            arguments = listOf(
-                navArgument(Routes.ARG_STAGE_NUMBER) { type = NavType.IntType },
-                navArgument(Routes.ARG_DIFFICULTY) { type = NavType.StringType }
-            ),
-            enterTransition = { NavTransitions.defaultEnterTransition() },
-            exitTransition = { NavTransitions.defaultExitTransition() },
-            popEnterTransition = { NavTransitions.defaultPopEnterTransition() },
-            popExitTransition = { NavTransitions.defaultPopExitTransition() }
-        ) { backStackEntry ->
-            val stageNumber = backStackEntry.arguments?.getInt(Routes.ARG_STAGE_NUMBER) ?: 1
-            val difficulty = backStackEntry
-                .arguments
-                ?.getString(Routes.ARG_DIFFICULTY)
-                .toDifficultyFromRoute()
+            // Gameplay route
+            composable(
+                route = Routes.GAMEPLAY_WITH_ARGS,
+                arguments = listOf(
+                    navArgument(Routes.ARG_STAGE_NUMBER) { type = NavType.IntType },
+                    navArgument(Routes.ARG_DIFFICULTY) { type = NavType.StringType }
+                ),
+                enterTransition = { NavTransitions.defaultEnterTransition() },
+                exitTransition = { NavTransitions.defaultExitTransition() },
+                popEnterTransition = { NavTransitions.defaultPopEnterTransition() },
+                popExitTransition = { NavTransitions.defaultPopExitTransition() }
+            ) { backStackEntry ->
+                val stageNumber = backStackEntry.arguments?.getInt(Routes.ARG_STAGE_NUMBER) ?: 1
+                val difficulty = backStackEntry
+                    .arguments
+                    ?.getString(Routes.ARG_DIFFICULTY)
+                    .toDifficultyFromRoute()
 
-            GameplayPage(
-                navController = navController,
-                isDarkTheme = isDarkTheme,
-                stageNumber = stageNumber,
-                difficulty = difficulty
-            )
-        }
+                Background(isHomePage = false, isDarkTheme = isDarkTheme) {
+                    GameplayPage(
+                        navController = navController,
+                        isDarkTheme = isDarkTheme,
+                        stageNumber = stageNumber,
+                        difficulty = difficulty
+                    )
+                }
+            }
 
-        // Game rewards/results route
-        composable(
-            route = Routes.GAME_REWARDS_WITH_ARGS,
-            arguments = listOf(
-                navArgument(Routes.ARG_PLAYER_MOVES) { type = NavType.IntType },
-                navArgument(Routes.ARG_ELAPSED_TIME) { type = NavType.LongType },
-                navArgument(Routes.ARG_DIFFICULTY) { type = NavType.StringType },
-                navArgument(Routes.ARG_STAGE_NUMBER) { type = NavType.IntType },
-                navArgument(Routes.ARG_OPTIMAL_MOVES) { type = NavType.IntType },
-                navArgument(Routes.ARG_USER_ACCURACY) { type = NavType.IntType }
-            ),
-            enterTransition = { NavTransitions.defaultEnterTransition() },
-            exitTransition = { NavTransitions.defaultExitTransition() },
-            popEnterTransition = { NavTransitions.defaultPopEnterTransition() },
-            popExitTransition = { NavTransitions.defaultPopExitTransition() }
-        ) { backStackEntry ->
-            val playerMoves = backStackEntry.arguments?.getInt(Routes.ARG_PLAYER_MOVES) ?: 0
-            val elapsedTime = backStackEntry.arguments?.getLong(Routes.ARG_ELAPSED_TIME) ?: 0L
-            val difficulty = backStackEntry
-                .arguments
-                ?.getString(Routes.ARG_DIFFICULTY)
-                .toDifficultyFromRoute()
-            val stageNumber = backStackEntry.arguments?.getInt(Routes.ARG_STAGE_NUMBER) ?: 1
-            val optimalMoves = backStackEntry.arguments?.getInt(Routes.ARG_OPTIMAL_MOVES) ?: 0
-            val userAccuracy = backStackEntry.arguments?.getInt(Routes.ARG_USER_ACCURACY) ?: 0
+            // Game rewards/results route
+            composable(
+                route = Routes.GAME_REWARDS_WITH_ARGS,
+                arguments = listOf(
+                    navArgument(Routes.ARG_PLAYER_MOVES) { type = NavType.IntType },
+                    navArgument(Routes.ARG_ELAPSED_TIME) { type = NavType.LongType },
+                    navArgument(Routes.ARG_DIFFICULTY) { type = NavType.StringType },
+                    navArgument(Routes.ARG_STAGE_NUMBER) { type = NavType.IntType },
+                    navArgument(Routes.ARG_OPTIMAL_MOVES) { type = NavType.IntType },
+                    navArgument(Routes.ARG_USER_ACCURACY) { type = NavType.IntType }
+                ),
+                enterTransition = { NavTransitions.defaultEnterTransition() },
+                exitTransition = { NavTransitions.defaultExitTransition() },
+                popEnterTransition = { NavTransitions.defaultPopEnterTransition() },
+                popExitTransition = { NavTransitions.defaultPopExitTransition() }
+            ) { backStackEntry ->
+                val playerMoves = backStackEntry.arguments?.getInt(Routes.ARG_PLAYER_MOVES) ?: 0
+                val elapsedTime = backStackEntry.arguments?.getLong(Routes.ARG_ELAPSED_TIME) ?: 0L
+                val difficulty = backStackEntry
+                    .arguments
+                    ?.getString(Routes.ARG_DIFFICULTY)
+                    .toDifficultyFromRoute()
+                val stageNumber = backStackEntry.arguments?.getInt(Routes.ARG_STAGE_NUMBER) ?: 1
+                val optimalMoves = backStackEntry.arguments?.getInt(Routes.ARG_OPTIMAL_MOVES) ?: 0
+                val userAccuracy = backStackEntry.arguments?.getInt(Routes.ARG_USER_ACCURACY) ?: 0
 
-            // Scope VM to this destination (restores better after process death)
-            val rewardsViewModel: RewardsViewModel = viewModel(viewModelStoreOwner = backStackEntry)
+                // Scope VM to this destination (restores better after process death)
+                val rewardsViewModel: RewardsViewModel = viewModel(viewModelStoreOwner = backStackEntry)
 
-            GameResultScreen(
-                isDarkTheme = isDarkTheme,
-                optimalMoves = optimalMoves,
-                userAccuracy = userAccuracy,
-                playerMoves = playerMoves,
-                elapsedTime = elapsedTime,
-                navController = navController,
-                difficulty = difficulty,
-                stageNumber = stageNumber,
-                viewModel = rewardsViewModel
-            )
+                Background(isHomePage = false, isDarkTheme = isDarkTheme) {
+                    GameResultScreen(
+                        isDarkTheme = isDarkTheme,
+                        optimalMoves = optimalMoves,
+                        userAccuracy = userAccuracy,
+                        playerMoves = playerMoves,
+                        elapsedTime = elapsedTime,
+                        navController = navController,
+                        difficulty = difficulty,
+                        stageNumber = stageNumber,
+                        viewModel = rewardsViewModel
+                    )
+                }
+            }
         }
     }
 }

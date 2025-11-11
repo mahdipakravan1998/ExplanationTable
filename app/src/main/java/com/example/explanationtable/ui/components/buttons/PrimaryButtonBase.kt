@@ -23,6 +23,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,7 +53,7 @@ import kotlinx.coroutines.launch
  * Visual contracts preserved:
  * - Colors are unchanged and selected by isDarkTheme exactly as before.
  * - Press animation duration is EXACTLY 30ms.
- * - A 50ms post-up delay before invoking onClick is preserved.
+ * - A small post-up delay before invoking onClick is preserved (tunable per-variant).
  *
  * Enhancements:
  * - Accessibility semantics (role=Button, screen-reader click).
@@ -71,8 +72,8 @@ data class PrimaryButtonStyle(
 // === original animation duration preserved ===
 private const val PRIMARY_BUTTON_ANIMATION_DURATION_MS: Int = 30
 
-// Behavior parity: keep the tiny click delay
-private const val CLICK_DELAY_MS: Long = 50
+// Default tiny motion buffer so release animation completes before action.
+private const val DEFAULT_CLICK_DELAY_MS: Long = 120L
 
 @Composable
 fun PrimaryButtonBase(
@@ -80,10 +81,16 @@ fun PrimaryButtonBase(
     onClick: () -> Unit,
     text: String,
     style: PrimaryButtonStyle,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /**
+     * Extra time to wait after finger-up before invoking [onClick].
+     * Ensures release animation finishes and gives the destination a tiny warm-up window.
+     */
+    postReleaseDelayMs: Long = DEFAULT_CLICK_DELAY_MS
 ) {
     // Stable, up-to-date reference to onClick for gesture/semantics blocks.
     val onClickState = rememberUpdatedState(onClick)
+    val scope = rememberCoroutineScope()
 
     // === DO NOT CHANGE: original color logic preserved ===
     val buttonBackgroundColor =
@@ -110,9 +117,9 @@ fun PrimaryButtonBase(
                 val up = waitForUpOrCancellation()
                 isPressed = false
                 if (up != null) {
-                    // Preserve original subtle delay before click
+                    // Wait long enough for the release animation to finish gracefully.
                     launch {
-                        delay(CLICK_DELAY_MS)
+                        delay(postReleaseDelayMs)
                         onClickState.value.invoke()
                     }
                 }
@@ -124,7 +131,11 @@ fun PrimaryButtonBase(
     val semanticsModifier = Modifier.semantics(mergeDescendants = true) {
         role = Role.Button
         onClick(label = text) {
-            onClickState.value.invoke()
+            // Mirror the same tiny buffer for a11y-triggered clicks.
+            scope.launch {
+                delay(postReleaseDelayMs)
+                onClickState.value.invoke()
+            }
             true
         }
     }
