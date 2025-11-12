@@ -140,6 +140,7 @@ fun MainPage(
         }
 
         DifficultyDialog(
+            isDarkTheme = isDarkTheme,
             showDialog = showDifficultyDialog,
             onDismiss = { showDifficultyDialog = false },
             onOptionSelected = { option ->

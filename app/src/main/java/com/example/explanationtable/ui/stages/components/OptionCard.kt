@@ -2,24 +2,32 @@ package com.example.explanationtable.ui.stages.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.coroutineScope
@@ -30,14 +38,17 @@ private const val PRESS_ANIM_DURATION_MS: Int = 30
 private const val POST_RELEASE_DELAY_MS: Long = 120L  // allow press/release to finish cleanly
 
 /**
- * A customizable option card component with a press animation and shadow effect.
+ * A text-only option button with a press animation and shadow/lift effect.
  *
- * @param label The text label displayed on the card.
- * @param onClick Callback triggered when the card is tapped.
- * @param backgroundColor The primary color of the card.
- * @param shadowColor The color used for the shadow effect.
+ * The label is centered horizontally and vertically. Height defaults to 56.dp
+ * (Material touch-friendly size) and will never go below a 48.dp minimum touch target.
+ *
+ * @param label The text label displayed on the button.
+ * @param onClick Callback triggered after press/release completes.
+ * @param backgroundColor The primary color of the button surface.
+ * @param shadowColor The color used for the shadow/background offset card.
  * @param textColor The color of the label text.
- * @param imageResId Resource ID for the image displayed on the card.
+ * @param cardHeight The desired height of the button (defaults to 56.dp, min 48.dp).
  */
 @Composable
 fun OptionCard(
@@ -46,22 +57,19 @@ fun OptionCard(
     backgroundColor: Color,
     shadowColor: Color,
     textColor: Color,
-    imageResId: Int
+    cardHeight: Dp = 64.dp
 ) {
-    // Constant offset value used for the shadow and press animation.
     val shadowOffset = 4.dp
+    val clampedHeight = if (cardHeight < 56.dp) 56.dp else cardHeight
 
-    // State to track whether the card is pressed.
     var isPressed by remember { mutableStateOf(false) }
 
-    // Animate the vertical offset of the card when pressed.
     val pressOffsetY by animateDpAsState(
         targetValue = if (isPressed) shadowOffset else 0.dp,
         animationSpec = tween(durationMillis = PRESS_ANIM_DURATION_MS),
         label = "OptionCardPressOffset"
     )
 
-    // Pointer input with a tiny motion buffer after finger-up so the animation completes.
     val gestureModifier = Modifier.pointerInput(Unit) {
         coroutineScope {
             awaitEachGesture {
@@ -79,64 +87,48 @@ fun OptionCard(
         }
     }
 
-    // Main container for the card, applying full width, fixed height, and gesture detection.
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .height(clampedHeight)
             .then(gestureModifier)
     ) {
-        // Background shadow card with a fixed offset.
+        // Shadow/background card
         Card(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(y = shadowOffset),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = shadowColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) { /* shadow */ }
 
-        // Foreground card that animates vertically based on press state.
+        // Foreground/lifting card
         Card(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(y = pressOffsetY),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            // Layout container for the card content.
-            Row(
+            // Centered text-only content with horizontal padding
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                contentAlignment = Alignment.Center
             ) {
-                // Box for the image with centered alignment.
-                Box(
-                    modifier = Modifier.size(48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = imageResId),
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
-
-                // Spacer to add horizontal separation between the image and text.
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Text label displayed on the card.
                 Text(
                     text = label,
                     color = textColor,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = 18.sp,
+                        lineHeight = 22.sp,
                         fontWeight = FontWeight.Bold
                     ),
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.End
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

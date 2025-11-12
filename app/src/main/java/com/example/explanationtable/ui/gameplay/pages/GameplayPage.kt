@@ -142,7 +142,7 @@ fun GameplayPage(
                 onHelpClick = if (!result.over) ({ isHintDialogVisible = true }) else null
             )
         },
-        contentTopSpacing = 72.dp,
+        contentTopSpacing = 0.dp,
         bottomBarAppearance = bottomAppearance,
         // Floating center draws behind nav bar.
         floatingCenterRespectNavInsets = false,
@@ -151,10 +151,12 @@ fun GameplayPage(
         floatingEndRespectNavInsets = true,
         floatingStart = {
             if (!result.over) {
-                BackAnchor(
-                    isDarkTheme = isDarkTheme,
-                    onClick = navigateToStages
-                )
+                Box(modifier = Modifier.padding(bottom = 16.dp)) {
+                    BackAnchor(
+                        isDarkTheme = isDarkTheme,
+                        onClick = navigateToStages
+                    )
+                }
             }
         },
         floatingCenter = {
@@ -177,21 +179,23 @@ fun GameplayPage(
             )
         }
     ) {
-        GameplayContentSwitch(
-            isGameOver = result.over,
-            isDarkTheme = isDarkTheme,
-            difficulty = difficulty,
-            stageNumber = stageNumber,
-            onGameComplete = { optimal, accuracy, moves, time ->
-                gameplayViewModel.onGameComplete(optimal, accuracy, moves, time)
-            },
-            onTableInitialized = { orig: LevelTable, current: MutableMap<CellPosition, List<String>> ->
-                gameplayViewModel.setTableData(orig, current)
-            },
-            onRegisterCellsCorrectlyPlaced = { callback: (List<CellPosition>) -> Unit ->
-                gameplayViewModel.registerCellsCorrectlyPlacedCallback(callback)
-            }
-        )
+        Box(modifier = Modifier.padding(top = 72.dp)) {
+            GameplayContentSwitch(
+                isGameOver = result.over,
+                isDarkTheme = isDarkTheme,
+                difficulty = difficulty,
+                stageNumber = stageNumber,
+                onGameComplete = { optimal, accuracy, moves, time ->
+                    gameplayViewModel.onGameComplete(optimal, accuracy, moves, time)
+                },
+                onTableInitialized = { orig: LevelTable, current: MutableMap<CellPosition, List<String>> ->
+                    gameplayViewModel.setTableData(orig, current)
+                },
+                onRegisterCellsCorrectlyPlaced = { callback: (List<CellPosition>) -> Unit ->
+                    gameplayViewModel.registerCellsCorrectlyPlacedCallback(callback)
+                }
+            )
+        }
 
         GameplayDialogs(
             isSettingsDialogVisible = isSettingsDialogVisible,

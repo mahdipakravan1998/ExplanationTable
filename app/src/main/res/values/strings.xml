@@ -8,9 +8,9 @@
     <string name="start_game">شروع بازی</string>
 
     <!-- Options for the difficulty level in the popup -->
-    <string name="easy_step_label">آسان</string>
-    <string name="medium_step_label">متوسط</string>
-    <string name="difficult_step_label">سخت</string>
+    <string name="easy_step_label">جمع و جور</string>
+    <string name="medium_step_label">درست و درمون</string>
+    <string name="difficult_step_label">پر و پیمون</string>
 
     <!-- Button text for closing the popup -->
     <string name="close">بستن</string>
@@ -46,6 +46,7 @@
     <!-- Hint dialog and settings dialog titles -->
     <string name="hint_dialog_title">راهنما</string>
     <string name="Settings_dialog_title">تنظیمات</string>
+    <string name="table_types_title">نوع جدول‌ها</string>
 
     <!-- Different types of hints (single letter, word, and stage completion) -->
     <string name="hint_single_letter">جایگذاری یک حرف</string>
