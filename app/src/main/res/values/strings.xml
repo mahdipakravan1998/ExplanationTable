@@ -8,9 +8,9 @@
     <string name="start_game">شروع بازی</string>
 
     <!-- Options for the difficulty level in the popup -->
-    <string name="easy_step_label">جمع و جور</string>
-    <string name="medium_step_label">درست و درمون</string>
-    <string name="difficult_step_label">پر و پیمون</string>
+    <string name="easy_step_label">سریع</string>
+    <string name="medium_step_label">استاندارد</string>
+    <string name="difficult_step_label">حماسی</string>
 
     <!-- Button text for closing the popup -->
     <string name="close">بستن</string>
