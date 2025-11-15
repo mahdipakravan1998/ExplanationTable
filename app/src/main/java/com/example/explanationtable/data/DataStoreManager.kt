@@ -68,7 +68,7 @@ class DataStoreManager(
         private val KEY_CLAIMED_CHESTS_HARD = stringSetPreferencesKey("claimed_chests_hard")
 
         // Default Values
-        private const val DEFAULT_DIAMONDS = 20000
+        private const val DEFAULT_DIAMONDS = 200
         private const val DEFAULT_LAST_UNLOCKED = 1
         private const val DEFAULT_LAST_PLAYED = 0
     }
