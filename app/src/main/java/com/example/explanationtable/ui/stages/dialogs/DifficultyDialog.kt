@@ -33,6 +33,10 @@ import com.example.explanationtable.ui.theme.TextDarkMode
  *
  * @param isDarkTheme Whether dark theme is active (for title color parity with Settings).
  * @param showDialog Boolean flag indicating whether the dialog is visible.
+ * @param loadingDifficultyValue The label ("Easy", "Medium", "Hard") of the option that
+ * is currently in a loading state, or `null` if none.
+ * @param isInteractionLocked When true, the dialog cannot be dismissed and options behave
+ * as read-only (used while off-screen preflight is running).
  * @param onDismiss Callback triggered when the dialog is dismissed.
  * @param onOptionSelected Callback triggered when a difficulty option is selected.
  */
@@ -40,6 +44,8 @@ import com.example.explanationtable.ui.theme.TextDarkMode
 fun DifficultyDialog(
     isDarkTheme: Boolean,
     showDialog: Boolean,
+    loadingDifficultyValue: String? = null,
+    isInteractionLocked: Boolean = false,
     onDismiss: () -> Unit,
     onOptionSelected: (String) -> Unit
 ) {
@@ -48,7 +54,11 @@ fun DifficultyDialog(
     val textColor = if (isDarkTheme) TextDarkMode else Eel
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            if (!isInteractionLocked) {
+                onDismiss()
+            }
+        },
         // Keep ImmersiveForDialog inside the title slot so it binds to the dialog's Window.
         title = {
             ImmersiveForDialog()
@@ -70,7 +80,12 @@ fun DifficultyDialog(
                 )
 
                 IconButton(
-                    onClick = onDismiss,
+                    onClick = {
+                        if (!isInteractionLocked) {
+                            onDismiss()
+                        }
+                    },
+                    enabled = !isInteractionLocked,
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     Icon(
@@ -84,7 +99,11 @@ fun DifficultyDialog(
         text = {
             // Small buffer so the options don't crowd the title (kept from your previous layout).
             Box(modifier = Modifier.padding(top = 8.dp)) {
-                DifficultyOptions(onOptionSelected = onOptionSelected)
+                DifficultyOptions(
+                    onOptionSelected = onOptionSelected,
+                    loadingDifficultyValue = loadingDifficultyValue,
+                    interactionEnabled = !isInteractionLocked
+                )
             }
         },
         confirmButton = {},

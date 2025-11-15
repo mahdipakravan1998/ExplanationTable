@@ -1,5 +1,6 @@
 package com.example.explanationtable.ui.stages.content
 
+import android.util.Log
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -30,6 +31,8 @@ import com.example.explanationtable.ui.stages.components.CalloutBubble
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sqrt
+
+private const val TAG_BUBBLE = "FloatingBubble"
 
 /** Symmetric smooth bob easing. */
 internal val EaseInOutSine: Easing = Easing { x -> 0.5f - 0.5f * cos((Math.PI * x).toFloat()) }
@@ -63,7 +66,9 @@ internal fun FloatingCalloutBubble(
         val obs = LifecycleEventObserver { _, event ->
             isResumed = when (event) {
                 Lifecycle.Event.ON_RESUME -> true
-                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> false
+                Lifecycle.Event.ON_PAUSE,
+                Lifecycle.Event.ON_STOP,
+                Lifecycle.Event.ON_DESTROY -> false
                 else -> isResumed
             }
         }
@@ -84,6 +89,7 @@ internal fun FloatingCalloutBubble(
     // Bubble size for centering; measured once and only written if changed
     var bubbleW by remember { mutableStateOf(0) }
     var bubbleH by remember { mutableStateOf(0) }
+    var hasMeasuredBubble by remember { mutableStateOf(false) }
 
     // Exact geometric compensation for the triangular tip (must match CalloutBubble)
     val tipCompensationPx = remember(density) {
@@ -102,9 +108,13 @@ internal fun FloatingCalloutBubble(
     val anchorY = localAnchor.y
     val estimatedVisible = anchorY > -marginPx && anchorY < viewportHeightPx + marginPx
 
-    // Same spec: 1000ms half-cycle, reverse, sine ease
+    // Only animate once:
+    // - lifecycle is RESUMED
+    // - anchor is near the viewport
+    // - content is not moving
+    // - bubble has been fully measured (no jump from size=0 → real size)
     val bobAmplitudePx = with(density) { 7.dp.toPx() }
-    val shouldAnimate = isResumed && estimatedVisible && !isContentMoving
+    val shouldAnimate = isResumed && estimatedVisible && hasMeasuredBubble && !isContentMoving
 
     val bobOffsetYpx = if (shouldAnimate) {
         val infinite = rememberInfiniteTransition(label = "callout-bob-leaf")
@@ -120,13 +130,20 @@ internal fun FloatingCalloutBubble(
         bobPhase * bobAmplitudePx
     } else 0f
 
-    // Center horizontally on anchor; align visible tip to anchor at the *topmost* point
+    // Center horizontally on anchor; align visible tip to anchor at the *topmost* point.
+    // While bubbleW/H are 0 we still compute a position, but we keep the bubble fully transparent.
     val leftPx = (localAnchor.x - (if (bubbleW == 0) 1 else bubbleW) / 2f)
     val topAtRestPx = localAnchor.y - (if (bubbleH == 0) 1 else bubbleH) + tipCompensationPx
     val animatedTopPx = topAtRestPx + bobOffsetYpx
 
-    // If completely off-screen, skip composing the bubble entirely
-    if (!estimatedVisible) return
+    // Final visibility: only show when (a) near viewport AND (b) we know the bubble size.
+    val bubbleVisible = estimatedVisible && hasMeasuredBubble
+
+    if (!estimatedVisible) {
+        // Still compose the bubble (so measurement can happen when it scrolls in),
+        // but keep it fully transparent while off-screen.
+        Log.d(TAG_BUBBLE, "Bubble off-screen; anchorY=$anchorY, viewportHeight=$viewportHeightPx")
+    }
 
     Box(
         modifier = Modifier
@@ -134,19 +151,45 @@ internal fun FloatingCalloutBubble(
                 translationX = leftPx
                 translationY = animatedTopPx
                 transformOrigin = TransformOrigin(0.5f, 0.0f)
+                // Key part: hide bubble until we know its real size, so the user never
+                // sees the "bottom of button → top of button" jump.
+                alpha = if (bubbleVisible) 1f else 0f
             }
             .zIndex(5f)
             .onGloballyPositioned { coords ->
                 val nw = coords.size.width
                 val nh = coords.size.height
-                if (nw != bubbleW) bubbleW = nw
-                if (nh != bubbleH) bubbleH = nh
+
+                var changed = false
+                if (nw != bubbleW) {
+                    bubbleW = nw
+                    changed = true
+                }
+                if (nh != bubbleH) {
+                    bubbleH = nh
+                    changed = true
+                }
+
+                if (changed && nw > 0 && nh > 0 && !hasMeasuredBubble) {
+                    hasMeasuredBubble = true
+                    Log.d(
+                        TAG_BUBBLE,
+                        "Bubble measured → width=$nw, height=$nh, anchorY=$anchorY; now safe to show."
+                    )
+                }
             }
     ) {
         // Localized string resource (defaults to Persian text to preserve visuals).
         CalloutBubble(
             isDarkTheme = isDarkTheme,
             text = stringResource(R.string.stages_callout_start)
+        )
+    }
+
+    if (bubbleVisible && shouldAnimate) {
+        Log.d(
+            TAG_BUBBLE,
+            "Bubble visible & animating at anchorY=$anchorY, viewportHeight=$viewportHeightPx"
         )
     }
 }

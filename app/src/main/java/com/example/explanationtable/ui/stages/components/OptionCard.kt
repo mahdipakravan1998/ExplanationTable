@@ -17,9 +17,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.explanationtable.ui.components.LoadingDots
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,12 +44,17 @@ private const val POST_RELEASE_DELAY_MS: Long = 120L  // allow press/release to 
  * The label is centered horizontally and vertically. Height defaults to 56.dp
  * (Material touch-friendly size) and will never go below a 48.dp minimum touch target.
  *
+ * When [isLoading] is true, the card becomes non-interactive and shows a centered
+ * [LoadingDots] indicator instead of the label. This is used by the difficulty-selection
+ * flow while the stages list is being prepared off-screen.
+ *
  * @param label The text label displayed on the button.
  * @param onClick Callback triggered after press/release completes.
  * @param backgroundColor The primary color of the button surface.
  * @param shadowColor The color used for the shadow/background offset card.
- * @param textColor The color of the label text.
- * @param cardHeight The desired height of the button (defaults to 56.dp, min 48.dp).
+ * @param textColor The color of the label text and loading dots.
+ * @param cardHeight The desired height of the button (defaults to 64.dp, min 56.dp).
+ * @param isLoading When true, shows a centered three-dot loading animation instead of the label.
  */
 @Composable
 fun OptionCard(
@@ -57,7 +63,8 @@ fun OptionCard(
     backgroundColor: Color,
     shadowColor: Color,
     textColor: Color,
-    cardHeight: Dp = 64.dp
+    cardHeight: Dp = 64.dp,
+    isLoading: Boolean = false
 ) {
     val shadowOffset = 4.dp
     val clampedHeight = if (cardHeight < 56.dp) 56.dp else cardHeight
@@ -70,22 +77,28 @@ fun OptionCard(
         label = "OptionCardPressOffset"
     )
 
-    val gestureModifier = Modifier.pointerInput(Unit) {
-        coroutineScope {
-            awaitEachGesture {
-                awaitFirstDown(requireUnconsumed = false)
-                isPressed = true
-                val upEvent = waitForUpOrCancellation()
-                isPressed = false
-                if (upEvent != null) {
-                    launch {
-                        delay(POST_RELEASE_DELAY_MS)
-                        onClick()
+    // Disable clicks while loading to prevent re-triggering actions.
+    val gestureModifier =
+        if (!isLoading) {
+            Modifier.pointerInput(Unit) {
+                coroutineScope {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        isPressed = true
+                        val upEvent = waitForUpOrCancellation()
+                        isPressed = false
+                        if (upEvent != null) {
+                            launch {
+                                delay(POST_RELEASE_DELAY_MS)
+                                onClick()
+                            }
+                        }
                     }
                 }
             }
+        } else {
+            Modifier // no gestures during loading
         }
-    }
 
     Box(
         modifier = Modifier
@@ -112,24 +125,28 @@ fun OptionCard(
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            // Centered text-only content with horizontal padding
+            // Centered content with horizontal padding
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = label,
-                    color = textColor,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 18.sp,
-                        lineHeight = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (isLoading) {
+                    LoadingDots(color = textColor)
+                } else {
+                    Text(
+                        text = label,
+                        color = textColor,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = 18.sp,
+                            lineHeight = 22.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

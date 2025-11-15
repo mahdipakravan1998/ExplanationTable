@@ -7,8 +7,13 @@ import com.example.explanationtable.data.DataStoreManager
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.repository.ProgressRepository
 import com.example.explanationtable.repository.ProgressRepositoryImpl
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 /**
  * ViewModel managing the user’s progress through stages, per difficulty.
@@ -26,13 +31,20 @@ class StageProgressViewModel(application: Application) : AndroidViewModel(applic
 
     /**
      * Internal StateFlow combining each difficulty’s `getLastUnlockedStage` Flow.
+     *
+     * Repository is allowed to return sentinel values (e.g. 0) but we clamp to
+     * at least 1 here so downstream geometry (scroll centering, bubble anchors)
+     * never sees an unlocked stage index below 1.
      */
     private val _lastUnlocked: StateFlow<Map<Difficulty, Int>> =
         Difficulty.entries
             .map { difficulty ->
                 repository
                     .getLastUnlockedStage(difficulty)
-                    .map { unlockedStage -> difficulty to unlockedStage }
+                    .map { unlockedStage ->
+                        val clamped = max(unlockedStage, 1)
+                        difficulty to clamped
+                    }
             }
             .let { difficultyFlows ->
                 combine(difficultyFlows) { latestPairs ->

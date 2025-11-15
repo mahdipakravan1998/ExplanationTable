@@ -1,11 +1,8 @@
 package com.example.explanationtable.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.StartOffset
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -24,11 +22,17 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 /**
  * Three-dot loading indicator that grows/shrinks from LEFT to RIGHT, then repeats.
  * - Fixed-size cells prevent horizontal jitter.
  * - Forces LTR locally so "left" is visually left even in RTL UIs.
+ *
+ * Implementation note:
+ * This version uses three independent [Animatable] instances instead of
+ * [rememberInfiniteTransition], which makes it more robust on devices where
+ * infinite transitions sometimes appear stuck or don’t tick under heavy load.
  */
 @Composable
 fun LoadingDots(
@@ -38,42 +42,42 @@ fun LoadingDots(
     space: Dp = 6.dp,
     cycleDurationMs: Int = 500
 ) {
-    val transition = rememberInfiniteTransition(label = "LoadingDotsTransition")
     val minScale = dotMinSize.value / dotMaxSize.value
     val delayStep = cycleDurationMs / 4 // stagger so left leads, then middle, then right
 
-    val leftScale by transition.animateFloat(
-        initialValue = minScale,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = cycleDurationMs, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(offsetMillis = 0)
-        ),
-        label = "LeftDotScale"
-    )
+    // Each dot has its own Animatable scale.
+    val leftAnim = remember { Animatable(minScale) }
+    val middleAnim = remember { Animatable(minScale) }
+    val rightAnim = remember { Animatable(minScale) }
 
-    val middleScale by transition.animateFloat(
-        initialValue = minScale,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = cycleDurationMs, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(offsetMillis = delayStep)
-        ),
-        label = "MiddleDotScale"
-    )
+    // Left dot: no initial delay.
+    LaunchedEffect(Unit) {
+        val spec = tween<Float>(durationMillis = cycleDurationMs, easing = FastOutSlowInEasing)
+        while (true) {
+            leftAnim.animateTo(1f, animationSpec = spec)
+            leftAnim.animateTo(minScale, animationSpec = spec)
+        }
+    }
 
-    val rightScale by transition.animateFloat(
-        initialValue = minScale,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = cycleDurationMs, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(offsetMillis = delayStep * 2)
-        ),
-        label = "RightDotScale"
-    )
+    // Middle dot: start a bit later.
+    LaunchedEffect(Unit) {
+        delay(delayStep.toLong())
+        val spec = tween<Float>(durationMillis = cycleDurationMs, easing = FastOutSlowInEasing)
+        while (true) {
+            middleAnim.animateTo(1f, animationSpec = spec)
+            middleAnim.animateTo(minScale, animationSpec = spec)
+        }
+    }
+
+    // Right dot: start even later.
+    LaunchedEffect(Unit) {
+        delay((delayStep * 2L))
+        val spec = tween<Float>(durationMillis = cycleDurationMs, easing = FastOutSlowInEasing)
+        while (true) {
+            rightAnim.animateTo(1f, animationSpec = spec)
+            rightAnim.animateTo(minScale, animationSpec = spec)
+        }
+    }
 
     // Ensure left-to-right visual order regardless of app RTL.
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
@@ -81,9 +85,9 @@ fun LoadingDots(
             horizontalArrangement = Arrangement.spacedBy(space),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            DotCell(color = color, maxSize = dotMaxSize, scale = leftScale)
-            DotCell(color = color, maxSize = dotMaxSize, scale = middleScale)
-            DotCell(color = color, maxSize = dotMaxSize, scale = rightScale)
+            DotCell(color = color, maxSize = dotMaxSize, scale = leftAnim.value)
+            DotCell(color = color, maxSize = dotMaxSize, scale = middleAnim.value)
+            DotCell(color = color, maxSize = dotMaxSize, scale = rightAnim.value)
         }
     }
 }
@@ -98,7 +102,7 @@ private fun DotCell(color: Color, maxSize: Dp, scale: Float) {
         Box(
             modifier = Modifier
                 .size(maxSize) // full circle
-                .scale(scale)  // scale around center
+                .scale(scale.coerceAtLeast(0f))  // scale around center, guard against negatives
                 .background(color, CircleShape)
         )
     }

@@ -5,20 +5,26 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 import com.example.explanationtable.R
 
 /**
  * A composable that displays difficulty options as selectable buttons.
  *
- * @param onOptionSelected Callback invoked with the selected difficulty.
+ * @param onOptionSelected Callback invoked with the selected difficulty label ("Easy", "Medium", "Hard").
+ * @param loadingDifficultyValue The label of the option that is currently in a loading state, or `null` if none.
+ * @param interactionEnabled When false, all options are effectively read-only and ignore taps.
  */
 @Composable
-fun DifficultyOptions(onOptionSelected: (String) -> Unit) {
+fun DifficultyOptions(
+    onOptionSelected: (String) -> Unit,
+    loadingDifficultyValue: String? = null,
+    interactionEnabled: Boolean = true
+) {
     data class DifficultyOption(
         val labelResId: Int,
         val difficultyValue: String,
@@ -58,12 +64,20 @@ fun DifficultyOptions(onOptionSelected: (String) -> Unit) {
             .fillMaxWidth()
     ) {
         difficultyOptions.forEachIndexed { index, option ->
+            val isLoading = loadingDifficultyValue == option.difficultyValue
+            val isOptionEnabled = interactionEnabled && !isLoading
+
             OptionCard(
                 label = stringResource(id = option.labelResId),
-                onClick = { onOptionSelected(option.difficultyValue) },
+                onClick = {
+                    if (isOptionEnabled) {
+                        onOptionSelected(option.difficultyValue)
+                    }
+                },
                 backgroundColor = option.backgroundColor,
                 shadowColor = option.shadowColor,
-                textColor = option.textColor
+                textColor = option.textColor,
+                isLoading = isLoading
             )
             if (index < difficultyOptions.lastIndex) {
                 Spacer(modifier = Modifier.height(optionSpacing))

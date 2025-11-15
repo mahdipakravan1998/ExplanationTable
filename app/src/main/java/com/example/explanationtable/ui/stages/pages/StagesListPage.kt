@@ -1,6 +1,8 @@
 package com.example.explanationtable.ui.stages.pages
 
 import android.app.Activity
+import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.AnimationSpec
@@ -43,6 +45,8 @@ import com.example.explanationtable.ui.settings.dialogs.SettingsDialog
 import com.example.explanationtable.ui.stages.components.ScrollAnchor
 import com.example.explanationtable.ui.stages.content.StageListDefaults
 import com.example.explanationtable.ui.stages.content.StagesListContent
+import com.example.explanationtable.ui.stages.preflight.ReadySnapshot
+import com.example.explanationtable.ui.stages.preflight.StagesPreflightViewModel
 import com.example.explanationtable.ui.stages.viewmodel.ScrollAnchorVisibilityViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
@@ -53,13 +57,10 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
+private const val TAG_PAGE = "StagesListPage"
+
 /**
- * Stages list screen; orchestrates top app bar, back/scroll anchors, and a vertically
- * scrollable list of stage buttons. External behavior and visuals are preserved.
- *
- * @param navController Navigation controller for routing.
- * @param difficulty Current difficulty whose stages are shown. Defaults to [Difficulty.EASY].
- * @param isDarkTheme Whether the app is currently in dark mode (affects theming/icons).
+ * Stages list screen; orchestrates top app bar, back/scroll anchors, and the list.
  */
 @Composable
 fun StagesListPage(
@@ -67,17 +68,24 @@ fun StagesListPage(
     difficulty: Difficulty = Difficulty.EASY,
     isDarkTheme: Boolean
 ) {
-    // ----- Global state (from other VMs) -----
     val mainViewModel: MainViewModel = viewModel()
     val diamonds by mainViewModel.diamonds.collectAsStateWithLifecycle(initialValue = 0)
 
     val context = LocalContext.current
+    val activity = context as? Activity
+    val componentActivity = context as? ComponentActivity
 
-    // Repository creation is memoized per application context; no leaks.
+    // Repository + VM (shared with preflight)
     val stageRepository = remember(context) {
         StageRepositoryImpl(DataStoreManager(context.applicationContext))
     }
-    val stageViewModel: StageViewModel = viewModel(factory = StageViewModelFactory(stageRepository))
+
+    val stageViewModel: StageViewModel =
+        if (componentActivity != null) {
+            viewModel(componentActivity, factory = StageViewModelFactory(stageRepository))
+        } else {
+            viewModel(factory = StageViewModelFactory(stageRepository))
+        }
 
     val progressViewModel: StageProgressViewModel = viewModel()
     val unlockedMap by progressViewModel.lastUnlocked.collectAsStateWithLifecycle(initialValue = emptyMap())
@@ -87,24 +95,46 @@ fun StagesListPage(
     val showScrollAnchor by visibilityViewModel.showScrollAnchor.collectAsStateWithLifecycle(initialValue = false)
     val isStageAbove by visibilityViewModel.isStageAbove.collectAsStateWithLifecycle(initialValue = false)
 
-    // When the anchor appears, we "latch" its flip orientation to avoid visual popping
-    // during the brief show/hide animation.
-    var anchorFlip by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(showScrollAnchor, isStageAbove) {
-        if (showScrollAnchor) anchorFlip = isStageAbove
+    // Preflight snapshots (produced off-screen)
+    val preflightViewModel: StagesPreflightViewModel =
+        if (componentActivity != null) {
+            viewModel(componentActivity)
+        } else {
+            viewModel()
+        }
+
+    val preflightSnapshots: Map<Difficulty, ReadySnapshot> by preflightViewModel
+        .snapshots
+        .collectAsStateWithLifecycle(initialValue = emptyMap())
+
+    val previousRoute = navController.previousBackStackEntry?.destination?.route
+    val cameFromMain: Boolean = previousRoute == Routes.MAIN
+
+    val preflightSnapshotForDifficulty: ReadySnapshot? =
+        preflightSnapshots[difficulty]
+
+    val initialScrollOffset: Int = preflightSnapshotForDifficulty?.targetOffsetPx ?: 0
+
+    Log.d(
+        TAG_PAGE,
+        "Compose StagesListPage: difficulty=$difficulty, unlockedStage=$unlockedStage, " +
+                "previousRoute=$previousRoute, cameFromMain=$cameFromMain, " +
+                "hasPreflightSnapshot=${preflightSnapshotForDifficulty != null}, " +
+                "preflightTarget=${preflightSnapshotForDifficulty?.targetOffsetPx}, " +
+                "initialScrollOffset=$initialScrollOffset"
+    )
+
+    // Scroll state starts at preflight-computed offset (if any)
+    val scrollState: ScrollState = rememberSaveable(
+        saver = ScrollState.Saver,
+        inputs = arrayOf(initialScrollOffset, difficulty)
+    ) {
+        Log.d(TAG_PAGE, "Creating ScrollState with initialScrollOffset=$initialScrollOffset")
+        ScrollState(initialScrollOffset)
     }
 
-    var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
-    val activity = context as? Activity
-
-    // ----- Scroll & geometry state -----
-
-    // Preserve list position across process death; behavior is otherwise identical.
-    val scrollState: ScrollState = rememberSaveable(saver = ScrollState.Saver) { ScrollState(0) }
-
-    // Target scroll offset is provided by child content; we use rememberUpdatedState so
-    // animations always read the latest value even if a coroutine outlives a recomposition.
-    var targetOffset by remember { mutableIntStateOf(0) }
+    // Target offset is driven by StagesListContent; ScrollAnchor uses this.
+    var targetOffset by remember { mutableIntStateOf(initialScrollOffset) }
     val currentTargetOffset by rememberUpdatedState(targetOffset)
 
     var viewportHeight by remember { mutableIntStateOf(0) }
@@ -112,24 +142,26 @@ fun StagesListPage(
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Back navigates to main, clearing this screen—preserve exact behavior.
     BackHandler {
+        Log.d(TAG_PAGE, "BackHandler → navigate to MAIN")
         navController.navigate(Routes.MAIN) {
             popUpTo(Routes.MAIN) { inclusive = true }
         }
     }
 
-    // Ensure stages metadata is loaded when difficulty changes.
-    LaunchedEffect(difficulty) { stageViewModel.fetchStagesCount(difficulty) }
+    // Make sure counts are loaded (also done inside content, but harmless)
+    LaunchedEffect(difficulty) {
+        Log.d(TAG_PAGE, "fetchStagesCount($difficulty) from StagesListPage")
+        stageViewModel.fetchStagesCount(difficulty)
+    }
 
-    // Stable per-density item height in PX: (container + vertical padding x2)
+    // Geometry used for the scroll-to-unlocked anchor
     val itemPx = remember(density) {
         with(density) {
             (StageListDefaults.ButtonContainerHeight + StageListDefaults.ButtonVerticalPadding * 2).toPx()
         }.toInt()
     }
 
-    // Top padding depends on whether first stage is unlocked; derive once per change.
     val topPaddingDp by remember(unlockedStage) {
         mutableStateOf(
             StageListDefaults.ListVerticalPadding + if (unlockedStage == 1) 36.dp else 0.dp
@@ -137,18 +169,31 @@ fun StagesListPage(
     }
     val bottomPaddingDp = StageListDefaults.ListVerticalPadding
 
-    // Convert total list padding to PX; recompute only when density or top padding changes.
     val totalListPaddingPx = remember(density, topPaddingDp) {
         with(density) { (topPaddingDp + bottomPaddingDp).toPx() }.toInt()
     }
 
-    // Stable animation specs; created once.
-    val anchorEnterSpec: FiniteAnimationSpec<Float> = remember { tween(durationMillis = 150, easing = EaseInOutCubic) }
-    val anchorExitSpec: FiniteAnimationSpec<Float> = remember { tween(durationMillis = 150, easing = EaseInOutCubic) }
-    val scrollAnimSpec: AnimationSpec<Float> = remember { tween(durationMillis = 600, easing = EaseInOutCubic) }
+    val anchorEnterSpec: FiniteAnimationSpec<Float> =
+        remember { tween(durationMillis = 150, easing = EaseInOutCubic) }
+    val anchorExitSpec: FiniteAnimationSpec<Float> =
+        remember { tween(durationMillis = 150, easing = EaseInOutCubic) }
+    val scrollAnimSpec: AnimationSpec<Float> =
+        remember { tween(durationMillis = 600, easing = EaseInOutCubic) }
 
-    // Stream scroll offset to VM with backpressure-aware flow. Effect restarts only when
-    // geometry parameters materially change.
+    Log.d(
+        TAG_PAGE,
+        "Centering: scrollStateInitial=${scrollState.value}, initialScrollOffset=$initialScrollOffset"
+    )
+
+    // Latch the flip orientation for the ScrollAnchor
+    var anchorFlip by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(showScrollAnchor, isStageAbove) {
+        if (showScrollAnchor) anchorFlip = isStageAbove
+    }
+
+    var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
+
+    // Feed scroll geometry into ScrollAnchorVisibilityViewModel
     LaunchedEffect(scrollState, viewportHeight, unlockedStage, itemPx, totalListPaddingPx) {
         snapshotFlow { scrollState.value }
             .distinctUntilChanged()
@@ -164,7 +209,6 @@ fun StagesListPage(
             }
     }
 
-    // Push initial/geometry changes without waiting for a scroll event.
     LaunchedEffect(viewportHeight, unlockedStage, itemPx, totalListPaddingPx) {
         visibilityViewModel.updateParams(
             scrollOffset = scrollState.value,
@@ -193,6 +237,7 @@ fun StagesListPage(
             BackAnchor(
                 isDarkTheme = isDarkTheme,
                 onClick = {
+                    Log.d(TAG_PAGE, "BackAnchor clicked → MAIN")
                     navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.MAIN) { inclusive = true }
                     }
@@ -210,7 +255,19 @@ fun StagesListPage(
                     flipVertical = anchorFlip,
                     onClick = {
                         coroutineScope.launch {
-                            scrollState.animateScrollTo(currentTargetOffset, animationSpec = scrollAnimSpec)
+                            if (scrollState.isScrollInProgress) return@launch
+                            val target = currentTargetOffset
+                            if (target == scrollState.value) return@launch
+
+                            Log.d(
+                                TAG_PAGE,
+                                "ScrollAnchor clicked: from=${scrollState.value} to=$target"
+                            )
+
+                            scrollState.animateScrollTo(
+                                target,
+                                animationSpec = scrollAnimSpec
+                            )
                         }
                     }
                 )
@@ -218,6 +275,9 @@ fun StagesListPage(
         }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // IMPORTANT: We now rely on the original bubble behaviour of StagesListContent.
+            // Preflight still works because it uses its own off-screen StagesListContent
+            // with ReadinessHooks; here we just use the defaults.
             StagesListContent(
                 navController = navController,
                 isDarkTheme = isDarkTheme,
