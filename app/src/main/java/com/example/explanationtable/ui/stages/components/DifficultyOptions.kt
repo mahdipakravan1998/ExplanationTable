@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,13 +15,11 @@ import com.example.explanationtable.R
  * A composable that displays difficulty options as selectable buttons.
  *
  * @param onOptionSelected Callback invoked with the selected difficulty label ("Easy", "Medium", "Hard").
- * @param loadingDifficultyValue The label of the option that is currently in a loading state, or `null` if none.
  * @param interactionEnabled When false, all options are effectively read-only and ignore taps.
  */
 @Composable
 fun DifficultyOptions(
     onOptionSelected: (String) -> Unit,
-    loadingDifficultyValue: String? = null,
     interactionEnabled: Boolean = true
 ) {
     data class DifficultyOption(
@@ -64,8 +61,7 @@ fun DifficultyOptions(
             .fillMaxWidth()
     ) {
         difficultyOptions.forEachIndexed { index, option ->
-            val isLoading = loadingDifficultyValue == option.difficultyValue
-            val isOptionEnabled = interactionEnabled && !isLoading
+            val isOptionEnabled = interactionEnabled
 
             OptionCard(
                 label = stringResource(id = option.labelResId),
@@ -76,8 +72,7 @@ fun DifficultyOptions(
                 },
                 backgroundColor = option.backgroundColor,
                 shadowColor = option.shadowColor,
-                textColor = option.textColor,
-                isLoading = isLoading
+                textColor = option.textColor
             )
             if (index < difficultyOptions.lastIndex) {
                 Spacer(modifier = Modifier.height(optionSpacing))

@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,6 +68,10 @@ object StageListDefaults {
     val ButtonContainerHeight = 77.dp
     val ButtonVerticalPadding = 8.dp
     val ListVerticalPadding = 16.dp
+
+    // NEW: extra gap below the last step, in addition to the nav bar inset.
+    // This is the “plus some other distance” you asked for.
+    val BottomSafeExtraPadding = 24.dp
 
     // Uniform visual height for all side art (before per-art overrides)
     val SideImageDesiredHeight = 136.dp
@@ -325,6 +332,15 @@ fun StagesListContent(
             if (unlockedIndex in stepOffsets.indices) stepOffsets[unlockedIndex].toPx() else 0f
         }
 
+        // --- NEW: compute bottom padding including nav bar inset ---
+        val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
+        val navigationBarBottomPadding = navigationBarsPadding.calculateBottomPadding()
+        val listBottomPaddingDp =
+            StageListDefaults.ListVerticalPadding +
+                    navigationBarBottomPadding +
+                    StageListDefaults.BottomSafeExtraPadding
+        // ---------------------------------------------
+
         // Calibration: constant correction added to math so the bubble is exactly tangent.
         var anchorXCorrectionPx by remember(unlockedStage, rootWidthPx, frontEllipseHeightPx) {
             mutableStateOf(0f)
@@ -356,7 +372,7 @@ fun StagesListContent(
                         }
                     }
                 }
-                .padding(top = topPaddingDp, bottom = StageListDefaults.ListVerticalPadding),
+                .padding(top = topPaddingDp, bottom = listBottomPaddingDp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val stepOffsetsLocal = stepOffsets // avoid capturing a mutable snapshot inside the loop

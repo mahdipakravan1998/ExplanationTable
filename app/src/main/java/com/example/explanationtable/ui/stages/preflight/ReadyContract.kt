@@ -26,6 +26,7 @@ enum class ReadySignal {
  * Derived flags:
  * - [minimallyReady]: "good enough to show" – data + geometry + settled first center.
  * - [ready]: everything is fully calibrated (including bubble and visuals).
+ * - [safeToShow]: the screen is safe to swap from placeholder to real content.
  */
 data class ReadySnapshot(
     val stageDataReady: Boolean = false,
@@ -49,6 +50,15 @@ data class ReadySnapshot(
         get() = minimallyReady &&
                 bubbleCalibrated &&
                 visualsSettled
+
+    /**
+     * Safe-to-show condition used by the page.
+     *
+     * Currently this is equivalent to [minimallyReady], but defined as a separate
+     * flag so we can tighten/loosen the condition later without touching callers.
+     */
+    val safeToShow: Boolean
+        get() = minimallyReady
 }
 
 /**
@@ -100,8 +110,6 @@ class MutableReadyTracker(
     override fun setTargetOffset(px: Int) {
         updateSnapshot { current ->
             // Clamp negative offsets to 0 and ALWAYS treat as "computed".
-            // This fixes the MEDIUM case where target was -640 and
-            // targetOffsetComputed stayed false, causing endless waiting.
             val clamped = max(px, 0)
             current.copy(
                 targetOffsetComputed = true,

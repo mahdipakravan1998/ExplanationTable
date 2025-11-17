@@ -10,7 +10,7 @@
     <!-- Options for the difficulty level in the popup -->
     <string name="easy_step_label">سریع</string>
     <string name="medium_step_label">استاندارد</string>
-    <string name="difficult_step_label">حماسی</string>
+    <string name="difficult_step_label">چالشی</string>
 
     <!-- Button text for closing the popup -->
     <string name="close">بستن</string>
