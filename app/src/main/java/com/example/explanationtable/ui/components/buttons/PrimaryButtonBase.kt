@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 import com.example.explanationtable.ui.theme.IconCircleDark
@@ -59,6 +60,7 @@ import kotlinx.coroutines.launch
  * - Accessibility semantics (role=Button, screen-reader click).
  * - `@Immutable` style for recomposition efficiency.
  * - `rememberUpdatedState` for the onClick lambda to avoid stale captures.
+ * - Integrated, low-latency UI click sound via LocalUiSoundManager (single, shared instance).
  */
 @Immutable
 data class PrimaryButtonStyle(
@@ -91,6 +93,7 @@ fun PrimaryButtonBase(
     // Stable, up-to-date reference to onClick for gesture/semantics blocks.
     val onClickState = rememberUpdatedState(onClick)
     val scope = rememberCoroutineScope()
+    val uiSoundManager = LocalUiSoundManager.current
 
     // === DO NOT CHANGE: original color logic preserved ===
     val buttonBackgroundColor =
@@ -107,6 +110,16 @@ fun PrimaryButtonBase(
         animationSpec = tween(durationMillis = PRIMARY_BUTTON_ANIMATION_DURATION_MS),
         label = "PrimaryButtonPressOffset"
     )
+
+    // Pointer input that triggers the click sound immediately on finger-down.
+    val soundModifier = Modifier.pointerInput(uiSoundManager) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false)
+            uiSoundManager.playClick()
+            // Do not consume; let the main gesture handler deal with click semantics.
+            waitForUpOrCancellation()
+        }
+    }
 
     // Pointer input replicates original press behavior without ripple.
     val gestureModifier = Modifier.pointerInput(Unit) {
@@ -131,8 +144,9 @@ fun PrimaryButtonBase(
     val semanticsModifier = Modifier.semantics(mergeDescendants = true) {
         role = Role.Button
         onClick(label = text) {
-            // Mirror the same tiny buffer for a11y-triggered clicks.
+            // For non-pointer (a11y) clicks, play sound immediately, then delay action.
             scope.launch {
+                uiSoundManager.playClick()
                 delay(postReleaseDelayMs)
                 onClickState.value.invoke()
             }
@@ -144,6 +158,7 @@ fun PrimaryButtonBase(
         modifier = modifier
             .fillMaxWidth()
             .height(style.height)
+            .then(soundModifier)
             .then(gestureModifier)
             .then(semanticsModifier)
     ) {

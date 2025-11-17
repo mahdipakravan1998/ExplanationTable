@@ -10,7 +10,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -21,11 +26,12 @@ import com.example.explanationtable.R
 import com.example.explanationtable.ui.settings.components.ConfirmationDialog
 import com.example.explanationtable.ui.settings.options.SettingsOptions
 import com.example.explanationtable.ui.settings.viewmodel.SettingsViewModel
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.system.ImmersiveForDialog
 import com.example.explanationtable.ui.theme.DialogBackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
-import com.example.explanationtable.ui.theme.TextDarkMode
 import com.example.explanationtable.ui.theme.Eel
+import com.example.explanationtable.ui.theme.TextDarkMode
 
 /**
  * Settings dialog backed by SettingsViewModel.
@@ -53,6 +59,7 @@ fun SettingsDialog(
     val isMusicEnabled by viewModel.isMusicEnabled.collectAsState()
 
     val textColor = if (isDarkTheme) TextDarkMode else Eel
+    val uiSoundManager = LocalUiSoundManager.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -72,7 +79,10 @@ fun SettingsDialog(
                     color = textColor
                 )
                 IconButton(
-                    onClick = onDismiss,
+                    onClick = {
+                        uiSoundManager.playClick()
+                        onDismiss()
+                    },
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     Icon(

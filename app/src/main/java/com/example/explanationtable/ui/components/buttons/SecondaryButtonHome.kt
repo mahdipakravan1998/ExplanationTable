@@ -1,5 +1,8 @@
 package com.example.explanationtable.ui.components.buttons
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +22,7 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -26,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.explanationtable.ui.components.buttons.internal.rememberPressGesture
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 import com.example.explanationtable.ui.theme.TextDarkMode
 import kotlin.math.max
@@ -38,6 +43,7 @@ import kotlin.math.round
  * Changes:
  * - Press/gesture logic centralized via [rememberPressGesture].
  * - Added semantics role for accessibility (no visual impact).
+ * - Integrated UI click sound via LocalUiSoundManager.
  */
 @Composable
 fun SecondaryButtonHome(
@@ -58,6 +64,18 @@ fun SecondaryButtonHome(
     val animationDuration = 30
     // Small motion buffer so release anim finishes before onClick.
     val clickDelayMs = 120
+
+    val uiSoundManager = LocalUiSoundManager.current
+
+    // Play the click sound immediately on finger-down without interfering with press logic.
+    val soundModifier = Modifier.pointerInput(uiSoundManager) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false)
+            uiSoundManager.playClick()
+            // Do not consume; let rememberPressGesture handle the actual click.
+            waitForUpOrCancellation()
+        }
+    }
 
     val press = rememberPressGesture(
         shadowOffset = shadowOffset,
@@ -121,6 +139,7 @@ fun SecondaryButtonHome(
                 val topRing = ringPath(top = po, bottom = h + po)
                 drawPath(topRing, color = borderColor)
             }
+            .then(soundModifier)
             .then(press.modifier),
         contentAlignment = Alignment.TopCenter
     ) {

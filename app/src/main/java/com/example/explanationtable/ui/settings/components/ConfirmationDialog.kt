@@ -1,6 +1,13 @@
 package com.example.explanationtable.ui.settings.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -14,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 
 /**
  * A customizable confirmation dialog with a title, message, and action buttons.
@@ -38,6 +46,8 @@ fun ConfirmationDialog(
 ) {
     // Only show the dialog if the flag is true.
     if (showDialog) {
+        val uiSoundManager = LocalUiSoundManager.current
+
         Dialog(onDismissRequest = onDismiss) {
             // Surface defines the background shape, color, and elevation.
             Surface(
@@ -82,7 +92,12 @@ fun ConfirmationDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Confirm action button.
-                        TextButton(onClick = onConfirm) {
+                        TextButton(
+                            onClick = {
+                                uiSoundManager.playClick()
+                                onConfirm()
+                            }
+                        ) {
                             Text(
                                 text = stringResource(id = confirmTextResId),
                                 color = MaterialTheme.colorScheme.error
@@ -93,7 +108,12 @@ fun ConfirmationDialog(
                         Spacer(modifier = Modifier.width(8.dp))
 
                         // Dismiss action button.
-                        TextButton(onClick = onDismiss) {
+                        TextButton(
+                            onClick = {
+                                uiSoundManager.playClick()
+                                onDismiss()
+                            }
+                        ) {
                             Text(
                                 text = stringResource(id = dismissTextResId),
                                 color = MaterialTheme.colorScheme.onSurface

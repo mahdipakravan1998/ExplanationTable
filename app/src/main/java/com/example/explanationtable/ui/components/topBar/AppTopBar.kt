@@ -44,6 +44,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import com.example.explanationtable.R
 import com.example.explanationtable.model.Difficulty
 import com.example.explanationtable.model.difficultyColors
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.system.SystemBarsDefaults
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
@@ -93,6 +94,7 @@ fun AppTopBar(
     val currentOnHelpClick = rememberUpdatedState(onHelpClick)
 
     val settingsContentDesc = stringResource(id = R.string.settings)
+    val uiSoundManager = LocalUiSoundManager.current
 
     Box(
         modifier = Modifier
@@ -148,7 +150,10 @@ fun AppTopBar(
                         modifier = Modifier
                             .size(48.dp)
                             .semantics { role = Role.Button }
-                            .clickable { onHelp() },
+                            .clickable {
+                                uiSoundManager.playClick()
+                                onHelp()
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -168,7 +173,10 @@ fun AppTopBar(
                             contentDescription = settingsContentDesc
                             role = Role.Button
                         }
-                        .clickable { currentOnSettingsClick.value.invoke() },
+                        .clickable {
+                            uiSoundManager.playClick()
+                            currentOnSettingsClick.value.invoke()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     if (isHomePage) {

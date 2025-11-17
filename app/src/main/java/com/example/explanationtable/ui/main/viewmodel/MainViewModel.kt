@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 /**
  * MainViewModel owns app-level UI state and one-shot navigation events for the main page.
  *
- * - Settings: exposed via StateFlow (theme, diamonds).
+ * - Settings: exposed via StateFlow (theme, diamonds, global mute).
  * - Start Game: computes a **single route** based on progress policy (see KDoc on method).
  * - Behavior is preserved exactly, including legacy uppercase "GAMEPLAY" route emission.
  */
@@ -49,6 +49,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val diamonds: StateFlow<Int> = settingsRepo.diamonds
         .stateIn(viewModelScope, SharingStarted.Eagerly, /* initial */ 200)
+
+    /**
+     * Global sound mute state, mirrored from SettingsRepository.
+     * Used at the Activity root to drive the UiSoundManager.
+     */
+    val isMuted: StateFlow<Boolean> = settingsRepo.isMuted
+        .stateIn(viewModelScope, SharingStarted.Eagerly, /* initial */ false)
 
     // One-shot navigation to gameplay
     private val _startGameRoutes = MutableSharedFlow<String>(replay = 0, extraBufferCapacity = 1)

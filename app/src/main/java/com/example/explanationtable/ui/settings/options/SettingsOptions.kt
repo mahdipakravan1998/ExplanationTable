@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
 import com.example.explanationtable.ui.settings.components.SettingCard
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.theme.BorderDark
 import com.example.explanationtable.ui.theme.BorderLight
 import com.example.explanationtable.ui.theme.DialogBackgroundDark
@@ -53,6 +54,8 @@ fun SettingsOptions(
     val borderColor = if (isDarkTheme) BorderDark else BorderLight
     val backgroundColor = if (isDarkTheme) DialogBackgroundDark else DialogBackgroundLight
 
+    val uiSoundManager = LocalUiSoundManager.current
+
     // Main vertical layout container for the settings options.
     Column(
         modifier = Modifier
@@ -61,11 +64,27 @@ fun SettingsOptions(
     ) {
         // Sound Setting Card:
         // Displays a toggle for the sound state. The switch is "checked" when sound is enabled.
+        // Special rule:
+        // - No click sound when muting.
+        // - Normal click sound when unmuting.
         SettingCard(
             iconResId = soundIcon,
             label = stringResource(id = R.string.soundLabel),
             isChecked = !isMuted, // Not muted means sound is enabled.
-            onCheckedChange = { onToggleMute() },
+            onCheckedChange = { newChecked ->
+                // newChecked represents "sound enabled" state.
+                val wasMuted = isMuted
+                val nowMuted = !newChecked
+
+                if (!nowMuted) {
+                    // We are unmuting → allowed to play click sound.
+                    uiSoundManager.playClick()
+                }
+
+                if (wasMuted != nowMuted) {
+                    onToggleMute()
+                }
+            },
             borderColor = borderColor,
             backgroundColor = backgroundColor
         )
@@ -80,7 +99,13 @@ fun SettingsOptions(
             iconResId = musicIcon,
             label = stringResource(id = R.string.musicLabel),
             isChecked = isMusicEnabled,
-            onCheckedChange = { onToggleMusic() },
+            onCheckedChange = { newChecked ->
+                // Always play a click sound for music toggles (both on and off).
+                uiSoundManager.playClick()
+                if (newChecked != isMusicEnabled) {
+                    onToggleMusic()
+                }
+            },
             borderColor = borderColor,
             backgroundColor = backgroundColor
         )
@@ -94,7 +119,13 @@ fun SettingsOptions(
             iconResId = themeIcon,
             label = stringResource(id = R.string.themeLabel),
             isChecked = isDarkTheme, // Checked if dark theme is active.
-            onCheckedChange = { onToggleTheme() },
+            onCheckedChange = { newChecked ->
+                // Always play a click sound for theme toggles (both on and off).
+                uiSoundManager.playClick()
+                if (newChecked != isDarkTheme) {
+                    onToggleTheme()
+                }
+            },
             borderColor = borderColor,
             backgroundColor = backgroundColor
         )
@@ -105,7 +136,10 @@ fun SettingsOptions(
         // Exit Button:
         // Triggers the exit action when clicked, styled with an error color scheme.
         Button(
-            onClick = onExit,
+            onClick = {
+                uiSoundManager.playClick()
+                onExit()
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error
             ),

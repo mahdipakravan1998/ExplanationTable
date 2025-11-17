@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
  * @param iconResId Resource ID for the icon to display.
  * @param label The descriptive text label.
  * @param isChecked Current state of the toggle switch.
- * @param onCheckedChange Callback invoked when the switch is toggled.
+ * @param onCheckedChange Callback invoked when the switch is toggled with the new checked value.
  * @param borderColor Color used for the card's border.
  * @param backgroundColor Background color of the card.
  */
@@ -34,7 +34,7 @@ fun SettingCard(
     iconResId: Int,
     label: String,
     isChecked: Boolean,
-    onCheckedChange: () -> Unit,
+    onCheckedChange: (Boolean) -> Unit,
     borderColor: Color,
     backgroundColor: Color
 ) {
@@ -72,10 +72,9 @@ fun SettingCard(
         )
 
         // Toggle switch on the right.
-        // The lambda ignores the incoming Boolean value and calls the provided callback.
         Switch(
             checked = isChecked,
-            onCheckedChange = { _ -> onCheckedChange() },
+            onCheckedChange = { newChecked -> onCheckedChange(newChecked) },
             modifier = Modifier.padding(end = 16.dp)
         )
     }
