@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.theme.BackgroundDark
 import com.example.explanationtable.ui.theme.BackgroundLight
 import com.example.explanationtable.ui.theme.BorderDark
@@ -67,6 +68,7 @@ fun ActionTile(
 
     val latestOnClick by rememberUpdatedState(onClick)
     val scope = rememberCoroutineScope()
+    val uiSoundManager = LocalUiSoundManager.current
 
     // Sizes, shapes, colors
     val cellSize = 52.dp
@@ -83,6 +85,7 @@ fun ActionTile(
             Modifier.pointerInput(enabled) {
                 detectTapGestures(
                     onPress = {
+                        uiSoundManager.playClick()
                         isPressed = true
                         val released = tryAwaitRelease()
                         isPressed = false
@@ -108,6 +111,7 @@ fun ActionTile(
             onClick(action = {
                 // Mirror the same tiny buffer for accessibility-initiated clicks.
                 scope.launch {
+                    uiSoundManager.playClick()
                     delay(postReleaseDelayMs)
                     latestOnClick()
                 }

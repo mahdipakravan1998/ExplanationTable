@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,11 +71,14 @@ fun OptionCard(
         label = "OptionCardPressOffset"
     )
 
+    val uiSoundManager = LocalUiSoundManager.current
+
     // Gesture handling with press/release animation before invoking onClick.
     val gestureModifier = Modifier.pointerInput(Unit) {
         coroutineScope {
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false)
+                uiSoundManager.playClick()
                 isPressed = true
                 val upEvent = waitForUpOrCancellation()
                 isPressed = false

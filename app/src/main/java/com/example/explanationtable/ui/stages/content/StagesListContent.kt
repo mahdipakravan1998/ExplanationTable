@@ -8,17 +8,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.stages.components.DifficultyStepButton
 import com.example.explanationtable.ui.stages.components.LockedStepButton
 import com.example.explanationtable.ui.stages.preflight.ReadinessHooks
@@ -219,6 +220,23 @@ fun StagesListContent(
     val grayscaleFilter = remember {
         val m = ColorMatrix().apply { setToSaturation(0f) }
         ColorFilter.colorMatrix(m)
+    }
+
+    // --- UI sound manager + chest-award sound wiring ---
+    val uiSoundManager = LocalUiSoundManager.current
+
+    LaunchedEffect(stageViewModel, uiSoundManager) {
+        stageViewModel.events.collectLatest { event ->
+            when (event) {
+                is StageViewModel.UiEvent.ChestAwarded -> {
+                    // Play chest reward diamonds sound only when diamonds were actually awarded.
+                    uiSoundManager.playRewardDiamond()
+                }
+                is StageViewModel.UiEvent.Error -> {
+                    // For now we ignore errors here; UI behaviour remains unchanged.
+                }
+            }
+        }
     }
 
     // Viewport + scroll targeting

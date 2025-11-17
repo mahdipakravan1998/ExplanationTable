@@ -4,6 +4,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -26,6 +29,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -33,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.model.Difficulty
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.theme.AppTypography
 import com.example.explanationtable.ui.theme.White
 import com.example.explanationtable.utils.toPersianDigits
@@ -103,11 +108,27 @@ fun DifficultyStepButton(
         label = "pressOffset"
     )
 
+    val uiSoundManager = LocalUiSoundManager.current
+
+    val soundModifier =
+        if (enabled) {
+            Modifier.pointerInput(uiSoundManager) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    uiSoundManager.playClick()
+                    waitForUpOrCancellation()
+                }
+            }
+        } else {
+            Modifier
+        }
+
     Box(
         modifier = Modifier
             .size(BUTTON_BOX_SIZE)
             // IMPORTANT: Your Compose version expects a String here.
             .semantics { contentDescription = stepNumber.toPersianDigits() }
+            .then(soundModifier)
             .clickable(
                 enabled = enabled,
                 interactionSource = interaction,

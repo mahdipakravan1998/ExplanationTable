@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.explanationtable.R
+import com.example.explanationtable.ui.sfx.LocalUiSoundManager
 import com.example.explanationtable.ui.stages.components.DifficultyOptions
 import com.example.explanationtable.ui.system.ImmersiveForDialog
 import com.example.explanationtable.ui.theme.Eel
@@ -49,6 +50,7 @@ fun DifficultyDialog(
     if (!showDialog) return
 
     val textColor = if (isDarkTheme) TextDarkMode else Eel
+    val uiSoundManager = LocalUiSoundManager.current
 
     AlertDialog(
         onDismissRequest = {
@@ -79,6 +81,7 @@ fun DifficultyDialog(
                 IconButton(
                     onClick = {
                         if (!isInteractionLocked) {
+                            uiSoundManager.playClick()
                             onDismiss()
                         }
                     },

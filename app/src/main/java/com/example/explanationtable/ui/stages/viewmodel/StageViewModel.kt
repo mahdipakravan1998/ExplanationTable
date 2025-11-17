@@ -68,7 +68,7 @@ class StageViewModel(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
-    /** Event stream for non-fatal errors. Safe for UI to ignore to keep behavior identical. */
+    /** Event stream for non-fatal errors and chest awards. */
     private val _events = MutableSharedFlow<UiEvent>(
         replay = 0,
         extraBufferCapacity = 4,
@@ -246,11 +246,16 @@ class StageViewModel(
     /**
      * Attempt to claim a chest (one-time).
      * Errors are reported via [events] but not thrown—UI remains responsive (original behavior).
+     *
+     * Emits [UiEvent.ChestAwarded] when diamonds were actually awarded (first claim).
      */
     fun claimChest(difficulty: Difficulty, stageNumber: Int) {
         viewModelScope.launch(ioDispatcher) {
             try {
-                stageRepository.claimChestIfEligible(difficulty, stageNumber)
+                val awarded = stageRepository.claimChestIfEligible(difficulty, stageNumber)
+                if (awarded) {
+                    _events.emit(UiEvent.ChestAwarded(difficulty, stageNumber))
+                }
             } catch (t: Throwable) {
                 Log.e(TAG, "Failed to claim chest: $difficulty #$stageNumber", t)
                 _events.emit(UiEvent.Error(UiEvent.ErrorType.ClaimChestFailed, t))
@@ -259,9 +264,14 @@ class StageViewModel(
         }
     }
 
-    /** One-shot UI events for non-fatal errors. */
+    /** One-shot UI events for non-fatal errors and chest awards. */
     sealed class UiEvent {
         data class Error(val type: ErrorType, val cause: Throwable? = null) : UiEvent()
+
+        data class ChestAwarded(
+            val difficulty: Difficulty,
+            val stageNumber: Int
+        ) : UiEvent()
 
         /** Typed errors keep ViewModel UI-agnostic (i18n/self-describing in UI). */
         enum class ErrorType {
