@@ -51,6 +51,7 @@ class DataStoreManager(
         // Preference Keys
         private val KEY_IS_MUTED = booleanPreferencesKey("is_muted")
         private val KEY_IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
+        private val KEY_IS_MUSIC_ENABLED = booleanPreferencesKey("is_music_enabled")
         private val KEY_DIAMONDS = intPreferencesKey("diamonds")
 
         private val KEY_LAST_UNLOCKED_EASY = intPreferencesKey("last_unlocked_easy")
@@ -71,6 +72,7 @@ class DataStoreManager(
         private const val DEFAULT_DIAMONDS = 200
         private const val DEFAULT_LAST_UNLOCKED = 1
         private const val DEFAULT_LAST_PLAYED = 0
+        private const val DEFAULT_MUSIC_ENABLED = true
     }
 
     // -------------------------------------------------------------------------
@@ -134,6 +136,14 @@ class DataStoreManager(
      */
     val isDarkTheme: Flow<Boolean?> = dataFlow.readNullableBool(KEY_IS_DARK_THEME)
 
+    /**
+     * Emits whether background music is enabled.
+     *
+     * Defaults to true if not set, so music is ON by default.
+     */
+    val isMusicEnabled: Flow<Boolean> =
+        dataFlow.read(KEY_IS_MUSIC_ENABLED, default = DEFAULT_MUSIC_ENABLED)
+
     /** Emits the current diamond count. Defaults to [DEFAULT_DIAMONDS] if not set. */
     val diamonds: Flow<Int> = dataFlow.read(KEY_DIAMONDS, default = DEFAULT_DIAMONDS)
 
@@ -159,6 +169,14 @@ class DataStoreManager(
         context.dataStore.edit { prefs ->
             val current = prefs[KEY_IS_MUTED] ?: false
             prefs[KEY_IS_MUTED] = !current
+        }
+    }
+
+    /** Toggles the background music enabled state. Main-safe. */
+    suspend fun toggleMusic() = withContext(ioDispatcher) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[KEY_IS_MUSIC_ENABLED] ?: DEFAULT_MUSIC_ENABLED
+            prefs[KEY_IS_MUSIC_ENABLED] = !current
         }
     }
 

@@ -41,6 +41,15 @@ class SettingsRepository(
         .distinctUntilChanged()
 
     /**
+     * Emits whether background music is enabled.
+     *
+     * Stabilized via `distinctUntilChanged()` for efficient UI collection.
+     */
+    val isMusicEnabled: Flow<Boolean> = dataStore
+        .isMusicEnabled
+        .distinctUntilChanged()
+
+    /**
      * Emits current diamond count, stabilized for UI collection.
      */
     val diamonds: Flow<Int> = dataStore
@@ -52,6 +61,13 @@ class SettingsRepository(
      */
     suspend fun toggleMute() = withContext(Dispatchers.IO) {
         dataStore.toggleMute()
+    }
+
+    /**
+     * Toggles background music enabled state. Executed on IO to avoid blocking the Main thread.
+     */
+    suspend fun toggleMusic() = withContext(Dispatchers.IO) {
+        dataStore.toggleMusic()
     }
 
     /**

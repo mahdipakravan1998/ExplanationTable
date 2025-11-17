@@ -46,6 +46,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             initialValue = false
         )
 
+    /** Expose background music enabled state as StateFlow */
+    val isMusicEnabled: StateFlow<Boolean> = settingsRepo
+        .isMusicEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
+
     /** Toggle theme */
     fun toggleTheme() {
         viewModelScope.launch {
@@ -57,6 +66,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun toggleMute() {
         viewModelScope.launch {
             settingsRepo.toggleMute()
+        }
+    }
+
+    /** Toggle background music enabled state */
+    fun toggleMusic() {
+        viewModelScope.launch {
+            settingsRepo.toggleMusic()
         }
     }
 }

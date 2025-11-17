@@ -16,8 +16,9 @@
     <string name="close">بستن</string>
 
     <!-- Settings-related labels -->
-    <string name="soundLabel">صدا</string>
+    <string name="soundLabel">صدای بازی</string>
     <string name="themeLabel">حالت شب</string>
+    <string name="musicLabel">آهنگ پس‌زمینه</string>
     <string name="exitLabel">خروج</string>
 
     <!-- Confirmation dialog strings -->

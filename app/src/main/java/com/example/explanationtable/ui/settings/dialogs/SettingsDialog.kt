@@ -1,6 +1,5 @@
 package com.example.explanationtable.ui.settings.dialogs
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -51,6 +50,7 @@ fun SettingsDialog(
 
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     val isMuted     by viewModel.isMuted.collectAsState()
+    val isMusicEnabled by viewModel.isMusicEnabled.collectAsState()
 
     val textColor = if (isDarkTheme) TextDarkMode else Eel
 
@@ -90,6 +90,8 @@ fun SettingsDialog(
                 onToggleTheme  = { viewModel.toggleTheme() },
                 isMuted        = isMuted,
                 onToggleMute   = { viewModel.toggleMute() },
+                isMusicEnabled = isMusicEnabled,
+                onToggleMusic  = { viewModel.toggleMusic() },
                 onExit         = { showExitConfirmation = true }
             )
         },

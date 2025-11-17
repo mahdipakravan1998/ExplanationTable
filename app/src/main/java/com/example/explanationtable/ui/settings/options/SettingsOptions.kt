@@ -21,7 +21,7 @@ import com.example.explanationtable.ui.theme.DialogBackgroundDark
 import com.example.explanationtable.ui.theme.DialogBackgroundLight
 
 /**
- * Displays the settings options panel containing controls for sound, theme toggle, and exit.
+ * Displays the settings options panel containing controls for sound, music, theme toggle, and exit.
  *
  * @param onDismiss Callback invoked when a setting option is dismissed.
  *                  Note: This parameter is currently not used in the implementation.
@@ -29,6 +29,8 @@ import com.example.explanationtable.ui.theme.DialogBackgroundLight
  * @param onToggleTheme Callback to toggle between dark and light themes.
  * @param isMuted Boolean flag representing whether the sound is muted.
  * @param onToggleMute Callback to toggle the mute state.
+ * @param isMusicEnabled Boolean flag representing whether the background music is enabled.
+ * @param onToggleMusic Callback to toggle the background music state.
  * @param onExit Callback invoked when the exit option is selected.
  */
 @Composable
@@ -38,10 +40,13 @@ fun SettingsOptions(
     onToggleTheme: () -> Unit,
     isMuted: Boolean,
     onToggleMute: () -> Unit,
+    isMusicEnabled: Boolean,
+    onToggleMusic: () -> Unit,
     onExit: () -> Unit
 ) {
-    // Determine the appropriate icons based on the current sound and theme states.
+    // Determine the appropriate icons based on the current sound, music, and theme states.
     val soundIcon = if (isMuted) R.drawable.ic_volume_down else R.drawable.ic_volume_up
+    val musicIcon = if (isMusicEnabled) R.drawable.ic_music_on else R.drawable.ic_music_off
     val themeIcon = if (isDarkTheme) R.drawable.ic_moon else R.drawable.ic_sun
 
     // Select border and background colors based on the active theme.
@@ -61,6 +66,21 @@ fun SettingsOptions(
             label = stringResource(id = R.string.soundLabel),
             isChecked = !isMuted, // Not muted means sound is enabled.
             onCheckedChange = { onToggleMute() },
+            borderColor = borderColor,
+            backgroundColor = backgroundColor
+        )
+
+        // Spacer for visual separation between setting cards.
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Music Setting Card:
+        // Displays a toggle for enabling/disabling background music.
+        // The switch is "checked" when music is enabled.
+        SettingCard(
+            iconResId = musicIcon,
+            label = stringResource(id = R.string.musicLabel),
+            isChecked = isMusicEnabled,
+            onCheckedChange = { onToggleMusic() },
             borderColor = borderColor,
             backgroundColor = backgroundColor
         )

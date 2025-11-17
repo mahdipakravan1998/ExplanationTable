@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +54,6 @@ import com.example.explanationtable.ui.stages.preflight.ReadinessHooks
 import com.example.explanationtable.ui.stages.util.computeCenterOffset
 import com.example.explanationtable.ui.stages.viewmodel.StageProgressViewModel
 import com.example.explanationtable.ui.stages.viewmodel.StageViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -71,7 +71,7 @@ object StageListDefaults {
 
     // NEW: extra gap below the last step, in addition to the nav bar inset.
     // This is the “plus some other distance” you asked for.
-    val BottomSafeExtraPadding = 24.dp
+    val BottomSafeExtraPadding = 56.dp
 
     // Uniform visual height for all side art (before per-art overrides)
     val SideImageDesiredHeight = 136.dp
@@ -95,9 +95,10 @@ object StageListDefaults {
 /**
  * Stages list screen with side-art, chest interaction, and a floating callout over the unlocked stage.
  *
- * Behaviour for the bubble and scrolling is the same as your original version:
+ * Behaviour for the bubble and scrolling matches your original version:
  * - Bubble stays above the last unlocked stage.
  * - Bubble bobs only when content is NOT moving (no scrolling / animation).
+ * - Bubble pauses while the user’s finger is down, even if they are at the bounds.
  *
  * Additional parameters (readinessHooks, firstRenderInstantCenter, enableProgrammaticCentering)
  * are used only for the off-screen preflight pipeline.
@@ -225,21 +226,22 @@ fun StagesListContent(
     var targetOffsetPx by remember { mutableStateOf(0) }
     var requestCalibration by remember { mutableStateOf(false) } // trigger a one-shot calibration after initial scroll
 
-    // Unified "content is moving" flag: true whenever the scroll offset is changing
-    // (user drag, fling, or any animateScrollTo), false shortly after it settles.
-    var isContentMoving by remember { mutableStateOf(false) }
+    // --- OLD-STYLE MOTION GATING REINTRODUCED ---
+    // Tracks programmatic scroll (animateScrollTo). True only while we are animating ourselves.
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
 
-    LaunchedEffect(scrollState) {
-        snapshotFlow { scrollState.value }
-            .distinctUntilChanged()
-            .collectLatest {
-                // Any scroll offset change → content is moving
-                isContentMoving = true
+    // True whenever the user’s finger is down and the scrollable is engaged
+    // (dragging or fling), even if the offset does not change (e.g., at the bounds).
+    val isUserScrolling by remember {
+        derivedStateOf { scrollState.isScrollInProgress }
+    }
 
-                // If no new scroll event arrives for a short time, consider it settled
-                delay(80)
-                isContentMoving = false
-            }
+    // Final flag used by the bubble + calibration.
+    // Restores your old behaviour:
+    // - Bubble is paused while finger is on the screen.
+    // - Bubble is paused while programmatic centering animation runs.
+    val isContentMoving by remember {
+        derivedStateOf { isUserScrolling || isProgrammaticScroll }
     }
 
     // Center on the unlocked stage whenever inputs change (original behaviour),
@@ -278,10 +280,16 @@ fun StagesListContent(
                     // Preflight can use this to snap instantly off-screen
                     scrollState.scrollTo(scrollTarget)
                 } else {
-                    scrollState.animateScrollTo(
-                        scrollTarget,
-                        animationSpec = tween(600, easing = EaseInOutSine)
-                    )
+                    // Tell the bubble that content is moving due to a programmatic scroll
+                    isProgrammaticScroll = true
+                    try {
+                        scrollState.animateScrollTo(
+                            scrollTarget,
+                            animationSpec = tween(600, easing = EaseInOutSine)
+                        )
+                    } finally {
+                        isProgrammaticScroll = false
+                    }
                 }
 
                 // Ask for calibration right after the programmatic scroll settles
